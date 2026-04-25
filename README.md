@@ -66,8 +66,8 @@ and follow its required-reading list from there.
 
 Contribution guide is TBD — will be written after v0.1 ships with working code. Until then:
 
-- The project is in the foundational-docs phase; the right entry point is `docs/PRD.md` (once
-  it exists) and `SPIRIT.md` (now)
+- The project is in the foundational-docs phase; the right entry point is `docs/PRD.md` and
+  `SPIRIT.md`
 - All architectural decisions go through the WHY graph before code is written
 - If you want to understand the agent1st protocol that governs how this is built:
   [https://github.com/applerom/agent1st](https://github.com/applerom/agent1st)

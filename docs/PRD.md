@@ -1226,8 +1226,9 @@ This section defines concrete acceptance criteria for the v0.1 milestone. v0.1 i
 
 ### 26.1 Importer
 
-- Markdown importer runs as a CLI command: `uv run observatory import-canon --source <path-to-harness-architecture>`
-- Implementation lives in `src/observatory/importers/canon.py` (note plural `importers`; `import` alone is a Python reserved word and cannot be a module name)
+- Markdown importer runs as a Python module entry: `uv run python -m observatory.importers.canon --source <path-to-harness-architecture>`
+- Implementation lives in `src/observatory/importers/canon.py` (note plural `importers`; `import` alone is a Python reserved word and cannot be a module name). The module exposes a `__main__` block parsing `--source`; no `[project.scripts]` entry, no Typer/Click wrapper in v0.1
+- A unified `observatory` Typer CLI (`uv run observatory dev | import-canon | migrate | …`) is a candidate scope-add for v0.2; deferred from v0.1 to keep the slice tight and avoid an extra dependency before any subagent code lands
 - Re-runnable: importing twice from the same source is idempotent (no duplicate rows; existing rows updated by stable identifier)
 - Ambiguous items (could not be cleanly parsed) are logged to `import-ambiguous.log`; script does not silently discard them
 - All imported Insights default to `status = proposed`, `confidence_band = unverified`
@@ -1291,6 +1292,66 @@ All surfaces are read-only in v0.1. No edit forms required except as stubs.
 
 ### 26.6 Dev startup
 
-- `uv run uvicorn observatory.main:app --reload` starts the server with no errors
-- `uv run observatory import-canon` runs the importer with no crashes on the real source data
+Canonical commands for v0.1 (no CLI wrapper invented; one `uv run <tool>` pattern):
+
+- `uv run uvicorn observatory.web.app:create_app --factory --reload` starts the server with no errors
+- `uv run python -m observatory.importers.canon --source ../harness-architecture` runs the importer with no crashes on the real source data
 - `uv run alembic upgrade head` applies all migrations to a fresh SQLite file with no errors
+- `uv run pytest` runs all tests
+- `uv run python scripts/validate_anchors.py` runs the anchor validator
+- `uv run ruff check src/ tests/` lints
+
+A future Typer CLI (`uv run observatory <subcmd>`) would unify these behind one surface and is a probable v0.2 ergonomics improvement; punted from v0.1 because it adds a dependency and a CLI module before any of the things it wraps exist.
+
+---
+
+## 27. Long-Haul Orchestration on Personal Subscriptions
+
+> **Status:** named concern + locked design constraints. Design and scaffolding deferred to a separate checkpoint — see CONTEXT.md "open sequencing question". This section commits the project to *handling* the problem; it does not yet specify directory layout, file formats, or scripts.
+
+### 27.1 The concern
+
+This project is built and operated on the owner's personal subscriptions: Claude Pro (5-hour rolling usage window) and ChatGPT Plus / Codex Plus (similar 5-hour windows). It is open-source, free, financed personally, and intended to run for many weeks of subagent work — far beyond what one continuous interactive session can cover before hitting a window limit.
+
+A multi-week project under this constraint cannot rely on the lead agent personally clicking "dispatch" on every subagent task. The system needs to keep moving while the owner sleeps, while the rate window resets, and across days when no human is at the keyboard. But it also must not silently burn quota on retries that will fail, and must not lose track of what was *partially* completed when a window closed mid-task.
+
+This is itself a teaching artifact (Level 3 dogfood, §3): "how to run a real multi-week agent project on personal subscriptions" is a lesson students will want, because almost all of them will be in the same constraint.
+
+### 27.2 Design constraints (locked)
+
+Any orchestration mechanism added to this project must satisfy these constraints. Architectures that violate them are out of bounds and should be rejected at proposal time.
+
+**(a) No LLM call in the cron / wake loop.** The wake-up that checks "is there pending work, has the rate window cleared, can I dispatch?" must be pure scripting (filesystem reads, timestamp arithmetic, subprocess exit codes). LLM calls are reserved for the actual subagent work being dispatched. Reason: the wake loop runs frequently (every ~30 minutes for many days) and must not itself consume the quota it is trying to manage.
+
+**(b) Timing-based rate-limit detection first; output-pattern detection only after empirical validation.** When a runner subprocess (e.g., `claude -p`) exits non-zero within an unexpectedly short wall-clock duration, treat it as a probable rate-window hit, mark the work item with state `blocked-rate-limit` plus a runner-specific `unblock_after` timestamp, and back off. Output-string parsing ("rate limit exceeded" etc.) is brittle until the actual limit-hit output has been observed for each runner — designing detection logic on guesses risks both false positives (work stalls on real errors) and false negatives (quota burned on retry loops). The empirical signal is captured the first time a real limit is hit, then layered into the detector as Class A evidence.
+
+**(c) Multi-runner aware.** The mechanism must support per-runner block state from day one (Claude Pro window is independent of Codex Plus window). The runner identity is the key: when ClaudeRunner is blocked, CodexRunner work can still proceed if the plan has any items routed to it.
+
+**(d) Plan as durable artifact, hand-editable.** The work plan (queue of items with state, dependencies, runner assignment, brief) lives as a versioned artifact (likely YAML at first), not an in-memory queue. Owner and lead agent edit it directly between cron firings. Reasons: (1) survives any single process crash; (2) git history shows plan evolution; (3) decouples from the Observatory app's own database (the orchestrator can dispatch work for v0.1 *before* the Observatory app is built); (4) hand-editable means the human can intervene without writing code.
+
+**(e) Lead agent owns plan adjustments; orchestrator owns dispatch and state recording.** Architectural division (matches the (iii) hybrid pattern): an interactive lead agent (Opus session with full context) writes and revises the plan; the cron-driven orchestrator (no LLM) reads the plan, picks the next dispatchable item, runs the subagent, records the result. New items, scope changes, plan revisions happen between cron cycles in a human-in-the-loop session — never inside the cron loop.
+
+**(f) Partial completion is a first-class state.** When a subagent returns work that is incomplete (rate-limited mid-task, returned with explicit blockers, etc.), the item state is `partial` with a `note` field — not silently downgraded to `failed` and not optimistically marked `completed`. Lead agent sees `partial` items on next session and decides: re-dispatch (possibly with a smaller batch), split into smaller items, or escalate to owner. This loop is what eventually informs better batch sizing (a goal §4.7).
+
+**(g) Configurable back-off, not hardcoded "5 hours".** The rate-window duration is a per-runner config value (default 5h for Claude Pro and Codex Plus, but overridable per runner profile). When provider terms change, only config changes — not code.
+
+**(h) Dogfood by default.** The orchestration mechanism, once built, is itself documented as a teaching artifact: a README in the orchestration directory explains the design, the constraints above, and how a student running on their own Pro subscription would use the same pattern for their own multi-week agent project. The first lessons that emerge from operating the orchestrator (real partial completions, real window hits, real plan revisions) become teaching material under `harness-architecture/lessons/`.
+
+### 27.3 Out of scope for §27
+
+This section commits to constraints, not implementation. The following are deliberately *not* decided here and require their own checkpoint:
+
+- Directory layout (`orchestration/` at repo root vs inside `src/observatory/orchestrator/` module vs separate `harness-orchestrator/` repo)
+- Exact plan format (YAML schema, top-level fields, item shape)
+- Whether to build the orchestrator *before* v0.1 dispatch (delaying dispatch ~1-2 days but running v0.1 under the orchestrator) or *alongside* v0.1 (using v0.1's 5 hand-dispatches as empirical input for orchestrator design — Task F in DELEGATION-PLAN)
+- Exactly which runners ship in the first version (likely ClaudeRunner only at first, since v0.1 has no working ClaudeRunner anyway)
+- Windows scheduled-task setup script (PowerShell `Register-ScheduledTask` per global CLAUDE.md preference) vs cron on Linux/Mac
+
+### 27.4 What this section *does* commit
+
+Future work on orchestration must:
+- live within the constraints of §27.2 above (any deviation requires explicit owner sign-off in the same kind of alignment commit that landed §27 itself)
+- treat the constraints as load-bearing decisions worth defending against future "let's just hardcode it" refactors — same posture as §4.10 (AgentRunner agnosticism) and §4.7 (popular over optimal)
+- update this section if a constraint is *replaced* by empirical evidence (e.g., when actual `claude -p` rate-limit output is captured, constraint (b) gets a Class A entry; output-pattern detection becomes a usable layer on top of timing)
+
+The mechanism's actual design lives in a future PRD section (likely §28 or a separate `docs/orchestrator.md`) and is dispatched as its own work item once the sequencing question in CONTEXT.md is resolved.

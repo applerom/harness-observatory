@@ -25,12 +25,12 @@ Lead agent does **not** write production code. Lead agent writes specs, contract
 
 When v0.1 is "done", the owner can:
 
-1. Run `uv run observatory` (or equivalent CLI entry point) on Windows; FastAPI server starts on `localhost:8000`.
+1. Run `uv run uvicorn observatory.web.app:create_app --factory --reload` on Windows; FastAPI server starts on `localhost:8000`.
 2. Open browser to `http://localhost:8000/` and see a dashboard with counts (N harnesses, N topics, N evidence items).
 3. Click into a harness dossier — see all insights for that harness, EvidenceItems collapsed under "Show the proof" buttons.
 4. Click into a topic dossier — see all harnesses' positions on that topic.
 5. Open the comparison matrix — see harness × topic grid, click a cell to expand evidence inline.
-6. Run `uv run observatory import-canon --source ../harness-architecture` — markdown gets imported into SQLite, dashboard counts update.
+6. Run `uv run python -m observatory.importers.canon --source ../harness-architecture` — markdown gets imported into SQLite, dashboard counts update.
 7. Run `uv run pytest` — all tests pass.
 8. Run `uv run python scripts/validate_anchors.py` — every `<ANCHOR>` in `why-graph.xml` resolves to a real `START_*` marker in source (or reports concrete failures).
 
@@ -73,11 +73,11 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 - `src/observatory/web/templates/_nav.html` — top nav: Dashboard, Harnesses, Topics, Matrix.
 - `src/observatory/web/routes/dashboard.py` — `/` route returning dashboard with placeholder counts (real counts wired by Task D).
 - `src/observatory/web/routes/__init__.py` — router registration.
-- `pyproject.toml` — uv project config with all stack dependencies pinned.
-- `README` snippet for `uv run observatory web` to start the server.
+- `pyproject.toml` — uv project config with all stack dependencies pinned. No `[project.scripts]` entry in v0.1 (Typer CLI wrapper deferred to v0.2 per PRD §26.1).
+- `README` snippet documenting the canonical dev startup: `uv run uvicorn observatory.web.app:create_app --factory --reload`.
 
 **Acceptance:**
-- `uv sync && uv run uvicorn observatory.web.app:create_app --factory` starts server on `:8000`.
+- `uv sync && uv run uvicorn observatory.web.app:create_app --factory --reload` starts server on `:8000`.
 - Browser to `localhost:8000/` returns 200 with the dashboard placeholder.
 - Tailwind utility classes render correctly (one visible Tailwind-styled element).
 - HTMX swap works (one `hx-get` demonstration on the dashboard).
@@ -93,7 +93,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 **Deliverable:**
 - `src/observatory/importers/canon.py` — entry point that reads `D:/ai/harnesses/harness-architecture/registry/harnesses.md` (table → `Harness` rows), `topics/*/topic.md` and `topics/*/evidence.md` (→ `Topic` and `EvidenceItem` rows), `comparisons/harness-map.md` (→ `ComparisonCell` rows). Handles both ASCII tables and pipe-tables.
 - `src/observatory/importers/markdown_table.py` — table parser utility.
-- `scripts/import_canon.py` or `observatory import-canon --source <path>` CLI command.
+- A `__main__` block in `src/observatory/importers/canon.py` exposing the entry as `uv run python -m observatory.importers.canon --source <path>`. No `scripts/import_canon.py`, no Typer wrapper in v0.1 (per PRD §26.1).
 - Tests in `tests/importers/` — sample fixture markdown files exercise each parser path; the real `harness-architecture/` is read in an end-to-end test.
 
 **Acceptance:**
@@ -133,12 +133,15 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 **Owner subagent type:** Haiku (small task)
 **WHY graph subtree:** `MOD-RUNNER-BASE`, `FEAT-AGENT-RUNNER` (interface only)
 **Deliverable:**
-- `src/observatory/runners/base.py` — `AgentRunner` Protocol class with method signatures only. Type stubs for `AgentEvent`, `AgentContext`. NO concrete implementations in v0.1. Module contract header explicitly states: "no `claude -p` invocation may exist below this abstraction boundary."
+- `src/observatory/runners/base.py` — `AgentRunner` Protocol class with method signatures only. Type stubs for `AgentEvent`, `AgentContext`.
+- `src/observatory/runners/claude.py` — stub `ClaudeRunner` class implementing the `AgentRunner` Protocol with **every method body** raising `NotImplementedError("ClaudeRunner is a v0.1 stub; concrete `claude -p` invocation lands in v0.2 per PRD §24")` (per PRD §26.3 — the wiring is real, the call is not). The class exists so dependency-injection sites and the Job Dashboard's "Refresh" button can resolve a real type, while attempting to actually run anything fails loudly. **No `claude -p` subprocess call may exist anywhere in v0.1** — neither in `claude.py`, nor elsewhere in the codebase. The module-contract header for `claude.py` states this prohibition explicitly.
 - `scripts/validate_anchors.py` — parses `docs/why-graph.xml` (lxml), enumerates `<ANCHOR COORD="path#NAME"/>` BUT only for anchors inside `MODULE_*` nodes whose `STATE` is `STARTED` or `DONE` (skipping `PLANNED` nodes — the graph plans more than the code implements at any moment; STATE is the watershed). For each non-skipped anchor, opens the file, checks `# START_NAME:` (or `// START_NAME:`, etc., language-agnostic) is present. Reports missing/extra. Exit code 0 if all resolve; non-zero with a clear list otherwise. The skip-PLANNED policy must be stated in the script's docstring.
 - Tests for both the Protocol shape and the validator.
 
 **Acceptance:**
-- `mypy src/observatory/runners/base.py` clean (no concrete code, just protocol).
+- `mypy src/observatory/runners/base.py src/observatory/runners/claude.py` clean (Protocol + stub class implementing it; both type-check).
+- `pytest tests/runners/test_claude_stub.py` passes — instantiates `ClaudeRunner`, asserts each public method raises `NotImplementedError` with the v0.2 explainer message.
+- `grep -RIn "claude -p" src/ scripts/` returns no matches in v0.1 (subprocess body is what v0.2 fills in; v0.1 must not contain the literal string anywhere).
 - `python scripts/validate_anchors.py` returns exit 0 in v0.1 (all MODULE nodes are still `STATE="PLANNED"`, so all anchors are correctly skipped). When a Task A/B/C/D subagent flips a MODULE node to `STATE="STARTED"`, the validator must then enforce the anchors in that node — the same Task subagent is responsible for placing the `START_*` markers in source.
 - Validator regression test: introduces a fake "missing anchor" in a fixture WHY graph (with `STATE="STARTED"`), asserts exit code is non-zero.
 - Second regression test: a `STATE="PLANNED"` node with anchors pointing at non-existent files asserts exit code 0 (skip policy honored).
@@ -251,7 +254,7 @@ These are violations to catch in subagent output and refuse to merge:
 
 1. **Silent friction** — subagent worked around a blocker without flagging. Per `AGENTS.md` §6 (CDD), surface and propose a fix; don't paper over.
 2. **Scope creep** — subagent added features beyond the deliverable. Even nice features. Reject and ask them to remove; v0.1 is read-only ONLY.
-3. **Hardcoded `claude -p`** anywhere except inside `ClaudeRunner` (which is NOT in v0.1 — so any occurrence in v0.1 is a bug).
+3. **Any literal `claude -p` string** — anywhere in `src/` or `scripts/` in v0.1. The stub `ClaudeRunner` (per Task E) raises `NotImplementedError`; the actual subprocess call lands in v0.2. Any occurrence in v0.1 is a bug. From v0.2 onward, `claude -p` may exist *only* inside `ClaudeRunner`.
 4. **Code-first UI** — if any cell view shows code FIRST and Insight under it, that's wrong. Insight on top, code under "Show the proof". Reject and fix.
 5. **Review queue / staging** — if a subagent invents a "pending approval" mechanism, that violates L1 autonomy (PRD §12). Reject.
 6. **Deleting agent output that looks bad** — fallibility is teaching material (PRD §4.9, SPIRIT). Use status fields, not deletion.
