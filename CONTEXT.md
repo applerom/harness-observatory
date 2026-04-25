@@ -23,14 +23,15 @@ All decisions are written into `docs/PRD.md` (v2). The pedagogical and collabora
 ## 2. Reading order for a new agent (cold start)
 
 1. `SPIRIT.md` — project soul, pedagogical bet, what would betray this spirit
-2. `AGENTS.md` — agent1st protocol (the 11 numbered principles) plus observatory-specific addendum
+2. `AGENTS.md` — agent1st protocol (the 11 numbered principles) plus observatory-specific addendum (incl. "Interrupt-and-Resume Pattern")
 3. `docs/PRD.md` — what we're building, locked decisions, phases v0.1 → v1.0
 4. `docs/why-graph.xml` — intent → code map (stem; expanded as code lands)
 5. `docs/why-graph-principles.md` + `docs/why-contracts-v1.md` — how to extend the graph and write contracts (reference)
-6. `CONTEXT.md` (this file) — current handoff state
-7. `DELEGATION-PLAN.md` — if you're coordinating subagents or writing code
+6. `CONTEXT.md` (this file) — running decision log
+7. `WORKLOG.md` — durable state of current work (active items, next queue, blocked, recent history)
+8. `DELEGATION-PLAN.md` — if you're coordinating subagents or writing code
 
-After reading 1–7, output once: `Observatory Agent1st ON`
+After reading 1–8, output once: `Observatory Agent1st ON`
 
 ---
 
@@ -44,7 +45,8 @@ harness-observatory/
 ├── SPIRIT.md                   project soul — Russian, English headers (162 lines)
 ├── AGENTS.md                   agent1st core + observatory addendum (237 lines)
 ├── CLAUDE.md                   3-line import file (@AGENTS @SPIRIT @CONTEXT)
-├── CONTEXT.md                  this file
+├── CONTEXT.md                  this file (running decision log)
+├── WORKLOG.md                  durable state of current work in flight (NEW — interrupt-resume substrate)
 ├── DELEGATION-PLAN.md          orchestration plan for subagents
 ├── docs/
 │   ├── PRD.md                  product spec v2 — interview-locked (1271 lines)
@@ -95,10 +97,31 @@ After owner review and any adjustments, the next steps are:
 - **`first_observed_by` identity model.** PRD v2 defaults this to a free-text handle (no auth, no user table). Open to revisit if engagement features in v0.6 need more.
 - **Anchor validator policy on PLANNED state.** **Resolved 2026-04-25 alignment pass:** validator skips anchors inside `MODULE_*` nodes with `STATE="PLANNED"`. The graph plans more than the code implements at any moment; `STATE` is the watershed. Validator only fails when an anchor is referenced from a node with `STATE="STARTED"` or `STATE="DONE"` and the anchor is missing from source (or a `STATE="PLANNED"` node has been left STARTED-without-cleanup). Documented in the validator script's docstring when it lands as part of v0.1 Task E.
 - **Broken absolute paths in `harness-architecture/`** (7 known references to old `D:/ai/harness-architecture/` location, listed by an exploration subagent earlier). Not blocking — fix as a separate cleanup pass when convenient.
-- **Sequencing of orchestration vs v0.1 dispatch (open, NEEDS OWNER DECISION).** PRD §27 names the long-haul orchestration concern and locks design constraints, but deliberately does not scaffold. Two reasonable paths, owner picks:
-  - **(A) Build orchestrator first.** Add a Task F (design + scaffold `orchestration/`, build `orchestrate.py` + plan format + scheduled-task setup), then dispatch v0.1 (Tasks A–E) *under* the new orchestrator from the start. Trade-off: delays v0.1 dispatch by ~1-2 days of subagent work; pays back as soon as A–E start running, since wake-up across rate windows is automated. Also: dogfoods immediately. Risk: orchestrator design is informed by *imagined* needs rather than real dispatch experience.
-  - **(B) Dispatch v0.1 manually first; build orchestrator alongside as Task F using v0.1 hand-dispatch as empirical input.** Trade-off: matches AGENTS.md §7 (Explore → Execute) — v0.1's 5 hand-dispatches *are* the explore. Plan format and rate-limit detection are designed against actual observed signals (real partial completions, real window hits) instead of guesses. Risk: lead agent has to hand-shepherd v0.1, including the rate-window awkwardness this whole exercise is trying to solve.
-  - Lead agent's recommendation: **(B)**, per advisor reasoning — but the orchestrator is genuinely useful from the start, and (A) is defensible if owner wants to dogfood the long-haul pattern from day one. Either path requires its own design checkpoint *before* code lands; this open question is just about which work item lands next.
+- **~~Sequencing of orchestration vs v0.1 dispatch.~~ Resolved 2026-04-25:** owner directed neither (A) nor (B). The automated orchestrator is **deferred to the far horizon** — building it before any code lands risks designing for imagined needs and adds scope before the project has earned the right to it. The v0 substitute is a manual interrupt-and-resume runbook that costs zero code:
+  - `AGENTS.md` "Interrupt-and-Resume Pattern" section — describes the hierarchy (owner = orchestrator; lead agent = architect; subagents = bounded executors), WORKLOG discipline, resume protocol across rate-window stops.
+  - `WORKLOG.md` (root) — durable state file for current work in flight (active items, next ordered queue, blocked, recent history). Hand-editable Markdown.
+  - On rate-window stop or session loss: owner reads WORKLOG, starts a new session (same or different agent class), the new session does the resume protocol, picks up from the active item.
+  - PRD §27 design constraints remain valid as guardrails for if/when an automated orchestrator is later built.
+
+## Update 2026-04-25 — interrupt-and-resume runbook + sequencing question closed
+
+After alignment pass 2 (commit `0d90bd1`) named the long-haul orchestration concern in PRD §27 and surfaced the sequencing question in §6 above, the owner gave clear direction: **do not build the orchestrator now — defer to the far horizon.** Reasoning: the orchestration ask was a *constraint to keep in mind*, not a green light to build. Premature orchestration = imagined-needs design + scope creep before the project has earned the right.
+
+The v0 substitute, landing in this update:
+
+- **`AGENTS.md` "Interrupt-and-Resume Pattern" section** added to the Observatory Addendum. Describes:
+  - the substrate (WORKLOG.md = task state; CONTEXT.md = decision log; git = historical truth; TaskCreate/TaskList = session-local only, do not rely on)
+  - the hierarchy (owner = orchestrator; lead agent = architect; subagents = bounded executors)
+  - lead agent's WORKLOG discipline (read at session start; update after each meaningful step; ensure 5-minute resume test passes before any known stop; commit with the change)
+  - resume protocol (cold-start agent reads SPIRIT → AGENTS → CONTEXT → WORKLOG → DELEGATION; check for orphaned subagent output before re-dispatch; surface to owner if state is unclear)
+  - manual resume across rate-window stops (owner waits for window or escalates to different agent class; new session does resume protocol; no automated retry)
+- **`WORKLOG.md`** created at root. Five sections: current state / active items / next ordered queue / blocked / recent history. Hand-editable Markdown. Initial content reflects current pre-v0.1 state (paused awaiting owner go-ahead for v0.1 first wave).
+- **`AGENTS.md` Required Reading list** updated: WORKLOG.md inserted as item 7 (between CONTEXT.md and DELEGATION-PLAN.md).
+- **`AGENTS.md` Documentation conventions** updated: WORKLOG.md described and distinguished from CONTEXT.md.
+
+What's now possible: lead agent can be interrupted (rate window, compaction, session end) at any point and a fresh session — same or different agent class — can pick up from WORKLOG with the resume protocol. No code lost, no work duplicated, no orchestrator dependency.
+
+What's now blocking: still nothing in this commit's scope. The original v0.1 first-wave dispatch is still gated on owner go-ahead — that gate did not move.
 
 ## Update 2026-04-25 — alignment pass 2 + long-haul orchestration concern named
 
