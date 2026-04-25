@@ -9,6 +9,11 @@
   All edges declared here represent intended structure, not implemented reality.
   Update this graph alongside every code commit that changes feature scope.
 
+  Validator policy: anchors inside MODULE_* nodes with STATE="PLANNED" are
+  skipped by scripts/validate_anchors.py. The graph plans more than the code
+  implements at any moment; STATE is the watershed. Validator only enforces
+  graph<->code agreement for STATE="STARTED" or STATE="DONE" modules.
+
   Companion docs:
     docs/why-graph-principles.md  — authoring guide
     docs/why-contracts-v1.md      — anchor and contract rules
@@ -76,35 +81,35 @@
 
   <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="PLANNED">
     <INTENT>Importer reads harness-architecture registry, topic files, and harness-map comparison and populates the SQLite database with normalized Harness, Topic, Insight, and EvidenceItem records.</INTENT>
-    <PRD_REF>docs/PRD.md §6 Import Pipeline</PRD_REF>
+    <PRD_REF>docs/PRD.md §26.1 Importer (v0.1 slice)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
   </FEATURE_MARKDOWN_IMPORT>
 
   <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="PLANNED">
     <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline.</INTENT>
-    <PRD_REF>docs/PRD.md §8 Comparison Matrix</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_COMPARISON_MATRIX_RO>
 
   <FEATURE_HARNESS_DOSSIER_RO ID="FEAT-HARNESS-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
     <INTENT>Read-only harness profile page listing all topics covered for that harness with their Insights and collapsed EvidenceItems.</INTENT>
-    <PRD_REF>docs/PRD.md §9 Harness Dossier</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_HARNESS_DOSSIER_RO>
 
   <FEATURE_TOPIC_DOSSIER_RO ID="FEAT-TOPIC-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
     <INTENT>Read-only topic profile page listing all harnesses that have data for that topic, with their Insights and collapsed EvidenceItems.</INTENT>
-    <PRD_REF>docs/PRD.md §10 Topic Dossier</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.4 Topic Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_TOPIC_DOSSIER_RO>
 
   <FEATURE_DASHBOARD ID="FEAT-DASHBOARD" PRIORITY="HIGH" STATE="PLANNED">
     <INTENT>Home page showing harness count, topic count, total insight count, and entry links to matrix, harness list, and topic list.</INTENT>
-    <PRD_REF>docs/PRD.md §7 Dashboard</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.1 Overview Dashboard</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-APP"/>
   </FEATURE_DASHBOARD>
@@ -115,55 +120,55 @@
 
   <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs — scaffolded in v0.1 but not wired to any concrete runner yet.</INTENT>
-    <PRD_REF>docs/PRD.md §12 AgentRunner Abstraction</PRD_REF>
+    <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
   </FEATURE_AGENT_RUNNER>
 
   <FEATURE_CLAUDE_RUNNER ID="FEAT-CLAUDE-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>ClaudeRunner concrete implementation of AgentRunner that invokes `claude -p` as a subprocess and streams stdout back to the job record.</INTENT>
-    <PRD_REF>docs/PRD.md §12.1 ClaudeRunner</PRD_REF>
+    <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §20 Technical Stack</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_CLAUDE_RUNNER>
 
   <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>AgentJob entity and dispatch mechanism: job type, status tracking (queued/running/done/failed), result storage, and linking job output to Insight records.</INTENT>
-    <PRD_REF>docs/PRD.md §13 Agent Jobs</PRD_REF>
+    <PRD_REF>docs/PRD.md §7 Core Information Model (AgentJob entity), §18.7 Agent job management</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_AGENT_JOB>
 
   <FEATURE_CRON_SCHEDULER ID="FEAT-CRON-SCHEDULER" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>APScheduler integration that fires configured job types on a schedule (e.g. nightly refresh, weekly discovery), with schedule configuration in a settings file.</INTENT>
-    <PRD_REF>docs/PRD.md §14 Cron Scheduler</PRD_REF>
+    <PRD_REF>docs/PRD.md §14 Automation Strategy</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-APP"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_CRON_SCHEDULER>
 
   <FEATURE_LIVE_AGENT_STUDIO ID="FEAT-LIVE-AGENT-STUDIO" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Projector-optimized SSE streaming UI for live agent runs — shows the agent's output token by token in real time, designed for large screens and live lecture use.</INTENT>
-    <PRD_REF>docs/PRD.md §11 Live Agent Studio</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.8 Live Agent Studio</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_LIVE_AGENT_STUDIO>
 
   <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Student attribution on fresh-finding Insights: Insight.first_observed_by field stores the student's name when they claim a discovery during a live session; UI surfaces the attribution visibly.</INTENT>
-    <PRD_REF>docs/PRD.md §11.2 Student Credit</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.8 Live Agent Studio (Insight.first_observed_by)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-LIVE-AGENT-STUDIO"/>
   </FEATURE_FIRST_PUBLISH_CREDIT>
 
   <FEATURE_MULTI_PASS_VERIFICATION ID="FEAT-MULTI-PASS-VERIFICATION" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Verify job type that runs multiple agent passes on the same question and labels the resulting Insight with a confidence status (proposed / corroborated / disputed) visible in all UI surfaces.</INTENT>
-    <PRD_REF>docs/PRD.md §15 Multi-Pass Verification</PRD_REF>
+    <PRD_REF>docs/PRD.md §7.3 Autonomy model, §14.2 Job types (verify)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_MULTI_PASS_VERIFICATION>
 
   <FEATURE_ASK_AGENT_WHY ID="FEAT-ASK-AGENT-WHY" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Per-Insight "Ask the agent why" button that spawns a short explain job; the explanation is appended to the Insight record and rendered below it without replacing the original text.</INTENT>
-    <PRD_REF>docs/PRD.md §16 Ask Agent Why</PRD_REF>
+    <PRD_REF>docs/PRD.md §14.2 Job types (explain)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
@@ -171,14 +176,14 @@
 
   <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Engagement job type that produces telegram-seed formulations, surprising-fact hooks, and optionally humorous framings for Insights — subject to human review before publishing.</INTENT>
-    <PRD_REF>docs/PRD.md §17 Engagement Hooks</PRD_REF>
+    <PRD_REF>docs/PRD.md §7 Core Information Model (Insight.engagement_hook), §14.2 Job types (engagement)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>
 
   <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Cell and dossier view with Insight always at top and EvidenceItem collapsed below it; "Show the proof" button expands the file:line citation from upstream. Button label is fixed — it communicates epistemology, not just UI affordance.</INTENT>
-    <PRD_REF>docs/PRD.md §8.3 Evidence View</PRD_REF>
+    <PRD_REF>docs/PRD.md §4.8 Three-stage learner journey, §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
@@ -186,7 +191,7 @@
 
   <FEATURE_CONFIDENCE_BANDS ID="FEAT-CONFIDENCE-BANDS" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Confidence status label (proposed / corroborated / disputed / human-verified / corrected) visible on every Insight card in matrix, harness dossier, and topic dossier views.</INTENT>
-    <PRD_REF>docs/PRD.md §15.2 Confidence Labels</PRD_REF>
+    <PRD_REF>docs/PRD.md §4.9 Agent fallibility as pedagogy, §7.3 Autonomy model</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MULTI-PASS-VERIFICATION"/>
@@ -194,31 +199,32 @@
 
   <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix.</INTENT>
-    <PRD_REF>docs/PRD.md §18 Lens Scoring</PRD_REF>
+    <PRD_REF>docs/PRD.md §15 Lenses and Scoring</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-COMPARISON-MATRIX-RO"/>
   </FEATURE_LENS_SCORING>
 
   <FEATURE_DOC_GENERATION ID="FEAT-DOC-GENERATION" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Markdown export from DB: generates harness-map.md-style documents from live DB state, allowing the observatory to feed back into the harness-architecture sibling project or other consumers.</INTENT>
-    <PRD_REF>docs/PRD.md §19 Doc Generation</PRD_REF>
+    <PRD_REF>docs/PRD.md §13 Document Generation</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
   </FEATURE_DOC_GENERATION>
 
   <!-- ================================================================
        MODULE STUBS — v0.1 slice, STATE="PLANNED"
        Anchors listed here assert what WILL exist when code lands.
-       Validators will fail on these until the START_* markers appear.
+       Validator skips PLANNED nodes (see header comment) — these are
+       checked only when STATE flips to STARTED or DONE.
   ================================================================ -->
 
   <MODULE_IMPORTER ID="MOD-IMPORTER"
-                   FILE="src/observatory/import/markdown.py"
+                   FILE="src/observatory/importers/canon.py"
                    STATE="PLANNED">
     <INTENT>Markdown importer: reads harness-architecture corpus (registry/harnesses.md, topics/*/topic.md, topics/*/evidence.md, comparisons/harness-map.md) and populates the SQLite database via SQLModel. Also the entry point for markdown export (doc generation).</INTENT>
-    <ANCHOR NAME="START_IMPORT_HARNESSES"  COORD="src/observatory/import/markdown.py#START_IMPORT_HARNESSES"/>
-    <ANCHOR NAME="START_IMPORT_TOPICS"     COORD="src/observatory/import/markdown.py#START_IMPORT_TOPICS"/>
-    <ANCHOR NAME="START_IMPORT_INSIGHTS"   COORD="src/observatory/import/markdown.py#START_IMPORT_INSIGHTS"/>
-    <ANCHOR NAME="START_EXPORT_MARKDOWN"   COORD="src/observatory/import/markdown.py#START_EXPORT_MARKDOWN"/>
+    <ANCHOR NAME="START_IMPORT_HARNESSES"  COORD="src/observatory/importers/canon.py#START_IMPORT_HARNESSES"/>
+    <ANCHOR NAME="START_IMPORT_TOPICS"     COORD="src/observatory/importers/canon.py#START_IMPORT_TOPICS"/>
+    <ANCHOR NAME="START_IMPORT_INSIGHTS"   COORD="src/observatory/importers/canon.py#START_IMPORT_INSIGHTS"/>
+    <ANCHOR NAME="START_EXPORT_MARKDOWN"   COORD="src/observatory/importers/canon.py#START_EXPORT_MARKDOWN"/>
   </MODULE_IMPORTER>
 
   <MODULE_MODELS ID="MOD-MODELS"

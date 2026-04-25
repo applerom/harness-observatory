@@ -90,11 +90,29 @@ After owner review and any adjustments, the next steps are:
 
 ## 6. Open questions / known gaps
 
-- **Migration data scope.** PRD §21 says only `topics/`, `comparisons/`, `lessons/` migrate to DB. The exact mapping (which markdown table column → which SQLModel field) is for the v0.1 importer subagent to draft and propose. Not pre-specified.
+- **Migration data scope.** ~~Mapping not pre-specified.~~ **Resolved 2026-04-25 alignment pass:** see PRD §26.1.1 and §26.1.2 for the explicit field-by-field translation, including the MiniMax CLI ecosystem-object exception.
 - **Initial seed PromptTemplates** for the 6 AgentJob types (`discover`/`verify`/`abstract`/`engagement`/`refresh`/`explain`). Not in v0.1 (no jobs yet). Will be drafted in v0.2 when first job lands. Templates are versioned entities — first version is OK to be rough.
 - **`first_observed_by` identity model.** PRD v2 defaults this to a free-text handle (no auth, no user table). Open to revisit if engagement features in v0.6 need more.
-- **Anchor validator** — agent1st docs say a trivial shell script counts as a validator. Not yet written. Subagent for v0.1 should produce a minimal Python script `scripts/validate_anchors.py` that parses `why-graph.xml` and checks each `<ANCHOR COORD="..."/>` resolves to a real `START_X:` comment in source. Empty success in v0.1 (no source files yet) is fine.
+- **Anchor validator policy on PLANNED state.** **Resolved 2026-04-25 alignment pass:** validator skips anchors inside `MODULE_*` nodes with `STATE="PLANNED"`. The graph plans more than the code implements at any moment; `STATE` is the watershed. Validator only fails when an anchor is referenced from a node with `STATE="STARTED"` or `STATE="DONE"` and the anchor is missing from source (or a `STATE="PLANNED"` node has been left STARTED-without-cleanup). Documented in the validator script's docstring when it lands as part of v0.1 Task E.
 - **Broken absolute paths in `harness-architecture/`** (7 known references to old `D:/ai/harness-architecture/` location, listed by an exploration subagent earlier). Not blocking — fix as a separate cleanup pass when convenient.
+
+## Update 2026-04-25 — alignment pass after GPT-5.5 review
+
+A second reviewer agent caught real drift between foundational docs. Fixed in one alignment commit before any code subagent dispatch:
+
+- PRD §1 framing line: replaced "code-first and evidence-first" leftover with "insight-first, evidence-backed" (consistent with §4.8).
+- PRD §26.1: importer command unified across PRD/WHY-graph/DELEGATION-PLAN to `uv run observatory import-canon` (CLI), with module path `src/observatory/importers/canon.py` (avoids reserved word `import` as module name).
+- PRD §26.1 expanded with explicit field-by-field source→entity mapping and the MiniMax CLI ecosystem-object exception.
+- PRD §26.4: validator filename unified to `scripts/validate_anchors.py` (PEP 8 underscore).
+- WHY graph: 18 stale `PRD_REF` entries rewritten against PRD v2's actual section numbering. MOD-IMPORTER FILE attribute and 4 anchor COORDs updated to new path.
+- DELEGATION-PLAN.md Task A: removed `AgentRun-history` and `QueueItem` from stub-table list (neither exists in PRD §7).
+- DELEGATION-PLAN.md Task E: validator policy ("skip PLANNED MODULE nodes") added to acceptance criteria.
+- Documentation conventions formalized in AGENTS.md addendum: README only at root for humans; agent reading order canonical in AGENTS.md; do not duplicate.
+- SPIRIT.md "Hello Agent" and README "For agents" both deferred to AGENTS.md as single source of truth for reading order.
+
+What's now possible: subagent dispatch for v0.1 Task A/B/C without ambiguity about importer path, validator name, schema entity list, or which doc is the canonical reading-order source.
+
+What's now blocking: nothing in this commit's scope. Owner go-ahead is the next gate.
 
 ---
 

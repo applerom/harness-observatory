@@ -55,19 +55,10 @@ If you see something and wonder "why not X instead?" — the WHY graph probably 
 
 ## For agents starting work
 
-Read in this order before touching anything:
-
-1. `SPIRIT.md` — project constitution (mission, pedagogy, anti-patterns). In Russian (owner's
-   native language), English headers. Read it first; it governs everything else.
-2. `AGENTS.md` — agent1st protocol (operating rules for all agents on this project)
-3. `docs/PRD.md` — product truth: what we build, version scope, acceptance criteria
-4. `docs/why-graph.xml` — intent-to-implementation map; pin this during your session
-5. `CONTEXT.md` — current handoff state: where we are, what was just done, what is blocked
-
-After reading all five, output: `Observatory Agent1st ON`
-
-If `CONTEXT.md` or `docs/PRD.md` do not exist yet when you read this, that is your first
-blocker — escalate before assuming.
+The canonical reading order for agents is in **`AGENTS.md`** (the "Required Reading" section of
+the adopter addendum). README.md is for humans; agent context lives in AGENTS.md (operating
+rules) and CONTEXT.md (current handoff state). Start with `SPIRIT.md`, then go to `AGENTS.md`,
+and follow its required-reading list from there.
 
 ---
 

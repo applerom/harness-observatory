@@ -31,6 +31,16 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - `EvidenceItem` — a `file:line` citation backing an Insight (data model concept)
 - Do not use these terms interchangeably.
 
+### Documentation conventions
+
+- **README.md** lives only at the repo root, for humans landing on the project. Do not create README.md in subdirectories.
+- **AGENTS.md** (this file) is the canonical operating rules and required-reading list for agents. If you need to know "what should I read next" — it lives here, not in README and not in CONTEXT.
+- **CONTEXT.md** is the running handoff log — current state, recent decisions, what just changed. Append new dated sections; do not rewrite history.
+- **SPIRIT.md** is the constitution — slow-changing intent, pedagogy, anti-patterns. Changes to SPIRIT.md require owner discussion.
+- **DELEGATION-PLAN.md** is the orchestration plan — read it if you are coordinating subagents or are a code-writing subagent.
+- Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
+- README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.
+
 <!-- ============================================================
      AGENT1ST PROTOCOL CORE — unmodified copy
      Source: https://github.com/applerom/agent1st

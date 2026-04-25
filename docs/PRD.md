@@ -13,7 +13,7 @@ This project evolves from a Markdown research meta-repo (`harness-architecture/`
 
 The application must preserve the spirit of the source project:
 
-- code-first and evidence-first
+- insight-first, evidence-backed (per §4.8 — code is always available under "Show the proof", but never the default frame)
 - comparative, not vendor-marketing-driven
 - useful for instructors and researchers
 - focused not only on feature inventory, but on insights, trade-offs, and real engineering problems
@@ -1226,14 +1226,39 @@ This section defines concrete acceptance criteria for the v0.1 milestone. v0.1 i
 
 ### 26.1 Importer
 
-- Markdown importer runs as a one-shot script (`uv run python -m observatory.import`)
-- Ingests `D:/ai/harnesses/harness-architecture/registry/harnesses.md` → all 8 Harness records
-- Ingests all `D:/ai/harnesses/harness-architecture/topics/*/topic.md` → Topic records + ComparisonCells
-- Ingests `D:/ai/harnesses/harness-architecture/comparisons/harness-map.md` → additional ComparisonCells and Insights where parseable
-- Ingests EvidenceItems where `file:line` citations are present in evidence files
-- After import: `SELECT COUNT(*) FROM harness` = 8, `SELECT COUNT(*) FROM topic` >= 11
-- All imported Insights have `status = proposed`, `confidence_band = unverified`
+- Markdown importer runs as a CLI command: `uv run observatory import-canon --source <path-to-harness-architecture>`
+- Implementation lives in `src/observatory/importers/canon.py` (note plural `importers`; `import` alone is a Python reserved word and cannot be a module name)
+- Re-runnable: importing twice from the same source is idempotent (no duplicate rows; existing rows updated by stable identifier)
 - Ambiguous items (could not be cleanly parsed) are logged to `import-ambiguous.log`; script does not silently discard them
+- All imported Insights default to `status = proposed`, `confidence_band = unverified`
+
+#### 26.1.1 Source → Entity field mapping
+
+| Source file in `harness-architecture/` | Target entity | Key fields |
+|---|---|---|
+| `registry/harnesses.md` (table rows) | `Harness` | `name`, `slug`, `upstream_url`, `local_upstream_path`, `language`, `status_note`, `last_review_date` |
+| `registry/harnesses.md` (rows marked "agent tool") | `EcosystemObject` (kind=`agent-tool`) | same as Harness — see §26.1.2 |
+| `topics/<slug>/topic.md` (front matter + prose) | `Topic` | `name`, `slug`, `definition` (first paragraph), `why_it_matters`, `body_markdown` (raw remaining prose) |
+| `topics/<slug>/evidence.md` (per-harness sections) | `EvidenceItem` (one row per harness × topic where citation present) | `harness_id`, `topic_id`, `file_path`, `line_number`, `code_snippet` (pulled from upstream at import time), `claim_summary`, `evidence_class` |
+| `topics/<slug>/teaching.md` (hooks + telegram seeds) | `Insight` (audience=`lecturer-only` for hooks; `student-introductory` for general framings) | `title`, `concise_formulation`, `why_it_matters`, `audience`, `engagement_hook`, `joke_or_telegram_seed`, `format=text`, `status=proposed` |
+| `comparisons/harness-map.md` (table cells) | `ComparisonCell` | `harness_id`, `topic_id`, `state` (present/absent/partial/unknown — parsed from cell text), `cell_summary` (cell text verbatim) |
+| `comparisons/<topic>.md` (deep narrative comparison files) | `Insight` (audience=`developer-deep-dive`) | `title`, `concise_formulation` (first paragraph), `why_it_matters`, `body_markdown`, `audience`, `format=text` |
+| `comparisons/investigations/*.md` (case studies) | `Insight` (audience=`developer-deep-dive`, `format=text`) | one Insight per investigation file; `title` from H1, `body_markdown` is the file body |
+
+After import, expected counts (acceptance criterion):
+- `SELECT COUNT(*) FROM harness` ≥ 8 (registry-listed harnesses, see §26.1.2 for non-harness rows)
+- `SELECT COUNT(*) FROM topic` ≥ 11 (current topic directory count in `harness-architecture/topics/`)
+- `SELECT COUNT(*) FROM ecosystem_object WHERE kind='agent-tool'` ≥ 1 (MiniMax CLI at minimum)
+- `SELECT COUNT(*) FROM insight` ≥ 30 (rough lower bound across topic teaching files + investigations)
+- `SELECT COUNT(*) FROM comparison_cell` ≥ 80 (8 harnesses × 10 well-covered topics)
+
+#### 26.1.2 EcosystemObject exception (MiniMax CLI)
+
+The current `harness-architecture/registry/harnesses.md` registry has rows classified as "agent tool" rather than as a full harness (the project's distinction: harnesses run `while(true)` over a model + tools + prompt; agent tools are component pieces or composable services). MiniMax CLI is the v0.1 known instance.
+
+Importer rule: rows whose registry classification reads "agent tool" (or any non-"harness" classifier) MUST go into the `EcosystemObject` table with `kind` set accordingly, NOT into the `Harness` table. This preserves the ontological distinction even when both row types share most fields. Per PRD §7.2 (`EcosystemObject`), the data model supports this from v0.1 even though most v0.1 surfaces only render Harnesses.
+
+If the importer encounters a registry row whose classifier is unclear, it logs the row to `import-ambiguous.log` and does NOT default-create either entity (avoid silent misclassification — the owner reviews the log and resolves manually before re-running).
 
 ### 26.2 Web UI surfaces
 
@@ -1256,7 +1281,7 @@ All surfaces are read-only in v0.1. No edit forms required except as stubs.
 ### 26.4 WHY graph and anchor validator
 
 - `docs/why-graph.xml` exists with at minimum: one `USECASE` node per major surface (Comparison Matrix, Harness Dossier, Topic Dossier, Live Agent Studio, Job Dashboard), one `FEATURE` node per entity type
-- `scripts/validate-anchors.py` exists and passes with exit code 0 (trivial in v0.1 since few code anchors exist yet)
+- `scripts/validate_anchors.py` exists and passes with exit code 0 (trivial in v0.1 since all MODULE nodes are still `STATE="PLANNED"` and the validator skips them per the policy in the WHY graph header comment)
 
 ### 26.5 Tests
 
@@ -1267,5 +1292,5 @@ All surfaces are read-only in v0.1. No edit forms required except as stubs.
 ### 26.6 Dev startup
 
 - `uv run uvicorn observatory.main:app --reload` starts the server with no errors
-- `uv run python -m observatory.import` runs the importer with no crashes on the real source data
+- `uv run observatory import-canon` runs the importer with no crashes on the real source data
 - `uv run alembic upgrade head` applies all migrations to a fresh SQLite file with no errors

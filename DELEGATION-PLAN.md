@@ -47,7 +47,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 **Owner subagent type:** Sonnet
 **WHY graph subtree:** `MOD-MODELS` and the FEATUREs that depend on it
 **Deliverable:**
-- `src/observatory/models/__init__.py` — SQLModel entity definitions for all PRD §7 first-class entities. v0.1 needs at minimum: `Harness`, `Topic`, `Feature`, `EvidenceItem`, `Insight`, `ComparisonCell`, `Source`, `MediaAttachment`. Non-v0.1 entities (`AgentJob`, `PromptTemplate`, `AgentRun`-history, `RevisionNote`, `ObservationReview`, `Lens`, `Score`, `EcosystemObject`, `QueueItem`) — define stub tables (empty for v0.1, ready for later phases).
+- `src/observatory/models/__init__.py` — SQLModel entity definitions for all PRD §7 first-class entities. v0.1 needs at minimum: `Harness`, `Topic`, `Feature`, `EvidenceItem`, `Insight`, `ComparisonCell`, `Source`, `MediaAttachment`. Non-v0.1 entities (`AgentJob`, `PromptTemplate`, `RevisionNote`, `ObservationReview`, `Lens`, `Score`, `EcosystemObject`) — define stub tables (empty for v0.1, ready for later phases). Note: do NOT invent entities not listed in PRD §7 (no `QueueItem`, no `AgentRun-history` — `AgentJob` already covers run history).
 - `src/observatory/db.py` — engine + session management.
 - `migrations/` (Alembic) — initial migration that creates the schema.
 - `alembic.ini` + `migrations/env.py` configured for SQLite at `./observatory.sqlite`.
@@ -134,13 +134,14 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 **WHY graph subtree:** `MOD-RUNNER-BASE`, `FEAT-AGENT-RUNNER` (interface only)
 **Deliverable:**
 - `src/observatory/runners/base.py` — `AgentRunner` Protocol class with method signatures only. Type stubs for `AgentEvent`, `AgentContext`. NO concrete implementations in v0.1. Module contract header explicitly states: "no `claude -p` invocation may exist below this abstraction boundary."
-- `scripts/validate_anchors.py` — parses `docs/why-graph.xml` (lxml), enumerates `<ANCHOR COORD="path#NAME"/>`, opens each path, checks `# START_NAME:` (or `// START_NAME:`, etc., language-agnostic) is present. Reports missing/extra. Exit code 0 if all resolve; non-zero with a clear list otherwise.
+- `scripts/validate_anchors.py` — parses `docs/why-graph.xml` (lxml), enumerates `<ANCHOR COORD="path#NAME"/>` BUT only for anchors inside `MODULE_*` nodes whose `STATE` is `STARTED` or `DONE` (skipping `PLANNED` nodes — the graph plans more than the code implements at any moment; STATE is the watershed). For each non-skipped anchor, opens the file, checks `# START_NAME:` (or `// START_NAME:`, etc., language-agnostic) is present. Reports missing/extra. Exit code 0 if all resolve; non-zero with a clear list otherwise. The skip-PLANNED policy must be stated in the script's docstring.
 - Tests for both the Protocol shape and the validator.
 
 **Acceptance:**
 - `mypy src/observatory/runners/base.py` clean (no concrete code, just protocol).
-- `python scripts/validate_anchors.py` returns exit 0 after Tasks A, B, C, D have placed all `START_*` markers.
-- Validator regression test: introduces a fake "missing anchor" in a fixture WHY graph, asserts exit code is non-zero.
+- `python scripts/validate_anchors.py` returns exit 0 in v0.1 (all MODULE nodes are still `STATE="PLANNED"`, so all anchors are correctly skipped). When a Task A/B/C/D subagent flips a MODULE node to `STATE="STARTED"`, the validator must then enforce the anchors in that node — the same Task subagent is responsible for placing the `START_*` markers in source.
+- Validator regression test: introduces a fake "missing anchor" in a fixture WHY graph (with `STATE="STARTED"`), asserts exit code is non-zero.
+- Second regression test: a `STATE="PLANNED"` node with anchors pointing at non-existent files asserts exit code 0 (skip policy honored).
 
 **Estimate:** 0.5–1 day. Mostly mechanical.
 
