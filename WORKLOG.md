@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — Python 3.14 migration and evolution log complete
+**Last update:** 2026-04-26 — v0.2a job spine implemented and validated
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** Post-v0.1 hardening — runtime freshness and process logging
+**Current phase:** v0.2a complete — ready for raw-log review / parser slice
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Roman noticed the Python 3.12 scaffold as likely agent-version inertia; Codex verified official Python.org currently lists Python 3.14.4 as latest stable, installed a local 3.14.4 runtime, regenerated the lockfile, and is recording the lesson in EVOLUTION.md.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine: durable `AgentJob`, `ClaudeRunner` boundary, raw log, and Job Dashboard before any parser writes new Insights.
 
 ## 2. Active items
 
@@ -30,6 +30,7 @@ v0.1 is implemented and locally smoke-tested. Roman noticed the Python 3.12 scaf
 | C | Markdown importer (`DELEGATION-PLAN` Task C). Codex subagent Nash `019dc924-ce93-7ca2-b5e3-280b5977b587`; owns `src/observatory/importers/**`, `tests/importers/**`. | Codex hard_worker | completed | 2026-04-26 | integrated; real-source import produced 8 harnesses, 13 topics, 1 agent-tool, 72 evidence items, 34 insights, 76 comparison cells |
 | E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (`DELEGATION-PLAN` Task E). Codex subagent Hooke `019dc925-2b72-7390-8393-9bf278efd12c`; owns `src/observatory/runners/**`, `scripts/validate_anchors.py`, `tests/runners/**`, `tests/scripts/**`. | Codex implementation_worker | completed | 2026-04-26 | integrated with runner tests, mypy, ruff, anchor validator, and forbidden-literal check green |
 | D | Read-only dossier + matrix routes (`DELEGATION-PLAN` Task D). Codex subagent Pascal `019dc92c-e752-7011-b201-2e5a86625949`; owns web route/template/test integration. | Codex implementation_worker | completed | 2026-04-26 | integrated; real DB smoke and full validation green |
+| V02A | OpenCode refresh execution spine: create/run `AgentJob`, preserve raw log, expose Job Dashboard; parser into Insights deferred. | Codex lead | completed | 2026-04-26 | full validation green; server restarted and `/jobs` smoke returned 200 |
 
 ## 3. Next ordered queue
 
@@ -39,6 +40,7 @@ When Roman gives the implementation start signal, the v0.1 first wave dispatches
 |---|---|---|---|---|
 | FINAL-V0.1 | Start local dev server and hand owner the URL for hands-on testing | Codex lead | completed | 2026-04-26 | server running at http://127.0.0.1:8000/ |
 | PY314 | Move project runtime target from Python 3.12 to latest stable Python 3.14 and record dependency-freshness rules | Codex lead | completed | 2026-04-26 | 3.14.4 validation green; docs/log updates complete |
+| V02B | Parse one real OpenCode refresh raw log into proposed Insight/Evidence rows | Codex lead/subagent TBD | pending | V02A validation and at least one useful raw log |
 
 A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches when A returns green. See `DELEGATION-PLAN.md §5` for the sequencing diagram.
 
@@ -61,6 +63,9 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 - **2026-04-26** — Committed `237e8c4`: read-only dossiers and matrix. Final v0.1 validation repeated: `uv run pytest` 21 passed and `uv run python scripts/validate_anchors.py` checked 24 anchors / skipped 0. Local dev server started on `http://127.0.0.1:8000/` against the imported `observatory.sqlite`; `/` returned HTTP 200. Added `.uvicorn*.log` to `.gitignore` because the background server holds local stdout/stderr log handles.
 - **2026-04-26** — Roman challenged the Python 3.12 choice as likely agent-version inertia. Codex checked official Python.org: Python 3.14.4 is latest stable, 3.15 is alpha. Installed local Python 3.14.4 under `D:/ai/harnesses/.runtimes/python-3.14.4`, regenerated `uv.lock`, and validated on Python 3.14.4: `pytest` 21 passed, `ruff` passed, `mypy` passed, anchor validator checked 24 anchors / skipped 0.
 - **2026-04-26** — Added `EVOLUTION.md` and completed the Python 3.14/process hardening pass. Updated `pyproject.toml`, `uv.lock`, README, PRD, CONTEXT, AGENTS, DELEGATION-PLAN, Codex profile/recommendations, and `.codex/config.toml`. Revalidated on Python 3.14.4: `pytest` 21 passed, `ruff` passed, `mypy` passed, anchor validator checked 24/skipped 0, real import returned 8 harnesses / 13 topics / 1 ecosystem object / 72 evidence items / 34 insights / 76 cells, and route smoke returned 200 for the main v0.1 surfaces. Local note: `observatory.sqlite` was held by the running dev server during one cleanup attempt; importer rerun remained idempotent.
+- **2026-04-26** — Roman confirmed real development problems and decisions should become student-facing lessons. Codex added `SPIRIT.md` "Development as Curriculum", created `docs/lessons/development-as-curriculum.md`, `docs/lessons/runtime-freshness.md`, and `docs/lessons/subagent-orchestration.md`, and linked the extracted lessons from `EVOLUTION.md`.
+- **2026-04-26** — v0.2 planning decision: split full PRD v0.2 into v0.2a job spine first, parser second. Rationale: do not design an Insight parser around imagined freeform output; first capture real raw logs through an OpenCode refresh `AgentJob` and Job Dashboard.
+- **2026-04-26** — Implemented v0.2a: `ClaudeRunner` now performs the CLI subprocess inside the runner boundary and returns failed `AgentResult` on missing CLI/non-zero/timeout; `RefreshJobService` creates/runs OpenCode refresh jobs and writes `live-sessions/agent-job-*.log`; `/jobs`, `/jobs/{id}`, and `/jobs/{id}/log` expose the Job Dashboard; OpenCode dossier Refresh posts to the service. Validation: `pytest` 23 passed, `ruff` passed, `mypy` passed, anchor validator checked 30/skipped 0, no `claude -p` literal in `src/` or `scripts/`, local server restarted and `/`, `/harnesses/opencode`, `/jobs` returned 200.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

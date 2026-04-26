@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import AsyncIterator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,7 +7,24 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
+from observatory.runners.base import AgentContext, AgentEvent, AgentResult
 from observatory.web.app import create_app
+from observatory.web.routes.harness import get_refresh_runner
+
+
+class FakeRefreshRunner:
+    name = "fake"
+    version = "test"
+
+    async def run(self, context: AgentContext) -> AgentResult:
+        return AgentResult(status="done", output=f"Refreshed {context.target_kind} {context.target_id}")
+
+    async def _empty_stream(self) -> AsyncIterator[AgentEvent]:
+        if False:
+            yield AgentEvent(kind="noop", message="")
+
+    def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
+        return self._empty_stream()
 
 
 @pytest.fixture()
@@ -27,6 +44,7 @@ def client() -> Generator[TestClient, None, None]:
 
     app = create_app()
     app.dependency_overrides[db.get_session] = override_session
+    app.dependency_overrides[get_refresh_runner] = lambda: FakeRefreshRunner()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
@@ -108,7 +126,7 @@ def test_harness_list_and_dossier_render_imported_data(client: TestClient) -> No
     assert dossier_response.status_code == 200
     assert "Instruction Files" in dossier_response.text
     assert "Refresh" in dossier_response.text
-    assert "Agent jobs available from v0.2" in dossier_response.text
+    assert 'action="/harnesses/opencode/refresh"' in dossier_response.text
 
 
 def test_topic_list_and_dossier_render_imported_data(client: TestClient) -> None:
@@ -149,3 +167,31 @@ def test_show_the_proof_appears_below_insight_text(client: TestClient) -> None:
     proof_index = response.text.index("Show the proof")
     evidence_index = response.text.index("loadProjectInstructions(system_context)")
     assert insight_index < proof_index < evidence_index
+
+
+def test_opencode_refresh_creates_job_and_raw_log(client: TestClient) -> None:
+    response = client.post("/harnesses/opencode/refresh", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/jobs/1"
+
+    detail_response = client.get("/jobs/1")
+    log_response = client.get("/jobs/1/log")
+    jobs_response = client.get("/jobs")
+
+    assert detail_response.status_code == 200
+    assert "Job #1" in detail_response.text
+    assert "done" in detail_response.text
+    assert "fake test" in detail_response.text
+    assert log_response.status_code == 200
+    assert "Refreshed Harness 1" in log_response.text
+    assert jobs_response.status_code == 200
+    assert "Job Dashboard" in jobs_response.text
+    assert "#1" in jobs_response.text
+
+
+def test_job_dashboard_empty_state(client: TestClient) -> None:
+    response = client.get("/jobs")
+
+    assert response.status_code == 200
+    assert "No AgentJobs yet" in response.text

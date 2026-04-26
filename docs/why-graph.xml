@@ -48,6 +48,12 @@
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CRON-SCHEDULER"/>
   </USECASE_DISPATCH>
 
+  <USECASE_JOB_DASHBOARD ID="UC-JOB-DASHBOARD" NAME="Inspect agent job history">
+    <INTENT>Owner or lead agent opens the Job Dashboard to inspect recent AgentJobs, their status, runner identity, errors, and raw logs. The goal is operational transparency before freeform runner output is parsed into durable Insights.</INTENT>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+    <REL TYPE="DEPENDS_ON" TARGET="USECASE:UC-DISPATCH"/>
+  </USECASE_JOB_DASHBOARD>
+
   <USECASE_LIVE_DISCOVERY ID="UC-LIVE-DISCOVERY" NAME="Live discovery during a lecture">
     <INTENT>During a lecture, the lecturer opens Live Agent Studio on a projector screen and assigns a fresh discovery task (e.g. "find an undocumented feature added in the last 7 days"). Students watch the agent work in real time via SSE stream. When a genuine new finding lands, a student-observer can claim first-observer credit; the system generates a ready-to-publish telegram seed. The goal is turning a lecture into a live research session with attributable student contributions.</INTENT>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-LIVE-AGENT-STUDIO"/>
@@ -118,23 +124,26 @@
        FEATURES — later phases (PRIORITY="MEDIUM")
   ================================================================ -->
 
-  <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs — scaffolded in v0.1 but not wired to any concrete runner yet.</INTENT>
+  <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs; v0.2a wires the first manual refresh path through this boundary.</INTENT>
     <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
   </FEATURE_AGENT_RUNNER>
 
-  <FEATURE_CLAUDE_RUNNER ID="FEAT-CLAUDE-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_CLAUDE_RUNNER ID="FEAT-CLAUDE-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>ClaudeRunner concrete implementation of AgentRunner that invokes `claude -p` as a subprocess and streams stdout back to the job record.</INTENT>
     <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §20 Technical Stack</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CLAUDE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_CLAUDE_RUNNER>
 
-  <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>AgentJob entity and dispatch mechanism: job type, status tracking (queued/running/done/failed), result storage, and linking job output to Insight records.</INTENT>
+  <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>AgentJob entity and dispatch mechanism: v0.2a stores manual OpenCode refresh lifecycle and raw logs; linking runner output to Insight records is deliberately deferred until real logs inform the parser.</INTENT>
     <PRD_REF>docs/PRD.md §7 Core Information Model (AgentJob entity), §18.7 Agent job management</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_AGENT_JOB>
 
@@ -261,6 +270,7 @@
     <INTENT>FastAPI router for harness profile pages: list all harnesses, show dossier for one harness with all its topics and insights, handle "Ask the agent why" dispatch for harness-scoped insights.</INTENT>
     <ANCHOR NAME="START_ROUTE_HARNESS_LIST"    COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_LIST"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_DOSSIER" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_DOSSIER"/>
+    <ANCHOR NAME="START_ROUTE_HARNESS_REFRESH" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_REFRESH"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_ASK_WHY" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_ASK_WHY"/>
   </MODULE_WEB_ROUTES_HARNESS>
 
@@ -284,9 +294,32 @@
   <MODULE_RUNNER_BASE ID="MOD-RUNNER-BASE"
                       FILE="src/observatory/runners/base.py"
                       STATE="STARTED">
-    <INTENT>AgentRunner abstract Protocol class defining the interface for all agent runner implementations. v0.1 provides the interface only; ClaudeRunner concrete implementation lands in a later phase. No `claude -p` invocation is allowed below this abstraction boundary.</INTENT>
+    <INTENT>AgentRunner abstract Protocol class defining the interface for all agent runner implementations. No concrete subprocess invocation is allowed below this abstraction boundary.</INTENT>
     <ANCHOR NAME="START_RUNNER_PROTOCOL"       COORD="src/observatory/runners/base.py#START_RUNNER_PROTOCOL"/>
     <ANCHOR NAME="START_RUNNER_JOB_RESULT"     COORD="src/observatory/runners/base.py#START_RUNNER_JOB_RESULT"/>
   </MODULE_RUNNER_BASE>
+
+  <MODULE_RUNNER_CLAUDE ID="MOD-RUNNER-CLAUDE"
+                        FILE="src/observatory/runners/claude.py"
+                        STATE="STARTED">
+    <INTENT>Claude CLI backed AgentRunner implementation. The concrete subprocess invocation lives here and nowhere else.</INTENT>
+    <ANCHOR NAME="START_CLAUDE_RUN" COORD="src/observatory/runners/claude.py#START_CLAUDE_RUN"/>
+  </MODULE_RUNNER_CLAUDE>
+
+  <MODULE_JOBS_SERVICE ID="MOD-JOBS-SERVICE"
+                       FILE="src/observatory/jobs/service.py"
+                       STATE="STARTED">
+    <INTENT>Minimal v0.2a job service: creates OpenCode refresh AgentJobs, renders a prompt template, executes via AgentRunner, and writes raw logs.</INTENT>
+    <ANCHOR NAME="START_JOB_REFRESH" COORD="src/observatory/jobs/service.py#START_JOB_REFRESH"/>
+  </MODULE_JOBS_SERVICE>
+
+  <MODULE_WEB_ROUTES_JOBS ID="MOD-WEB-ROUTES-JOBS"
+                          FILE="src/observatory/web/routes/jobs.py"
+                          STATE="STARTED">
+    <INTENT>FastAPI router for Job Dashboard list/detail/log views.</INTENT>
+    <ANCHOR NAME="START_ROUTE_JOBS_LIST"   COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LIST"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_DETAIL" COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_DETAIL"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_LOG"    COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LOG"/>
+  </MODULE_WEB_ROUTES_JOBS>
 
 </Why_Graph>

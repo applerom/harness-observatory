@@ -39,6 +39,10 @@ Rule added:
 - If the latest stable upstream version is not locally available, record that as
   environment friction instead of quietly falling back.
 
+Teaching extraction:
+- This episode is now a reusable lesson:
+  `docs/lessons/runtime-freshness.md`.
+
 ## 2026-04-26 — Codex Subagent Thread Lifecycle
 
 Observation:
@@ -68,6 +72,10 @@ Rule added:
 - If thread pressure appears again, first close completed agents, then split or
   queue work; only raise the cap after observing repeated real need.
 
+Teaching extraction:
+- This episode is now a reusable lesson:
+  `docs/lessons/subagent-orchestration.md`.
+
 ## 2026-04-26 — v0.1 Subagent Quality Notes
 
 Observation:
@@ -86,3 +94,47 @@ Lesson:
 Rule added:
 - Keep using bounded subagents, but reserve final integration and semantic
   consistency checks for the lead or a dedicated reviewer subagent.
+
+## 2026-04-26 — Development As Curriculum
+
+Observation:
+- Roman explicitly confirmed that real project development episodes should be
+  captured as teaching material, not merely as private process notes.
+- The project already had Level 2 dogfooding ("we build with agents"), but the
+  curriculum extraction rule needed to be explicit.
+
+Impact:
+- Future agents should treat process friction, decision changes, and v0.x
+  compromises as source material for students.
+- Lessons should be short, evidence-backed, and linked to concrete project
+  episodes.
+
+Action:
+- `SPIRIT.md` now includes "Development as Curriculum".
+- `docs/lessons/` now holds extracted short lessons from real development
+  episodes.
+
+Rule added:
+- Record raw process observations in this file.
+- Extract reusable student-facing lessons into `docs/lessons/` when an episode
+  teaches a transferable operator habit.
+
+## 2026-04-26 — v0.2a Before Full v0.2
+
+Observation:
+- PRD v0.2 says one full end-to-end refresh cycle should eventually create
+  visible Insights.
+- Doing that in one move would mix three unknowns: real CLI subprocess behavior,
+  prompt/output shape, and parser rules for turning freeform output into
+  `Insight`/`EvidenceItem` rows.
+
+Decision:
+- Ship a smaller v0.2a first: OpenCode refresh button, durable `AgentJob`
+  lifecycle, `ClaudeRunner` execution boundary, raw log file, and Job Dashboard.
+- Defer parsing raw output into Insights until real logs exist.
+
+Why:
+- This preserves the minimum "something real" loop while avoiding a fake parser
+  designed around imagined output.
+- It also creates teaching material: students can see how an agent-first project
+  narrows a milestone without losing the larger intent.

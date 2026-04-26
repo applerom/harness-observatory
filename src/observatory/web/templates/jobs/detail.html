@@ -1,0 +1,53 @@
+<!--
+FILE: src/observatory/web/templates/jobs/detail.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: v0.2a AgentJob detail page.
+PRD_REF: docs/PRD.md §11.9, §1162
+WHY_REF: docs/why-graph.xml#UC-JOB-DASHBOARD
+SCOPE: status fields; raw-log link; error surface
+INVARIANTS:
+- Raw log is evidence of runner behavior, not a verified Insight.
+:END_MODULE_CONTRACT
+-->
+{% extends "_base.html" %}
+
+{% block title %}Job #{{ job.id }} - Harness Observatory{% endblock %}
+
+{% block content %}
+  <section class="space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">AgentJob</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Job #{{ job.id }}</h1>
+      </div>
+      <a class="entry-link min-h-0 px-4 py-2" href="/jobs">Back to jobs</a>
+    </div>
+
+    <dl class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 text-sm shadow-sm sm:grid-cols-2">
+      <div><dt class="font-medium text-slate-900">Status</dt><dd class="mt-1"><span class="status-badge">{{ job.status }}</span></dd></div>
+      <div><dt class="font-medium text-slate-900">Type</dt><dd class="mt-1 text-slate-700">{{ job.type }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Target</dt><dd class="mt-1 text-slate-700">{{ job.target_kind or "unknown" }} {{ job.target_id or "" }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Runner</dt><dd class="mt-1 text-slate-700">{{ job.runner_name or "unknown" }} {{ job.runner_version or "" }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Created</dt><dd class="mt-1 text-slate-700">{{ job.created_at }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Finished</dt><dd class="mt-1 text-slate-700">{{ job.finished_at or "not finished" }}</dd></div>
+    </dl>
+
+    {% if job.error_message %}
+      <section class="rounded-lg border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">
+        <h2 class="font-semibold">Runner error</h2>
+        <p class="mt-2 whitespace-pre-wrap">{{ job.error_message }}</p>
+      </section>
+    {% endif %}
+
+    <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold tracking-normal text-slate-950">Raw Log</h2>
+      {% if job.stdout_log_path %}
+        <p class="mt-2 text-sm text-slate-600">{{ job.stdout_log_path }}</p>
+        <a class="mt-4 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800" href="/jobs/{{ job.id }}/log">Open raw log</a>
+      {% else %}
+        <p class="mt-2 text-sm text-slate-500">No raw log has been written yet.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

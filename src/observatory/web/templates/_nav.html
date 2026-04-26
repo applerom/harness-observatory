@@ -2,10 +2,10 @@
 FILE: src/observatory/web/templates/_nav.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: Shared top navigation for v0.1 web surfaces.
-PRD_REF: docs/PRD.md §26.2
+PURPOSE: Shared top navigation for observatory web surfaces.
+PRD_REF: docs/PRD.md §26.2, §11.9
 WHY_REF: docs/why-graph.xml MOD-WEB-APP
-SCOPE: dashboard, harness, topic, and matrix entry links
+SCOPE: dashboard, harness, topic, matrix, and jobs entry links
 INVARIANTS:
 - Navigation names stay aligned with PRD §26.2 surfaces.
 :END_MODULE_CONTRACT
@@ -18,6 +18,7 @@ INVARIANTS:
       <a class="nav-link {% if active_nav == 'harnesses' %}nav-link-active{% endif %}" href="/harnesses">Harnesses</a>
       <a class="nav-link {% if active_nav == 'topics' %}nav-link-active{% endif %}" href="/topics">Topics</a>
       <a class="nav-link {% if active_nav == 'matrix' %}nav-link-active{% endif %}" href="/matrix">Matrix</a>
+      <a class="nav-link {% if active_nav == 'jobs' %}nav-link-active{% endif %}" href="/jobs">Jobs</a>
     </div>
   </nav>
 </header>

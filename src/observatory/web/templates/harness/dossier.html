@@ -3,11 +3,11 @@ FILE: src/observatory/web/templates/harness/dossier.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
 PURPOSE: Harness dossier with topic coverage, Insights, and collapsed EvidenceItems.
-PRD_REF: docs/PRD.md §26.2, §26.3
+PRD_REF: docs/PRD.md §26.2, §26.3, §1162
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-HARNESS
-SCOPE: harness identity; disabled refresh; topic sections; evidence-rich view
+SCOPE: harness identity; OpenCode refresh; topic sections; evidence-rich view
 INVARIANTS:
-- Refresh is disabled in v0.1 with v0.2 copy.
+- Refresh dispatch is enabled only for OpenCode in v0.2a.
 - Insight remains above EvidenceItem proof in every section.
 :END_MODULE_CONTRACT
 -->
@@ -28,14 +28,25 @@ INVARIANTS:
           <div><dt class="font-medium text-slate-900">Local path</dt><dd>{{ harness.local_upstream_path or "not recorded" }}</dd></div>
         </dl>
       </div>
-      <button
-        class="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500"
-        disabled
-        title="Agent jobs available from v0.2"
-        type="button"
-      >
-        Refresh
-      </button>
+      {% if refresh_enabled %}
+        <form action="/harnesses/{{ harness.slug }}/refresh" method="post">
+          <button
+            class="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            type="submit"
+          >
+            Refresh
+          </button>
+        </form>
+      {% else %}
+        <button
+          class="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500"
+          disabled
+          title="Only OpenCode refresh is enabled in v0.2a"
+          type="button"
+        >
+          Refresh
+        </button>
+      {% endif %}
     </div>
 
     {% if harness_insights %}

@@ -2,13 +2,13 @@
 FILE: src/observatory/web/templates/dashboard.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: v0.1 home dashboard with zero-safe counts and route entry points.
-PRD_REF: docs/PRD.md §11.1, §26.2
+PURPOSE: Home dashboard with zero-safe counts and route entry points.
+PRD_REF: docs/PRD.md §11.1, §26.2, §11.9
 WHY_REF: docs/why-graph.xml MOD-WEB-ROUTES-DASHBOARD
 SCOPE: placeholder counts; matrix/harness/topic links; HTMX demo partial
 INVARIANTS:
 - Counts render even before importer and models are integrated.
-- No AgentJob controls are active on the dashboard in v0.1.
+- Dashboard links to the Job Dashboard but does not dispatch jobs.
 :END_MODULE_CONTRACT
 -->
 {% extends "_base.html" %}
@@ -40,10 +40,11 @@ INVARIANTS:
       </article>
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-3">
+    <div class="grid gap-3 sm:grid-cols-4">
       <a class="entry-link" href="/matrix">Open matrix</a>
       <a class="entry-link" href="/harnesses">Browse harnesses</a>
       <a class="entry-link" href="/topics">Browse topics</a>
+      <a class="entry-link" href="/jobs">Open jobs</a>
     </div>
 
     <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

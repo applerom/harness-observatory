@@ -1168,6 +1168,8 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Watch one full end-to-end cycle work: trigger → subprocess → parse output → Insights stored → visible in dossier
 - Job Dashboard (basic: list of jobs, status, stdout log link)
 
+Implementation sequencing note (2026-04-26): v0.2 is split into smaller feedback slices. v0.2a ships the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → `ClaudeRunner` execution → raw log visible in Job Dashboard. Parsing raw runner output into `Insight` records is the next v0.2 slice, intentionally based on real logs rather than an invented output format.
+
 ### v0.3 — All harnesses and cron
 
 - Generalize `refresh` to all 8+ harnesses

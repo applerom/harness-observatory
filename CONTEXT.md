@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
 > **Last update:** 2026-04-26
-> **Phase:** Post-v0.1 — first working slice implemented; runtime freshness/process hardening in progress
-> **Next milestone:** owner hands-on review of v0.1, then v0.2 planning
+> **Phase:** v0.2a complete — OpenCode refresh execution spine
+> **Next milestone:** capture/review raw refresh logs, then parse refresh output into Insights
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
 
@@ -16,7 +16,7 @@ Decisions were locked through a structured interview between the project owner (
 
 All decisions are written into `docs/PRD.md` (v2). The pedagogical and collaborative spirit is captured in `SPIRIT.md`. The intent-to-implementation map starts in `docs/why-graph.xml` (stem only — modules will gain anchors as code lands).
 
-Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists and the project is in post-v0.1 hardening / owner-review preparation.
+Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.2a has added an OpenCode refresh job spine.
 
 ---
 
@@ -52,7 +52,8 @@ harness-observatory/
 ├── DELEGATION-PLAN.md          orchestration plan for subagents
 ├── docs/
 │   ├── PRD.md                  product spec v2 — interview-locked (1271 lines)
-│   ├── why-graph.xml           intent→code map (286 lines, schema 0.8, 7 UC + 18 FEAT + 8 MOD + 58 edges + 24 anchor stubs)
+│   ├── lessons/                short student-facing lessons extracted from real development episodes
+│   ├── why-graph.xml           intent→code map (expanded as code lands)
 │   ├── why-graph-principles.md  agent1st reference (verbatim from upstream)
 │   ├── why-contracts-v1.md      agent1st reference (verbatim from upstream)
 │   └── WHY-APPROACH.md         agent1st reference (verbatim from upstream)
@@ -80,14 +81,14 @@ Historical note: this was true at bootstrap. `src/` now exists after v0.1 implem
 
 ## 5. What's next
 
-The lead agent has finished foundational docs and **paused for owner review** before any code-writing subagent is dispatched.
+v0.1 is shipped locally. The current v0.2a direction is deliberately narrower than full PRD v0.2:
 
-After owner review and any adjustments, the next steps are:
+1. Keep OpenCode as the first refresh target.
+2. Use the Harness Dossier Refresh button to create and run a durable `AgentJob`.
+3. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
+4. After real logs exist, implement the parser/import slice that turns refresh output into `Insight`/`EvidenceItem` rows.
 
-1. **Owner review of foundational docs** (SPIRIT, PRD v2, WHY graph, AGENTS, README). Major-direction adjustments happen here, before code.
-2. **Lead agent dispatches v0.1 subagent tasks** per `DELEGATION-PLAN.md`. The plan decomposes v0.1 into ~5 parallel-friendly units, each with a deliverable, acceptance criteria, and a slice of the WHY graph it owns.
-3. **Subagents return implementation + tests + WHY graph anchors filled in** (planned anchors in `why-graph.xml` get matched by real `START_*` markers in code).
-4. **Lead agent reviews + integrates + runs validators** (anchor validator, type checks, tests). Reports back to owner.
+Decision note: full PRD v0.2 remains the goal, but parsing freeform agent output before seeing real logs would create a brittle invented format.
 5. **Owner runs the v0.1 app locally**, gives feedback, decides whether to proceed to v0.2 or iterate on v0.1.
 
 ---

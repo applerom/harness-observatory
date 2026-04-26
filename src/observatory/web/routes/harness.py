@@ -1,26 +1,29 @@
 # FILE: src/observatory/web/routes/harness.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Read-only harness list and dossier routes for imported observatory data.
-# PRD_REF: docs/PRD.md §26.2
+# PURPOSE: Harness list, dossier, and v0.2a manual refresh entry point.
+# PRD_REF: docs/PRD.md §26.2, §1162
 # WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-HARNESS
-# SCOPE: harness index; harness dossier; v0.1 disabled refresh affordance
+# SCOPE: harness index; harness dossier; OpenCode refresh trigger
 # INVARIANTS:
 # - Insight content renders above EvidenceItem proof controls.
 # - EvidenceItem proof is collapsed by default behind the exact label "Show the proof".
-# - v0.1 never dispatches AgentJobs; refresh is a disabled future affordance.
+# - Only OpenCode dispatches refresh jobs in v0.2a; other harnesses remain disabled.
 # :END_MODULE_CONTRACT
 
 from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
 from observatory import db
+from observatory.jobs.service import RefreshJobService, RefreshNotAvailableError
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
+from observatory.runners.base import AgentRunner
+from observatory.runners.claude import ClaudeRunner
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -34,6 +37,10 @@ class HarnessTopicSection:
     cell: ComparisonCell | None
     insights: list[Insight]
     evidence_items: list[EvidenceItem]
+
+
+def get_refresh_runner() -> AgentRunner:
+    return ClaudeRunner()
 
 
 # START_ROUTE_HARNESS_LIST:
@@ -74,6 +81,7 @@ def harness_dossier(
         {
             "active_nav": "harnesses",
             "harness": harness,
+            "refresh_enabled": harness.slug == "opencode",
             "sections": sections,
             "harness_insights": harness_insights,
         },
@@ -121,6 +129,26 @@ def _harness_topic_sections(session: Session, harness: Harness) -> list[HarnessT
 
 
 # :END_ROUTE_HARNESS_DOSSIER
+
+
+# START_ROUTE_HARNESS_REFRESH:
+@router.post("/{slug}/refresh", response_class=RedirectResponse)
+def refresh_harness(
+    slug: str,
+    session: Session = Depends(db.get_session),
+    runner: AgentRunner = Depends(get_refresh_runner),
+) -> RedirectResponse:
+    harness = session.exec(select(Harness).where(Harness.slug == slug)).first()
+    if harness is None:
+        raise HTTPException(status_code=404, detail="Harness not found")
+    try:
+        job = RefreshJobService(runner).refresh_harness(session, harness)
+    except RefreshNotAvailableError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RedirectResponse(url=f"/jobs/{job.id}", status_code=303)
+
+
+# :END_ROUTE_HARNESS_REFRESH
 
 
 # START_ROUTE_HARNESS_ASK_WHY:

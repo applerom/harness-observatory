@@ -258,6 +258,36 @@ When v0.1 ships, lead agent writes a v0.2 delegation plan addendum (this file ge
 
 Owner's feedback after using v0.1 hands-on is the input to v0.2 planning. Probable adjustments: schema fields that turned out wrong on real import, UI affordances that didn't feel right, performance hot spots in matrix rendering. These are normal iteration material — see SPIRIT.md "What Differentiates This Project" §3 (Live, not archival) and the iterative-simplicity principle.
 
+### v0.2a addendum — OpenCode refresh execution spine
+
+Decision: split PRD v0.2 into smaller feedback slices. The first slice ships the durable job spine before parsing freeform agent output into Insights.
+
+Deliverable:
+
+- OpenCode dossier has an active Refresh button.
+- POST refresh creates an `AgentJob(type="refresh", target_kind="Harness")`.
+- The job runs through `AgentRunner` and `ClaudeRunner`; concrete CLI subprocess code lives only in `src/observatory/runners/claude.py`.
+- Raw runner output is written to `live-sessions/agent-job-*.log`.
+- `/jobs` lists jobs; `/jobs/{id}` shows status/error/log link; `/jobs/{id}/log` serves the raw log.
+
+Non-goals for v0.2a:
+
+- no parser from raw log to `Insight`;
+- no cron;
+- no all-harness refresh;
+- no SSE/live studio;
+- no six-job-type forms.
+
+Why: the full v0.2 chain mixes subprocess behavior, prompt shape, parsing, and UI. Preserving raw logs first makes the next parser slice evidence-driven and keeps agent fallibility visible.
+
+Acceptance:
+
+- `uv run pytest` green;
+- `uv run ruff check src/ tests/ scripts/validate_anchors.py` green;
+- `uv run mypy src/observatory tests` green;
+- `uv run python scripts/validate_anchors.py` green;
+- grep confirms the concrete CLI invocation text does not leak outside the runner boundary.
+
 ---
 
 ## 9. Anti-patterns to avoid in delegation
