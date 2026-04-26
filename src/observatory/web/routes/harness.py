@@ -27,6 +27,7 @@ from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, T
 from observatory.runners.base import AgentRunner
 from observatory.runners.claude import ClaudeRunner
 from observatory.runners.codex import CodexRunner
+from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -133,6 +134,12 @@ def _harness_topic_sections(session: Session, harness: Harness) -> list[HarnessT
             ).all()
         )
         evidence_items.sort(key=lambda item: item.id or 0)
+        if cell is not None:
+            derived_confidence = confidence_from_verification_passes(
+                verification_passes_for_items(session, evidence_items)
+            )
+            if derived_confidence != "unverified":
+                cell.confidence_band = derived_confidence
         sections.append(
             HarnessTopicSection(
                 topic=topic,

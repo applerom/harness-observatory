@@ -84,6 +84,9 @@ INVARIANTS:
             </h3>
             <span class="state-badge">{{ section.cell.state if section.cell else "unknown" }}</span>
           </div>
+          <p class="mt-2 text-xs font-medium uppercase tracking-normal text-slate-500">
+            Confidence: {{ section.cell.confidence_band if section.cell else "unverified" }}
+          </p>
           {% if section.cell and section.cell.cell_summary %}
             <p class="mt-2 text-sm leading-6 text-slate-600">{{ section.cell.cell_summary }}</p>
           {% endif %}
@@ -98,7 +101,7 @@ INVARIANTS:
                   "body": section.cell.cell_summary if section.cell and section.cell.cell_summary else "Imported evidence for this harness and topic.",
                   "why_it_matters": none,
                   "status": "proposed",
-                  "confidence_band": "unverified"
+                  "confidence_band": section.cell.confidence_band if section.cell else "unverified"
                 } %}
                 {% set evidence_items = section.evidence_items %}
                 {% include "_insight_proof.html" %}

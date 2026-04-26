@@ -5,7 +5,7 @@ START_MODULE_CONTRACT:
 PURPOSE: Shared Insight-over-EvidenceItem rendering for v0.1 read-only views.
 PRD_REF: docs/PRD.md §4.8, §26.2
 WHY_REF: docs/why-graph.xml#FEAT-EVIDENCE-RICH-VIEW
-SCOPE: insight card; collapsed proof details
+SCOPE: insight card; collapsed proof details; optional verification pass breakdown
 INVARIANTS:
 - Insight text appears before the proof control in DOM order.
 - The proof control label matches the project-required copy.
@@ -32,6 +32,10 @@ INVARIANTS:
         {% for evidence in evidence_items %}
           <div class="proof-item">
             <p class="text-sm font-medium text-slate-800">{{ evidence.claim_summary }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+              Verification: {{ evidence.confidence or "unverified" }}
+              · Passes: {{ evidence.verification_passes }}
+            </p>
             {% if evidence.file_path %}
               <p class="mt-1 text-xs text-slate-500">
                 {{ evidence.file_path }}{% if evidence.line_number %}:{{ evidence.line_number }}{% endif %}
@@ -45,6 +49,23 @@ INVARIANTS:
             {% endif %}
           </div>
         {% endfor %}
+        {% set pass_rows = verification_passes|default([]) %}
+        {% if pass_rows %}
+          <section class="proof-item">
+            <h4 class="text-sm font-semibold tracking-normal text-slate-900">Verification passes</h4>
+            <ul class="mt-2 space-y-2">
+              {% for verification_pass in pass_rows %}
+                <li class="text-xs leading-5 text-slate-600">
+                  <span class="font-semibold text-slate-900">{{ verification_pass.outcome }}</span>
+                  by {{ verification_pass.verifier_agent }}
+                  on EvidenceItem #{{ verification_pass.evidence_item_id }}
+                  {% if verification_pass.job_id %}via verify job #{{ verification_pass.job_id }}{% endif %}
+                  {% if verification_pass.note %}<span class="block text-slate-500">{{ verification_pass.note }}</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
       {% else %}
         <p class="text-sm text-slate-500">No EvidenceItem is linked for this imported view yet.</p>
       {% endif %}

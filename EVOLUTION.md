@@ -42,6 +42,46 @@ Teaching extraction:
 - This episode is now a reusable lesson:
   `docs/lessons/live-streaming-is-a-contract.md`.
 
+## 2026-04-26 — Worker-Green Is Not Integration-Green
+
+Observation:
+- The v0.4b/v0.5/v0.6 product train was split across bounded workers:
+  abstract artifacts, verification/confidence, and engagement/Insight Library.
+- Each worker returned green local evidence, but a reviewer subagent still found
+  five cross-slice semantic problems: live claims were too broad, orphan
+  EvidenceItems could receive verification without affecting the Insight,
+  verification job artifact IDs mixed entity types, abstract output used a
+  drifting `format` vocabulary, and deterministic engagement jobs lacked
+  execution timestamps.
+
+Impact:
+- Parallel workers are good at their slice. They are not automatically good at
+  the product meaning formed between slices.
+- Lead integration review must check nouns and contracts, not just tests.
+- Reviewer subagents are especially useful after a parallel product train
+  because they see the whole dirty workspace without owning any patch.
+
+Action:
+- Live first-observer claims now require a live job and an Insight ID present in
+  that job's `produced_artifact_ids`.
+- Verification links orphan EvidenceItems to the target Insight before deriving
+  confidence.
+- Verify jobs now store only Insight/Evidence IDs in `produced_artifact_ids`;
+  `ObservationReview` remains the typed audit trail for verification pass
+  details.
+- Abstract artifacts use canonical `format="mermaid_diagram"`.
+- Engagement jobs set `created_at`, `started_at`, and `finished_at` together.
+
+Rule added:
+- After parallel implementation slices, run a dedicated semantic reviewer before
+  commit. Ask it to look for cross-slice vocabulary drift, overly broad routes,
+  ambiguous audit fields, and UI claims that are stronger than the underlying
+  data contract.
+
+Teaching extraction:
+- This episode is now a reusable lesson:
+  `docs/lessons/worker-green-is-not-integration-green.md`.
+
 ## 2026-04-26 — Runtime Freshness And Agent Version Inertia
 
 Observation:

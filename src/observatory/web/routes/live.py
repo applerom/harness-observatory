@@ -19,8 +19,9 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
 from observatory import db
+from observatory.engagement.service import claim_first_observer, create_engagement_job
 from observatory.live.service import create_live_discover_job, stream_live_job
-from observatory.models import AgentJob, Harness
+from observatory.models import AgentJob, Harness, Insight
 from observatory.runners.base import AgentRunner
 from observatory.web.routes.harness import make_refresh_runner
 from observatory.web.routes.jobs import _job_view
@@ -91,14 +92,61 @@ def live_job_detail(
     job = session.get(AgentJob, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="AgentJob not found")
+    claimable_insights = _claimable_insights_for_job(session, job)
     return templates.TemplateResponse(
         request,
         "live/detail.html",
         {
             "active_nav": "live",
             "job_view": _job_view(session, job),
+            "claimable_insights": claimable_insights,
         },
     )
+
+
+def _claimable_insights_for_job(session: Session, job: AgentJob) -> list[Insight]:
+    if job.target_kind != "Harness" or job.target_id is None or job.trigger != "live":
+        return []
+    artifact_ids = [artifact_id for artifact_id in job.produced_artifact_ids if artifact_id]
+    insights: list[Insight] = []
+    for artifact_id in artifact_ids:
+        insight = session.get(Insight, artifact_id)
+        if insight is not None and insight.harness_id == job.target_id:
+            insights.append(insight)
+    return sorted(
+        insights,
+        key=lambda insight: insight.agent_authored_at,
+    )
+
+
+# START_ROUTE_LIVE_CLAIM:
+@router.post("/{job_id}/insights/{insight_id}/claim", response_class=RedirectResponse)
+def claim_live_first_observer(
+    job_id: int,
+    insight_id: int,
+    observer_name: str = Form(...),
+    session: Session = Depends(db.get_session),
+) -> RedirectResponse:
+    job = session.get(AgentJob, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="AgentJob not found")
+    if job.trigger != "live":
+        raise HTTPException(status_code=409, detail="First-observer claims require a live job")
+    if insight_id not in job.produced_artifact_ids:
+        raise HTTPException(status_code=404, detail="Insight is not linked to this live job")
+    insight = session.get(Insight, insight_id)
+    if insight is None:
+        raise HTTPException(status_code=404, detail="Insight not found")
+    try:
+        claimed_insight = claim_first_observer(session, insight, observer_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if not claimed_insight.joke_or_telegram_seed:
+        create_engagement_job(session, claimed_insight, trigger="live")
+    return RedirectResponse(url=f"/live/{job_id}", status_code=303)
+
+
+# :END_ROUTE_LIVE_CLAIM
 
 
 # START_ROUTE_LIVE_STREAM:

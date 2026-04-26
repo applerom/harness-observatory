@@ -5,9 +5,9 @@ START_MODULE_CONTRACT:
 PURPOSE: Read-only harness x topic matrix grid with HTMX cell expansion controls.
 PRD_REF: docs/PRD.md §11.2, §26.2
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
-SCOPE: matrix table; imported cell states; confidence placeholder
+SCOPE: matrix table; imported cell states; current confidence labels
 INVARIANTS:
-- Every cell displays state and "not yet verified" confidence copy for v0.1.
+- Every cell displays state and current confidence copy.
 - Cell expansion uses HTMX, stays read-only, and scrolls the detail region into view.
 - Wide matrix horizontal scrolling is available above and below the table.
 :END_MODULE_CONTRACT
@@ -66,7 +66,7 @@ INVARIANTS:
                     type="button"
                   >
                     <span class="font-semibold text-slate-900">{{ cell.state if cell else "unknown" }}</span>
-                    <span class="text-xs text-slate-500">not yet verified</span>
+                    <span class="text-xs text-slate-500">{{ cell.confidence_band if cell else "unverified" }}</span>
                   </button>
                 </td>
               {% endfor %}

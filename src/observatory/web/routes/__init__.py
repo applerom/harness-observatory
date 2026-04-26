@@ -11,7 +11,7 @@
 
 from fastapi import FastAPI
 
-from observatory.web.routes import curation, dashboard, harness, jobs, live, matrix, topic
+from observatory.web.routes import curation, dashboard, harness, insight, jobs, live, matrix, topic
 
 
 def register_routes(app: FastAPI) -> None:
@@ -22,4 +22,5 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(matrix.router)
     app.include_router(jobs.router)
     app.include_router(curation.router)
+    app.include_router(insight.router)
     app.include_router(live.router)

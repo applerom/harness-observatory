@@ -4,11 +4,11 @@
 # PURPOSE: Read-only harness x topic matrix and HTMX cell expansion route.
 # PRD_REF: docs/PRD.md §26.2
 # WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
-# SCOPE: full matrix grid; per-cell partial; confidence placeholder labels
+# SCOPE: full matrix grid; per-cell partial; current confidence labels
 # INVARIANTS:
-# - Matrix cells show imported state and v0.1 confidence placeholder text.
+# - Matrix cells show imported state and current confidence text.
 # - Expanded cells render Insight above collapsed EvidenceItem proof.
-# - v0.1 expansion is read-only HTMX; no AgentJob or edit action is available.
+# - Expanded cell detail renders verification pass history without creating AgentJobs.
 # :END_MODULE_CONTRACT
 
 from dataclasses import dataclass
@@ -21,6 +21,7 @@ from sqlmodel import Session, select
 
 from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
+from observatory.verification.service import VerificationPass, verification_passes_for_items
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -41,6 +42,7 @@ class MatrixCellDetail:
     cell: ComparisonCell | None
     insights: list[Insight]
     evidence_items: list[EvidenceItem]
+    verification_passes: list[VerificationPass]
 
 
 # START_ROUTE_MATRIX_FULL:
@@ -119,12 +121,14 @@ def _matrix_cell_detail(session: Session, harness_slug: str, topic_slug: str) ->
         ).all()
     )
     evidence_items.sort(key=lambda item: item.id or 0)
+    verification_passes = verification_passes_for_items(session, evidence_items)
     return MatrixCellDetail(
         harness=harness,
         topic=topic,
         cell=cell,
         insights=insights,
         evidence_items=evidence_items,
+        verification_passes=verification_passes,
     )
 
 

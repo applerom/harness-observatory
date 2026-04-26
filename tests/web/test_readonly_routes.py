@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from observatory import db
+from observatory.engagement.service import create_engagement_job
 from observatory.live.service import stream_live_job
 from observatory.models import (
     AgentJob,
@@ -22,6 +23,7 @@ from observatory.models import (
     Topic,
 )
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
+from observatory.verification.service import VerificationJobService
 from observatory.web.app import create_app
 from observatory.web.routes.harness import get_refresh_runner_factory
 from observatory.web.routes.live import get_live_runner_factory
@@ -129,6 +131,8 @@ def seed_minimal_data(session: Session) -> None:
         short_title="Instruction files change authority",
         body="OpenCode places project instructions into a stronger runtime channel.",
         why_it_matters="The same filename does not imply the same control plane.",
+        audience="student-introductory",
+        format="text",
         topic_id=topic.id,
     )
     cell = ComparisonCell(
@@ -153,6 +157,21 @@ def seed_minimal_data(session: Session) -> None:
         insight_id=insight.id,
     )
     session.add(evidence)
+    session.commit()
+
+    live_insight = Insight(
+        short_title="Live stream exposes runner uncertainty",
+        body="The live surface keeps uncertainty visible while the job is running.",
+        why_it_matters="Students learn to read agent output as evidence, not polish.",
+        audience="developer-deep-dive",
+        format="mermaid_diagram",
+        status="corroborated",
+        confidence_band="verified",
+        engagement_hook="Wait for this live trace before trusting a summary.",
+        joke_or_telegram_seed="Telegram seed: live runner uncertainty is part of the lesson.",
+        harness_id=harness.id,
+    )
+    session.add(live_insight)
     session.commit()
 
 
@@ -217,11 +236,84 @@ def test_matrix_and_htmx_cell_render_imported_data(client: TestClient) -> None:
     assert matrix_response.status_code == 200
     assert "Harness x Topic" in matrix_response.text
     assert 'hx-get="/matrix/cells/opencode/instruction-files"' in matrix_response.text
-    assert "not yet verified" in matrix_response.text
+    assert "unverified" in matrix_response.text
+    assert "not yet verified" not in matrix_response.text
     assert cell_response.status_code == 200
     assert "Expanded cell" in cell_response.text
     assert "Instruction files change authority" in cell_response.text
     assert "loadProjectInstructions(system_context)" in cell_response.text
+    assert "Confidence:" in cell_response.text
+
+
+def test_confidence_labels_and_pass_breakdown_render_after_verification(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        service = VerificationJobService()
+        service.record_pass(
+            session,
+            insight_id=1,
+            evidence_item_id=1,
+            outcome="support",
+            verifier_agent="fake-codex",
+            note="Citation still supports the claim.",
+        )
+        service.record_pass(
+            session,
+            insight_id=1,
+            evidence_item_id=1,
+            outcome="support",
+            verifier_agent="fake-claude",
+        )
+
+    matrix_response = client.get("/matrix")
+    cell_response = client.get(
+        "/matrix/cells/opencode/instruction-files",
+        headers={"HX-Request": "true"},
+    )
+    harness_response = client.get("/harnesses/opencode")
+    topic_response = client.get("/topics/instruction-files")
+
+    assert matrix_response.status_code == 200
+    assert "corroborated" in matrix_response.text
+    assert "not yet verified" not in matrix_response.text
+    assert cell_response.status_code == 200
+    assert "Confidence:" in cell_response.text
+    assert "corroborated" in cell_response.text
+    assert "Verification passes" in cell_response.text
+    assert "support" in cell_response.text
+    assert "fake-codex" in cell_response.text
+    assert "fake-claude" in cell_response.text
+    assert "Citation still supports the claim." in cell_response.text
+    assert harness_response.status_code == 200
+    assert "Confidence: corroborated" in harness_response.text
+    assert topic_response.status_code == 200
+    assert "Confidence: corroborated" in topic_response.text
+
+
+def test_disputed_confidence_labels_render_after_verification(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        service = VerificationJobService()
+        service.record_pass(
+            session,
+            insight_id=1,
+            evidence_item_id=1,
+            outcome="dispute",
+            verifier_agent="fake-reviewer",
+            note="Current source no longer supports the claim.",
+        )
+
+    matrix_response = client.get("/matrix")
+    cell_response = client.get("/matrix/cells/opencode/instruction-files")
+    harness_response = client.get("/harnesses/opencode")
+
+    assert matrix_response.status_code == 200
+    assert "disputed" in matrix_response.text
+    assert cell_response.status_code == 200
+    assert "disputed" in cell_response.text
+    assert "Current source no longer supports the claim." in cell_response.text
+    assert harness_response.status_code == 200
+    assert "Confidence: disputed" in harness_response.text
 
 
 def test_show_the_proof_appears_below_insight_text(client: TestClient) -> None:
@@ -356,6 +448,50 @@ def test_job_detail_semantic_trace_empty_state_when_file_missing(client: TestCli
     assert "No semantic events recorded for this job yet." in detail_response.text
 
 
+def test_job_detail_exposes_produced_artifact_ids(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    log_path = Path("live-sessions") / "agent-job-00001.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text("abstract raw log\n", encoding="utf-8")
+    semantic_log = Path("live-sessions") / "semantic-events.jsonl"
+    semantic_log.write_text(
+        json.dumps(
+            {
+                "job_id": 1,
+                "level": "info",
+                "code": "abstract_artifact_created",
+                "anchor": "START_ABSTRACT_JOB",
+                "expected": "artifact exists",
+                "actual": "created mermaid Insight 7",
+                "component": "AbstractJobService",
+            }
+        ),
+        encoding="utf-8",
+    )
+    with Session(app.state.test_engine) as session:
+        job = AgentJob(
+            type="abstract",
+            target_kind="Insight",
+            target_id=1,
+            runner_name="TemplateAbstractGenerator",
+            runner_version="v0.4b",
+            status="done",
+            stdout_log_path=log_path.as_posix(),
+            produced_artifact_ids=[7],
+        )
+        session.add(job)
+        session.commit()
+
+    detail_response = client.get("/jobs/1")
+
+    assert detail_response.status_code == 200
+    assert "Produced Artifacts" in detail_response.text
+    assert "produced_artifact_ids: 7" in detail_response.text
+    assert "Open raw log" in detail_response.text
+    assert "abstract_artifact_created" in detail_response.text
+    assert "START_ABSTRACT_JOB" in detail_response.text
+
+
 def test_job_dashboard_empty_state(client: TestClient) -> None:
     response = client.get("/jobs")
 
@@ -455,6 +591,14 @@ def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> N
     assert create_response.status_code == 303
     assert create_response.headers["location"] == "/live/1"
 
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+        assert job is not None
+        job.produced_artifact_ids = [2]
+        session.add(job)
+        session.commit()
+
     detail_response = client.get("/live/1")
     assert detail_response.status_code == 200
     assert "Live Job #1" in detail_response.text
@@ -462,9 +606,11 @@ def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> N
     assert "fake-live test" in detail_response.text
     assert "queued" in detail_response.text
     assert "Find a live teaching detail." in detail_response.text
+    assert "First-observer claims" in detail_response.text
+    assert "Live stream exposes runner uncertainty" in detail_response.text
+    assert "Telegram seed: live runner uncertainty is part of the lesson." in detail_response.text
     assert 'href="/jobs/1/log"' in detail_response.text
 
-    app = cast(Any, client.app)
     with Session(app.state.test_engine) as session:
         job_before_stream = session.get(AgentJob, 1)
     assert job_before_stream is not None
@@ -503,6 +649,188 @@ def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> N
     ]
     assert semantic_events[-1]["anchor"] == "START_ROUTE_LIVE_STREAM"
     assert semantic_events[-1]["actual"] == "runner stream status: done"
+
+
+def test_live_first_observer_claim_stores_attribution_and_renders_seed(client: TestClient) -> None:
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a claimable teaching detail.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+        assert job is not None
+        job.produced_artifact_ids = [2]
+        session.add(job)
+        session.commit()
+
+    claim_response = client.post(
+        "/live/1/insights/2/claim",
+        data={"observer_name": "Nadia"},
+        follow_redirects=False,
+    )
+    assert claim_response.status_code == 303
+    assert claim_response.headers["location"] == "/live/1"
+
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 2)
+
+    assert insight is not None
+    assert insight.first_observed_by == "Nadia"
+
+    detail_response = client.get("/live/1")
+    assert detail_response.status_code == 200
+    assert "First observed by Nadia" in detail_response.text
+    assert "Telegram seed: live runner uncertainty is part of the lesson." in detail_response.text
+
+
+def test_live_first_observer_claim_generates_seed_when_missing(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = Insight(
+            short_title="Claimable live finding",
+            body="A fresh classroom claim needs a seed.",
+            why_it_matters="Attribution is more useful when it can be published.",
+            harness_id=1,
+        )
+        session.add(insight)
+        session.commit()
+        session.refresh(insight)
+        insight_id = insight.id or 0
+
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a claimable teaching detail.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+        assert job is not None
+        job.produced_artifact_ids = [insight_id]
+        session.add(job)
+        session.commit()
+
+    claim_response = client.post(
+        f"/live/1/insights/{insight_id}/claim",
+        data={"observer_name": "Mira"},
+        follow_redirects=False,
+    )
+    assert claim_response.status_code == 303
+
+    with Session(app.state.test_engine) as session:
+        claimed = session.get(Insight, insight_id)
+        engagement_jobs = session.exec(select(AgentJob).where(AgentJob.type == "engagement")).all()
+
+    assert claimed is not None
+    assert claimed.first_observed_by == "Mira"
+    assert claimed.joke_or_telegram_seed is not None
+    assert "Telegram seed: Claimable live finding" in claimed.joke_or_telegram_seed
+    assert len(engagement_jobs) == 1
+
+
+def test_live_first_observer_claim_rejects_unlinked_insight(client: TestClient) -> None:
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a claimable teaching detail.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    claim_response = client.post(
+        "/live/1/insights/2/claim",
+        data={"observer_name": "Nadia"},
+        follow_redirects=False,
+    )
+
+    assert claim_response.status_code == 404
+    assert "not linked to this live job" in claim_response.text
+
+
+def test_insight_library_filters_and_renders_engagement_fields(client: TestClient) -> None:
+    response = client.get("/insights")
+    audience_response = client.get("/insights?audience=developer-deep-dive")
+    format_response = client.get("/insights?format=text")
+
+    assert response.status_code == 200
+    assert "Insight Library" in response.text
+    assert "Insights" in response.text
+    assert "Live stream exposes runner uncertainty" in response.text
+    assert "verified" in response.text
+    assert "Wait for this live trace before trusting a summary." in response.text
+    assert "Telegram seed: live runner uncertainty is part of the lesson." in response.text
+    assert "Generate engagement" in response.text
+    assert audience_response.status_code == 200
+    assert "Live stream exposes runner uncertainty" in audience_response.text
+    assert "Instruction files change authority" not in audience_response.text
+    assert format_response.status_code == 200
+    assert "Instruction files change authority" in format_response.text
+    assert "Live stream exposes runner uncertainty" not in format_response.text
+
+
+def test_insight_engagement_action_creates_job_and_fills_missing_copy(client: TestClient) -> None:
+    response = client.post("/insights/1/engagement", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/insights"
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 1)
+        job = session.get(AgentJob, 1)
+
+    assert insight is not None
+    assert insight.engagement_hook is not None
+    assert insight.engagement_hook.startswith("Wait for this: Instruction files change authority")
+    assert insight.joke_or_telegram_seed is not None
+    assert "Telegram seed: Instruction files change authority" in insight.joke_or_telegram_seed
+    assert job is not None
+    assert job.type == "engagement"
+    assert job.target_kind == "Insight"
+    assert job.target_id == 1
+    assert job.status == "done"
+    assert job.started_at is not None
+    assert job.finished_at is not None
+
+
+def test_engagement_service_preserves_existing_copy_and_creates_agent_job(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 2)
+        assert insight is not None
+        job = create_engagement_job(session, insight, trigger="live")
+
+    assert job.type == "engagement"
+    assert job.trigger == "live"
+    assert job.produced_artifact_ids == [2]
+    assert job.started_at is not None
+    assert job.finished_at is not None
+
+    with Session(app.state.test_engine) as session:
+        insight_after = session.get(Insight, 2)
+
+    assert insight_after is not None
+    assert insight_after.engagement_hook == "Wait for this live trace before trusting a summary."
+    assert (
+        insight_after.joke_or_telegram_seed
+        == "Telegram seed: live runner uncertainty is part of the lesson."
+    )
 
 
 def test_live_stream_cancellation_marks_job_failed(client: TestClient) -> None:

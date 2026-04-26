@@ -208,23 +208,26 @@
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_CURATION_QUEUE>
 
-  <FEATURE_ABSTRACT_JOB ID="FEAT-ABSTRACT-JOB" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Abstract job type that turns EvidenceItems into diagrams, ascii art, or other higher-level teaching artifacts. v0.4a names this next slice after Live Studio streaming works.</INTENT>
+  <FEATURE_ABSTRACT_JOB ID="FEAT-ABSTRACT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Abstract job type that turns EvidenceItems into diagrams, ascii art, or other higher-level teaching artifacts. The first v0.4b slice can use deterministic artifacts to prove storage, visibility, and traceability before model-backed generation.</INTENT>
     <PRD_REF>docs/PRD.md §14.2 Job types, §24 v0.4</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-ABSTRACT-SERVICE"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ABSTRACT_JOB>
 
-  <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Student attribution on fresh-finding Insights: Insight.first_observed_by field stores the student's name when they claim a discovery during a live session; UI surfaces the attribution visibly.</INTENT>
     <PRD_REF>docs/PRD.md §11.8 Live Agent Studio (Insight.first_observed_by)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LIVE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-LIVE-AGENT-STUDIO"/>
   </FEATURE_FIRST_PUBLISH_CREDIT>
 
-  <FEATURE_MULTI_PASS_VERIFICATION ID="FEAT-MULTI-PASS-VERIFICATION" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_MULTI_PASS_VERIFICATION ID="FEAT-MULTI-PASS-VERIFICATION" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Verify job type that runs multiple agent passes on the same question and labels the resulting Insight with a confidence status (proposed / corroborated / disputed) visible in all UI surfaces.</INTENT>
     <PRD_REF>docs/PRD.md §7.3 Autonomy model, §14.2 Job types (verify)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-VERIFY-SERVICE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_MULTI_PASS_VERIFICATION>
 
@@ -236,10 +239,12 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ASK_AGENT_WHY>
 
-  <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Engagement job type that produces telegram-seed formulations, surprising-fact hooks, and optionally humorous framings for Insights. Published to the DB immediately per L1 auto-merge (PRD §7.3, §11.7) — there is no DB-publication review gate. External publication (e.g. an actual Telegram post) is a separate human action performed by the owner or a student via "claim a finding" in Live Studio; that human step is not the same as a DB approval queue.</INTENT>
     <PRD_REF>docs/PRD.md §7 Core Information Model (Insight.engagement_hook, joke_or_telegram_seed), §7.3 Autonomy model (L1 auto-merge), §11.7 Curation Queue (not an approval gate), §14.2 Job types (engagement)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-ENGAGEMENT-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>
 
@@ -251,13 +256,20 @@
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
   </FEATURE_EVIDENCE_RICH_VIEW>
 
-  <FEATURE_CONFIDENCE_BANDS ID="FEAT-CONFIDENCE-BANDS" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_CONFIDENCE_BANDS ID="FEAT-CONFIDENCE-BANDS" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Confidence status label (proposed / corroborated / disputed / human-verified / corrected) visible on every Insight card in matrix, harness dossier, and topic dossier views.</INTENT>
     <PRD_REF>docs/PRD.md §4.9 Agent fallibility as pedagogy, §7.3 Autonomy model</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MULTI-PASS-VERIFICATION"/>
   </FEATURE_CONFIDENCE_BANDS>
+
+  <FEATURE_INSIGHT_LIBRARY ID="FEAT-INSIGHT-LIBRARY" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Insight Library surface for retrieving Insights across harness/topic boundaries with filters for audience and format, including confidence, attribution, and engagement copy.</INTENT>
+    <PRD_REF>docs/PRD.md §11.6 Insight Library, §24 v0.6</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
+  </FEATURE_INSIGHT_LIBRARY>
 
   <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix.</INTENT>
@@ -334,9 +346,10 @@
   <MODULE_WEB_ROUTES_LIVE ID="MOD-WEB-ROUTES-LIVE"
                           FILE="src/observatory/web/routes/live.py"
                           STATE="STARTED">
-    <INTENT>FastAPI router for Live Agent Studio: creates live AgentJobs, renders the projector surface, and streams runner events through SSE while preserving raw logs.</INTENT>
+    <INTENT>FastAPI router for Live Agent Studio: creates live AgentJobs, renders the projector surface, streams runner events through SSE while preserving raw logs, and handles first-observer claims.</INTENT>
     <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STUDIO"/>
     <ANCHOR NAME="START_ROUTE_LIVE_START" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_START"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_CLAIM" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_CLAIM"/>
     <ANCHOR NAME="START_ROUTE_LIVE_STREAM" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STREAM"/>
   </MODULE_WEB_ROUTES_LIVE>
 
@@ -347,6 +360,36 @@
     <ANCHOR NAME="START_LIVE_JOB_CREATE" COORD="src/observatory/live/service.py#START_LIVE_JOB_CREATE"/>
     <ANCHOR NAME="START_LIVE_JOB_STREAM" COORD="src/observatory/live/service.py#START_LIVE_JOB_STREAM"/>
   </MODULE_LIVE_SERVICE>
+
+  <MODULE_ABSTRACT_SERVICE ID="MOD-ABSTRACT-SERVICE"
+                           FILE="src/observatory/abstracts/service.py"
+                           STATE="STARTED">
+    <INTENT>Service boundary for abstract jobs that turn EvidenceItems into higher-level teaching artifacts while preserving source evidence ids.</INTENT>
+    <ANCHOR NAME="START_ABSTRACT_JOB" COORD="src/observatory/abstracts/service.py#START_ABSTRACT_JOB"/>
+  </MODULE_ABSTRACT_SERVICE>
+
+  <MODULE_VERIFY_SERVICE ID="MOD-VERIFY-SERVICE"
+                         FILE="src/observatory/verification/service.py"
+                         STATE="STARTED">
+    <INTENT>Service boundary for verify jobs that record support/dispute passes, update EvidenceItem verification metadata, and derive Insight/ComparisonCell confidence labels.</INTENT>
+    <ANCHOR NAME="START_VERIFY_JOB" COORD="src/observatory/verification/service.py#START_VERIFY_JOB"/>
+  </MODULE_VERIFY_SERVICE>
+
+  <MODULE_ENGAGEMENT_SERVICE ID="MOD-ENGAGEMENT-SERVICE"
+                             FILE="src/observatory/engagement/service.py"
+                             STATE="STARTED">
+    <INTENT>Service boundary for engagement jobs and first-observer attribution helpers.</INTENT>
+    <ANCHOR NAME="START_ENGAGEMENT_JOB" COORD="src/observatory/engagement/service.py#START_ENGAGEMENT_JOB"/>
+    <ANCHOR NAME="START_FIRST_OBSERVER_CLAIM" COORD="src/observatory/engagement/service.py#START_FIRST_OBSERVER_CLAIM"/>
+  </MODULE_ENGAGEMENT_SERVICE>
+
+  <MODULE_WEB_ROUTES_INSIGHTS ID="MOD-WEB-ROUTES-INSIGHTS"
+                              FILE="src/observatory/web/routes/insight.py"
+                              STATE="STARTED">
+    <INTENT>FastAPI router for the Insight Library: filter Insights by audience/format and show confidence, attribution, and engagement copy.</INTENT>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_LIBRARY" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_LIBRARY"/>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_ENGAGEMENT" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_ENGAGEMENT"/>
+  </MODULE_WEB_ROUTES_INSIGHTS>
 
   <MODULE_WEB_ROUTES_HARNESS ID="MOD-WEB-ROUTES-HARNESS"
                               FILE="src/observatory/web/routes/harness.py"

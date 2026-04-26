@@ -21,6 +21,7 @@ from sqlmodel import Session, select
 
 from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
+from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -130,6 +131,12 @@ def _topic_harness_sections(session: Session, topic: Topic) -> list[TopicHarness
             ).all()
         )
         evidence_items.sort(key=lambda item: item.id or 0)
+        if cell is not None:
+            derived_confidence = confidence_from_verification_passes(
+                verification_passes_for_items(session, evidence_items)
+            )
+            if derived_confidence != "unverified":
+                cell.confidence_band = derived_confidence
         sections.append(TopicHarnessSection(harness=harness, cell=cell, evidence_items=evidence_items))
     return sections
 

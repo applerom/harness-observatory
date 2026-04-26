@@ -1255,6 +1255,14 @@ v0.4a acceptance:
 - Tests use fake runners and never call real Codex/Claude.
 - A first `abstract` job type placeholder is visible in code/docs as a next v0.4 slice, but diagram generation itself is deferred until the live stream surface works.
 
+v0.4b acceptance:
+
+- A service can create an `AgentJob(type="abstract")` for an existing Insight/Evidence set without invoking a real model in tests.
+- The job produces at least one higher-level teaching artifact as an `Insight(format="mermaid_diagram" | "ascii_art")` linked to the same harness/topic context when available.
+- The produced artifact has a `RevisionNote` that cites the source EvidenceItem ids and the parent abstract job id.
+- Job Dashboard shows the abstract job with `produced_artifact_ids`, raw log, and semantic events.
+- The first artifact generator may be deterministic/template-based; model-backed abstract generation is allowed later after the artifact shape proves useful.
+
 ### v0.5 — Multi-pass verification and confidence labels in UI
 
 - `verify` job type
@@ -1262,12 +1270,29 @@ v0.4a acceptance:
 - Per-pass UI breakdown on cell click
 - `disputed` status visible with inter-pass disagreement indicator
 
+v0.5a acceptance:
+
+- A verification service can record support/dispute passes for an Insight through `AgentJob(type="verify")`.
+- Verification updates `EvidenceItem.verification_passes`, `verifier_agents`, and `confidence`, and writes an `ObservationReview`.
+- Confidence labels update deterministically: disputed evidence marks the Insight/cell disputed; two supporting passes can mark an Insight/cell corroborated.
+- Harness dossier, topic dossier, matrix cells, and expanded cell detail show current confidence/status rather than the old "not yet verified" placeholder.
+- Expanded matrix cell detail shows a compact per-pass verification breakdown.
+- Tests use fake/manual verification outcomes and do not call real Codex/Claude.
+
 ### v0.6 — Engagement layer
 
 - `engagement` job type: generates `engagement_hook`, `joke_or_telegram_seed`
 - `first_observed_by` student attribution flow in Live Agent Studio
 - Telegram seed displayed on attribution
 - Insight Library filterable by `audience` and `format`
+
+v0.6a acceptance:
+
+- An engagement service can create an `AgentJob(type="engagement")` for an Insight and fill missing `engagement_hook` / `joke_or_telegram_seed` with a deterministic teaching seed in tests.
+- Live Agent Studio exposes a first-observer claim path for Insights produced by that live job; it stores `Insight.first_observed_by` and shows the generated telegram seed when present.
+- An Insight Library route lists Insights with filters for `audience` and `format`, and renders confidence, attribution, engagement hook, and telegram seed when available.
+- Navigation exposes the Insight Library.
+- Tests cover engagement generation, first-observer claim, and library filters without real model calls.
 
 ### v0.7 — "Ask the agent why" and explain job type
 

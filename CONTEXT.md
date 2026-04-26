@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
 > **Last update:** 2026-04-26
-> **Phase:** v0.2a+ complete — selectable Codex/Claude runner spine and matrix UX hardening
-> **Next milestone:** capture/review raw refresh logs, then parse refresh output into Insights
+> **Phase:** v0.6a complete — abstract jobs, verification/confidence, engagement/Insight Library
+> **Next milestone:** v0.7 "Ask the agent why" / explain job slice
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
 
@@ -16,7 +16,7 @@ Decisions were locked through a structured interview between the project owner (
 
 All decisions are written into `docs/PRD.md` (v2). The pedagogical and collaborative spirit is captured in `SPIRIT.md`. The intent-to-implementation map starts in `docs/why-graph.xml` (stem only — modules will gain anchors as code lands).
 
-Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.2a has added an OpenCode refresh job spine with selectable Codex/Claude runners and CLI Playwright visual QA.
+Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.6a has added refresh jobs, parser persistence, scheduler, curation, Live Studio SSE, abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, and the Insight Library.
 
 ---
 
@@ -89,10 +89,10 @@ v0.1 is shipped locally. The current v0.2a direction is deliberately narrower th
 2. Use the Harness Dossier Refresh button to create and run a durable `AgentJob`.
 3. Choose a runtime runner explicitly (`CodexRunner` by default, `ClaudeRunner` optional); keep `target` and `runner` labels separate in UI/logs.
 4. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
-5. Maintain agent-visible UI checks with Playwright CLI for matrix/dossier changes.
-6. After real logs exist, implement the parser/import slice that turns refresh output into `Insight`/`EvidenceItem` rows.
+5. Maintain agent-visible UI checks with Playwright CLI for matrix/dossier/job/live/library changes.
+6. Next product slice: implement PRD v0.7 "Ask the agent why" / `explain` job with exact prompt storage, semantic trace, and appended explanation.
 
-Decision note: full PRD v0.2 remains the goal, but parsing freeform agent output before seeing real logs would create a brittle invented format.
+Decision note: the product has advanced beyond the earlier v0.2 raw-log/parser question. The current discipline stays the same: frame the slice in PRD/WHY first, delegate bounded implementation, then prove with tests, visual checks, and durable logs.
 
 ---
 
@@ -308,3 +308,23 @@ Evidence:
 What's now possible: v0.4b can add the first `abstract` job type for EvidenceItem-to-teaching-artifact generation.
 
 What's now blocking: no product blocker. A real model-backed live session can be run when Roman wants to spend a live Codex/Claude invocation.
+
+## Update 2026-04-26 — v0.4b/v0.5a/v0.6a product train
+
+Roman asked Codex to take a larger product chunk and continue through v0.5 into v0.6 if v0.5 landed cleanly. Codex framed acceptance in PRD and WHY first, then delegated abstract, verification, and engagement slices to separate workers and used a reviewer agent for integration semantics.
+
+What changed:
+- Added `observatory.abstracts.service.AbstractJobService`: deterministic `AgentJob(type="abstract")`, `Insight(format="mermaid_diagram")` teaching artifact, `RevisionNote`, raw log, and semantic events.
+- Added `observatory.verification.service.VerificationJobService`: deterministic support/dispute passes, `ObservationReview` history, EvidenceItem verifier metadata, and derived Insight/ComparisonCell confidence labels.
+- Added engagement jobs, first-observer claim helpers, `/insights` Insight Library, navigation entry, and deterministic engagement-copy generation.
+- Live Studio first-observer claims are scoped to Insights listed in the live job's `produced_artifact_ids`; unrelated/stale Insights cannot be claimed as "first observed" for a live session.
+- Job Detail, matrix, harness dossier, topic dossier, live view, and Insight Library now expose the new artifact/confidence/engagement state.
+
+Evidence:
+- `uv run pytest` passed with 85 tests.
+- `ruff`, `mypy`, and anchor validator passed; anchor validator checked 52 anchors.
+- Playwright CLI passed for matrix, harness, jobs, live, insight library, and curation.
+
+What's now possible: v0.7 can add the "Ask the agent why" / `explain` job type using the now-established job, prompt, semantic trace, and Insight Library surfaces.
+
+What's now blocking: no product blocker. The next design question is how much explanation text belongs on the existing Insight row versus a separate explain artifact/revision trail.
