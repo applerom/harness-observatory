@@ -331,7 +331,7 @@
 
   <MODULE_JOB_LOG_PARSER ID="MOD-JOB-LOG-PARSER"
                          FILE="src/observatory/jobs/log_parser.py"
-                         STATE="PLANNED">
+                         STATE="STARTED">
     <INTENT>v0.2b parser that turns one real refresh raw log into proposed Insight and EvidenceItem rows while preserving the raw log.</INTENT>
     <ANCHOR NAME="START_JOB_LOG_PARSE" COORD="src/observatory/jobs/log_parser.py#START_JOB_LOG_PARSE"/>
   </MODULE_JOB_LOG_PARSER>

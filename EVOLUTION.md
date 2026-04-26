@@ -237,3 +237,23 @@ Rule added:
 - Before calling a CLI runner from the app, probe the concrete command form with
   `--help` or a tiny no-op prompt and record any version/model compatibility
   mismatch.
+
+## 2026-04-26 — Parser Failure Is A Runtime Boundary Too
+
+Observation:
+- v0.2b deliberately parsed the first real raw refresh log instead of inventing
+  a format in advance.
+- Reviewer feedback showed a second boundary after runner success: parser errors
+  can still turn a successful refresh into a web 500 or duplicate partial rows
+  on retry if persistence is not atomic.
+
+Action:
+- `RefreshJobService` now treats parser failure as a job failure with a durable
+  parser error appended to the raw log, rather than leaking an exception to the
+  web route.
+- Parser persistence is reviewed as part of the same AgentJob lifecycle, not as
+  a harmless post-processing detail.
+
+Rule added:
+- A job is not only the external CLI call. Every transformation from raw output
+  to database artifacts is part of the runtime boundary and needs failure tests.

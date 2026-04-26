@@ -1156,7 +1156,8 @@ Current phase status (2026-04-26):
 
 - v0.1 is complete locally: importer, schema, read-only dashboard/dossiers/matrix.
 - v0.2a is complete locally: OpenCode refresh job spine, selectable Codex/Claude runners, raw logs, Job Dashboard, and Playwright CLI visual QA.
-- Full v0.2 is not complete until one real refresh raw log is parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
+- v0.2b is complete locally: one real OpenCode Codex refresh raw log has been parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
+- Full v0.2 is functionally complete for the one-harness vertical; remaining v0.2 work, if any, is hardening and UX polish before moving toward v0.3.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1181,7 +1182,7 @@ Current phase status (2026-04-26):
 - Watch one full end-to-end cycle work: trigger → subprocess → parse output → Insights stored → visible in dossier
 - Job Dashboard (basic: list of jobs, status, stdout log link)
 
-Implementation sequencing note (2026-04-26): v0.2 is split into smaller feedback slices. v0.2a ships the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → selected `AgentRunner` execution → raw log visible in Job Dashboard. Parsing raw runner output into `Insight` records is the next v0.2 slice, intentionally based on real logs rather than an invented output format.
+Implementation sequencing note (2026-04-26): v0.2 was split into smaller feedback slices. v0.2a shipped the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → selected `AgentRunner` execution → raw log visible in Job Dashboard. v0.2b then parsed the first real raw runner log into proposed `Insight` / `EvidenceItem` rows, intentionally using observed output rather than an invented format.
 
 ### v0.3 — All harnesses and cron
 

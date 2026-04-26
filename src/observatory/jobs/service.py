@@ -1,13 +1,14 @@
 # FILE: src/observatory/jobs/service.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Minimal v0.2a AgentJob creation and execution service.
+# PURPOSE: Minimal v0.2 AgentJob creation and execution service.
 # PRD_REF: docs/PRD.md §24, §1162
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
-# SCOPE: OpenCode refresh job spine; prompt template seed; raw log persistence
+# SCOPE: OpenCode refresh job spine; prompt template seed; raw log persistence; successful log parsing
 # INVARIANTS:
-# - Only OpenCode refresh is enabled in v0.2a.
-# - Freeform runner output is preserved as a raw log; it is not parsed into Insights yet.
+# - Only OpenCode refresh is enabled in v0.2.
+# - Freeform runner output is preserved as a raw log before successful logs are parsed into Insights.
+# - Jobs with existing produced artifacts are not parsed again.
 # - Web/routes call this service rather than a concrete runner subprocess.
 # :END_MODULE_CONTRACT
 
@@ -17,6 +18,7 @@ from pathlib import Path
 
 from sqlmodel import Session, select
 
+from observatory.jobs.log_parser import parse_job_log
 from observatory.models import AgentJob, Harness, PromptTemplate
 from observatory.runners.base import AgentContext, AgentResult, AgentRunner
 
@@ -93,6 +95,19 @@ class RefreshJobService:
         session.add(job)
         session.commit()
         session.refresh(job)
+        if job.status == "done" and job.stdout_log_path and not job.produced_artifact_ids:
+            try:
+                parse_job_log(session, job)
+            except Exception as exc:
+                parser_error = (
+                    f"Parser failed after successful runner output: {type(exc).__name__}: {exc}"
+                )
+                append_job_log_error(Path(job.stdout_log_path), "[parser error]", parser_error)
+                job.status = "failed"
+                job.error_message = parser_error
+                session.add(job)
+                session.commit()
+            session.refresh(job)
         return job
 
     # :END_JOB_REFRESH
@@ -146,3 +161,8 @@ def write_job_log(log_dir: Path, job: AgentJob, output: str, error_message: str 
         chunks.extend(["", "[error]", error_message.rstrip()])
     path.write_text("\n".join(chunks).strip() + "\n", encoding="utf-8")
     return path
+
+
+def append_job_log_error(path: Path, heading: str, error_message: str) -> None:
+    with path.open("a", encoding="utf-8") as log_file:
+        log_file.write(f"\n{heading}\n{error_message.rstrip()}\n")
