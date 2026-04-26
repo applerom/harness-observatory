@@ -17,6 +17,10 @@ For runtimes, frameworks, and major dependencies:
 - validate under the runtime that the repo claims to support;
 - record the reason when choosing latest stable rather than latest prerelease.
 
+The same applies to local agent CLIs. A model name or flag shape may be valid in
+one Codex session but unsupported by the installed CLI. Probe the actual command
+with `--help` or a tiny no-op prompt before encoding it into an `AgentRunner`.
+
 ## Student Exercise
 
 When reviewing an agent-generated project, ask:

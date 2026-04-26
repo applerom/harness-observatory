@@ -12,10 +12,15 @@
 # :END_MODULE_CONTRACT
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from pathlib import Path
 
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
+
+
+WINDOWS_RUNNABLE_EXTENSIONS = (".exe", ".cmd", ".bat", ".com")
 
 
 @dataclass(slots=True)
@@ -33,21 +38,13 @@ class CodexRunner:
     async def run(self, context: AgentContext) -> AgentResult:
         """Execute one prompt through Codex CLI non-interactive mode."""
         cwd = context.metadata.get("cwd") or "."
-        args = [
-            self.executable_name,
-            "exec",
-            "--sandbox",
-            "read-only",
-            "--ask-for-approval",
-            "never",
-            "--cd",
-            cwd,
-            "--color",
-            "never",
-        ]
-        if self.model:
-            args.extend(["--model", self.model])
-        args.append(context.prompt)
+        executable = resolve_runnable_command(self.executable_name)
+        args = build_codex_exec_args(
+            executable=executable,
+            cwd=cwd,
+            prompt=context.prompt,
+            model=self.model,
+        )
 
         try:
             process = await asyncio.create_subprocess_exec(
@@ -64,6 +61,12 @@ class CodexRunner:
                 status="failed",
                 output="",
                 error_message=f"Codex CLI executable not found: {exc.filename}",
+            )
+        except OSError as exc:
+            return AgentResult(
+                status="failed",
+                output="",
+                error_message=f"Codex CLI failed to launch: {exc}",
             )
         except TimeoutError:
             process.kill()
@@ -102,3 +105,60 @@ class CodexRunner:
         yield AgentEvent(kind="status", message=result.status)
 
     # :END_CODEX_RUN
+
+
+def resolve_runnable_command(executable_name: str) -> str:
+    """Resolve a Windows-runnable Codex CLI command without choosing npm shims."""
+    if not _is_windows():
+        return executable_name
+
+    executable_path = Path(executable_name)
+    if executable_path.suffix:
+        return executable_name
+
+    if executable_path.parent != Path("."):
+        for suffix in WINDOWS_RUNNABLE_EXTENSIONS:
+            candidate = executable_path.with_suffix(suffix)
+            if candidate.is_file():
+                return str(candidate)
+        return executable_name
+
+    for directory in os.environ.get("PATH", "").split(os.pathsep):
+        if not directory:
+            continue
+        base = Path(directory) / executable_name
+        for suffix in WINDOWS_RUNNABLE_EXTENSIONS:
+            candidate = base.with_suffix(suffix)
+            if candidate.is_file():
+                return str(candidate)
+    return executable_name
+
+
+def build_codex_exec_args(
+    *,
+    executable: str,
+    cwd: str,
+    prompt: str,
+    model: str | None = None,
+) -> list[str]:
+    """Build Codex exec argv with global-only options before the subcommand."""
+    args = [
+        executable,
+        "--ask-for-approval",
+        "never",
+        "exec",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        cwd,
+        "--color",
+        "never",
+    ]
+    if model:
+        args.extend(["--model", model])
+    args.append(prompt)
+    return args
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"

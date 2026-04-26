@@ -207,3 +207,33 @@ Rule added:
 Teaching extraction:
 - This episode is now a reusable lesson:
   `docs/lessons/orchestrator-over-execution.md`.
+
+## 2026-04-26 — Runtime Runner CLI Truth Beats Remembered CLI Shape
+
+Observation:
+- The first real `CodexRunner` refresh did not produce a useful research log.
+- Three operational facts appeared only when the app called the real local CLI:
+  stale imported OpenCode paths, Windows `codex` shim launch failure, and Codex
+  CLI argument ordering (`--ask-for-approval` is global, not an `exec` option).
+- A manual probe also showed local Codex CLI v0.104 rejects the configured
+  default `gpt-5.5` model and asks for a newer Codex version, while `gpt-5.4`
+  works.
+
+Impact:
+- Runner implementations must be tested against the actual local CLI, not only
+  against remembered command syntax.
+- A failed runtime job can still be useful if it is durable: `AgentJob` status,
+  raw log, and error message become evidence for the next fix.
+
+Action:
+- `CodexRunner` now resolves Windows-runnable commands, puts global approval
+  options before `exec`, and catches launch errors.
+- `RefreshJobService` marks unexpected runner exceptions as failed instead of
+  leaving jobs stuck in `running`.
+- The current web route uses `gpt-5.4` for Codex runtime refresh until the local
+  Codex CLI can run the desired default model.
+
+Rule added:
+- Before calling a CLI runner from the app, probe the concrete command form with
+  `--help` or a tiny no-op prompt and record any version/model compatibility
+  mismatch.

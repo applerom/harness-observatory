@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — delegation discipline lesson and status cleanup complete
+**Last update:** 2026-04-26 — CodexRunner real refresh raw log captured
 **Active session lead:** Codex GPT-5.5-class (interactive)
 **Current phase:** v0.2b ready — raw-log capture before parser
 
@@ -18,7 +18,7 @@
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, and Job Dashboard before any parser writes new Insights. The next product move is to capture/review one real OpenCode refresh raw log, then delegate the parser slice.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, and Job Dashboard before any parser writes new Insights. A real OpenCode refresh raw log now exists at `live-sessions/agent-job-00003.log`; the next product move is to delegate the parser slice.
 
 ## 2. Active items
 
@@ -40,8 +40,8 @@ Current ordered queue after v0.2a+:
 
 | ID | Brief | Runner | Status | Blocked by |
 |---|---|---|---|---|
-| V02B-RUN | Run one OpenCode refresh with `CodexRunner` and inspect the raw log | Codex lead + possible validator subagent | pending | owner/lead decision to spend Codex runner quota |
-| V02B-PARSER | Parse one useful OpenCode refresh raw log into proposed Insight/Evidence rows | subagent preferred | pending | at least one useful raw log |
+| V02B-RUN | Run one OpenCode refresh with `CodexRunner` and inspect the raw log | Codex lead + implementation subagents Pasteur/Chandrasekhar | completed | AgentJob #3 done; raw log at `live-sessions/agent-job-00003.log` |
+| V02B-PARSER | Parse `live-sessions/agent-job-00003.log` into proposed Insight/Evidence rows | subagent preferred | pending | runner robustness commit |
 
 ## 4. Blocked / waiting
 
@@ -67,6 +67,9 @@ Current ordered queue after v0.2a+:
 - **2026-04-26** — Implemented v0.2a: `ClaudeRunner` now performs the CLI subprocess inside the runner boundary and returns failed `AgentResult` on missing CLI/non-zero/timeout; `RefreshJobService` creates/runs OpenCode refresh jobs and writes `live-sessions/agent-job-*.log`; `/jobs`, `/jobs/{id}`, and `/jobs/{id}/log` expose the Job Dashboard; OpenCode dossier Refresh posts to the service. Validation: `pytest` 23 passed, `ruff` passed, `mypy` passed, anchor validator checked 30/skipped 0, no `claude -p` literal in `src/` or `scripts/`, local server restarted and `/`, `/harnesses/opencode`, `/jobs` returned 200.
 - **2026-04-26** — Roman caught target/runner ambiguity and matrix UX gaps. Codex updated PRD/WHY first, then added `CodexRunner` (`codex exec` in read-only non-interactive mode), selectable "Run with Codex" / "Run with Claude" controls, clearer Job Dashboard target/runner labels, matrix top horizontal scrollbar, scroll-to-detail after cell click, and CLI Playwright visual QA. Validation: `pytest` 26 passed, `ruff` passed, `mypy` passed, anchor validator checked 31/skipped 0, `npm run visual:matrix` passed after Playwright Chromium install. Added lesson `docs/lessons/visual-qa-for-agents.md`.
 - **2026-04-26** — Roman flagged lead-agent over-execution: the matrix/Playwright patch worked, but bounded implementation should have been delegated after the lead made PRD/WHY decisions. Codex delegated a read-only status audit to Franklin, added `docs/lessons/orchestrator-over-execution.md`, recorded the rule in `EVOLUTION.md`, fixed stale CONTEXT/PRD/WHY/WORKLOG/DELEGATION status text, and added a v0.2b delegation contract. Anchor validator checked 31/skipped 0; stale-text grep returned no matches.
+- **2026-04-26** — V02B-RUN first attempt found two operational issues before producing a useful raw log. First, imported OpenCode local paths pointed to `d:/ai/opencode-*` while real local directories are `D:/ai/harnesses/opencode-*`; Codex patched the local SQLite row for this run. Second, POST refresh with `runner_name=codex` returned HTTP 500 because Windows resolved `codex` to an npm shim path that `asyncio.create_subprocess_exec` could not execute (`PermissionError WinError 5`), leaving AgentJob #1 stuck `running`. Codex delegated the bounded robustness fix to Pasteur (`019dca50-5a79-7a70-b683-0f68fbc2bffc`): make `CodexRunner` launch Windows-safe and make `RefreshJobService` mark unexpected runner exceptions as failed.
+- **2026-04-26** — Integrated Pasteur's robustness patch locally (not yet committed): `CodexRunner` prefers Windows runnable extensions and catches `OSError`; `RefreshJobService` marks unexpected runner exceptions as failed with raw log. Retry produced AgentJob #2 as failed-but-durable because `--ask-for-approval` was incorrectly passed to the `exec` subcommand. Codex delegated argument-order fix to Chandrasekhar (`019dca55-4412-7b80-a1e1-b831315256af`). Manual CLI probe confirmed `codex --ask-for-approval never exec ...` is accepted, but local Codex CLI v0.104 rejects default `gpt-5.5` as requiring a newer Codex; `--model gpt-5.4` succeeds. Current local route factory sets `CodexRunner(model="gpt-5.4")` for the runtime refresh retry.
+- **2026-04-26** — Third V02B-RUN attempt succeeded: POST refresh with `runner_name=codex` created AgentJob #3, status `done`, raw log `live-sessions/agent-job-00003.log`. The log summarizes recent OpenCode architecture/curriculum changes and includes evidence paths. Local cleanup: AgentJob #1 was manually marked failed with `live-sessions/agent-job-00001.log` because it was created before durable runner-exception handling existed. Validation after runner fixes: `pytest` 30 passed, `ruff` passed, `mypy` passed, anchor validator checked 31/skipped 0, `npm run visual:matrix` passed.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

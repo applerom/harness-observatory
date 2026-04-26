@@ -18,7 +18,7 @@ from pathlib import Path
 from sqlmodel import Session, select
 
 from observatory.models import AgentJob, Harness, PromptTemplate
-from observatory.runners.base import AgentContext, AgentRunner
+from observatory.runners.base import AgentContext, AgentResult, AgentRunner
 
 
 REFRESH_TEMPLATE_NAME = "opencode-refresh-v0.2a"
@@ -72,7 +72,17 @@ class RefreshJobService:
             target_id=job.target_id,
             metadata={"cwd": harness.local_upstream_path or "."},
         )
-        result = asyncio.run(self.runner.run(context))
+        try:
+            result = asyncio.run(self.runner.run(context))
+        except Exception as exc:
+            result = AgentResult(
+                status="failed",
+                output="",
+                error_message=(
+                    f"AgentRunner {self.runner.name} raised unexpected exception: "
+                    f"{type(exc).__name__}: {exc}"
+                ),
+            )
 
         log_path = write_job_log(self.log_dir, job, result.output, result.error_message)
         job.finished_at = utc_now()
