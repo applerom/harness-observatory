@@ -24,6 +24,9 @@ live-sessions/*.log
 live-sessions/*.jsonl
 !live-sessions/.gitkeep
 
+# Local dev server logs
+.uvicorn*.log
+
 # Media uploads (binary, not tracked by default; lecturers add per machine)
 media/**
 !media/.gitkeep
