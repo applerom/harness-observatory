@@ -1,0 +1,23 @@
+<!--
+FILE: src/observatory/web/templates/_nav.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Shared top navigation for v0.1 web surfaces.
+PRD_REF: docs/PRD.md §26.2
+WHY_REF: docs/why-graph.xml MOD-WEB-APP
+SCOPE: dashboard, harness, topic, and matrix entry links
+INVARIANTS:
+- Navigation names stay aligned with PRD §26.2 surfaces.
+:END_MODULE_CONTRACT
+-->
+<header class="border-b border-slate-200 bg-white">
+  <nav class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+    <a href="/" class="font-semibold tracking-normal text-slate-950">Harness Observatory</a>
+    <div class="flex items-center gap-2 text-sm">
+      <a class="nav-link {% if active_nav == 'dashboard' %}nav-link-active{% endif %}" href="/">Dashboard</a>
+      <a class="nav-link" href="/harnesses">Harnesses</a>
+      <a class="nav-link" href="/topics">Topics</a>
+      <a class="nav-link" href="/matrix">Matrix</a>
+    </div>
+  </nav>
+</header>

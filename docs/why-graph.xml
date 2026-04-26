@@ -107,7 +107,7 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_TOPIC_DOSSIER_RO>
 
-  <FEATURE_DASHBOARD ID="FEAT-DASHBOARD" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_DASHBOARD ID="FEAT-DASHBOARD" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Home page showing harness count, topic count, total insight count, and entry links to matrix, harness list, and topic list.</INTENT>
     <PRD_REF>docs/PRD.md §11.1 Overview Dashboard</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
@@ -229,7 +229,7 @@
 
   <MODULE_MODELS ID="MOD-MODELS"
                  FILE="src/observatory/models/__init__.py"
-                 STATE="PLANNED">
+                 STATE="STARTED">
     <INTENT>SQLModel entity definitions: Harness, Topic, Insight, EvidenceItem, AgentJob. Central schema for all DB reads and writes in the observatory.</INTENT>
     <ANCHOR NAME="START_MODELS_HARNESS"    COORD="src/observatory/models/__init__.py#START_MODELS_HARNESS"/>
     <ANCHOR NAME="START_MODELS_TOPIC"      COORD="src/observatory/models/__init__.py#START_MODELS_TOPIC"/>
@@ -240,7 +240,7 @@
 
   <MODULE_WEB_APP ID="MOD-WEB-APP"
                   FILE="src/observatory/web/app.py"
-                  STATE="PLANNED">
+                  STATE="STARTED">
     <INTENT>FastAPI application factory: registers all routers, configures DB engine, sets up lifespan (including APScheduler for cron jobs in later phases), and serves static assets.</INTENT>
     <ANCHOR NAME="START_APP_FACTORY"       COORD="src/observatory/web/app.py#START_APP_FACTORY"/>
     <ANCHOR NAME="START_APP_ROUTERS"       COORD="src/observatory/web/app.py#START_APP_ROUTERS"/>
@@ -249,7 +249,7 @@
 
   <MODULE_WEB_ROUTES_DASHBOARD ID="MOD-WEB-ROUTES-DASHBOARD"
                                 FILE="src/observatory/web/routes/dashboard.py"
-                                STATE="PLANNED">
+                                STATE="STARTED">
     <INTENT>FastAPI router for the home/dashboard page: shows harness count, topic count, insight count, entry links to matrix and dossiers. Also hosts the Live Agent Studio SSE endpoint in later phases.</INTENT>
     <ANCHOR NAME="START_ROUTE_DASHBOARD"   COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_DASHBOARD"/>
     <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_LIVE_STUDIO"/>

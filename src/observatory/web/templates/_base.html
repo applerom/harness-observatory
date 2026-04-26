@@ -1,0 +1,30 @@
+<!--
+FILE: src/observatory/web/templates/_base.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Shared HTML shell for the v0.1 server-rendered web UI.
+PRD_REF: docs/PRD.md §20, §26.2
+WHY_REF: docs/why-graph.xml MOD-WEB-APP
+SCOPE: document structure; Tailwind CDN; HTMX CDN; navigation include
+INVARIANTS:
+- No frontend build step is required in v0.1.
+- Layout stays server-rendered Jinja with HTMX enhancement.
+:END_MODULE_CONTRACT
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Harness Observatory{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.8"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-950 antialiased">
+    {% include "_nav.html" %}
+    <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
