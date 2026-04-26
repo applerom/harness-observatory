@@ -175,8 +175,8 @@
   </FEATURE_ASK_AGENT_WHY>
 
   <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Engagement job type that produces telegram-seed formulations, surprising-fact hooks, and optionally humorous framings for Insights — subject to human review before publishing.</INTENT>
-    <PRD_REF>docs/PRD.md §7 Core Information Model (Insight.engagement_hook), §14.2 Job types (engagement)</PRD_REF>
+    <INTENT>Engagement job type that produces telegram-seed formulations, surprising-fact hooks, and optionally humorous framings for Insights. Published to the DB immediately per L1 auto-merge (PRD §7.3, §11.7) — there is no DB-publication review gate. External publication (e.g. an actual Telegram post) is a separate human action performed by the owner or a student via "claim a finding" in Live Studio; that human step is not the same as a DB approval queue.</INTENT>
+    <PRD_REF>docs/PRD.md §7 Core Information Model (Insight.engagement_hook, joke_or_telegram_seed), §7.3 Autonomy model (L1 auto-merge), §11.7 Curation Queue (not an approval gate), §14.2 Job types (engagement)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>

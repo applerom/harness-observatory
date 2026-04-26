@@ -1140,7 +1140,7 @@ Mitigation: Job Dashboard shows status before session starts. Manual dispatch al
 
 Risk: Developers hardcode `claude -p` below the `AgentRunner` interface, defeating §4.10 and Level 3 dogfooding.
 
-Mitigation: `AgentRunner` is a defined interface from v0.2. All subprocess calls live in `ClaudeRunner` only. Code review and anchor validator script enforce this.
+Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `ClaudeRunner` is a stub raising `NotImplementedError` per §26.3). The concrete subprocess body lands in v0.2 — and lives only inside `ClaudeRunner`. Code review, the anchor validator script, and a `grep "claude -p" src/ scripts/` acceptance check (DELEGATION-PLAN Task E) enforce that the literal subprocess invocation cannot leak below the abstraction.
 
 ---
 

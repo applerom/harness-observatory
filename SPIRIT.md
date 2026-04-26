@@ -153,4 +153,4 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
 
 После SPIRIT.md канонический reading order для агентов — в `AGENTS.md` (раздел "Required Reading" в адоптер-аддендуме). Не дублирую здесь, чтобы не возникало drift между несколькими списками. Перейди туда и читай по порядку.
 
-После всего обязательного чтения выведи один раз: `Observatory Spirit ON`
+Единственный sentinel ("hello") этого проекта — `Observatory Agent1st ON`, выводится один раз после прочтения `AGENTS.md` (см. там же). SPIRIT.md своего hello не имеет — один проект, один сигнал, чтобы не плодить ритуал.
