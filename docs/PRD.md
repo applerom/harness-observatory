@@ -1174,6 +1174,7 @@ Current phase status (2026-04-26):
 - v0.2b is complete locally: one real OpenCode Codex refresh raw log has been parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
 - Full v0.2 is functionally complete for the one-harness vertical.
 - v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed `Insight` / `EvidenceItem` rows.
+- v0.3b is complete locally: DB-backed refresh schedules exist, APScheduler is wired through an opt-in FastAPI lifespan, and Job Dashboard shows schedule metadata.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1217,6 +1218,14 @@ v0.3a acceptance:
 - The refresh prompt template is target-generic rather than named for OpenCode.
 - Successful refresh logs parse into harness-scoped proposed `Insight` / `EvidenceItem` rows for the actual target harness.
 - Tests cover at least one non-OpenCode harness refresh path and one stale imported path repaired to a local sibling directory.
+
+v0.3b acceptance:
+
+- A DB-backed per-harness refresh schedule model exists with enabled flag, runner name, interval, next-run time, last-run time, and last job link.
+- FastAPI can start and stop an in-process APScheduler instance through app lifespan, but automatic scheduled dispatch is guarded by configuration and is off by default in local/test runs.
+- The scheduler registration layer is testable without waiting for real time and without invoking Codex/Claude.
+- Job Dashboard shows a compact schedule section with next-run metadata.
+- The first scheduler slice reuses the existing `AgentJob` / `RefreshJobService` path instead of inventing a separate cron execution path.
 
 ### v0.4 — Live Agent Studio and abstract job type
 

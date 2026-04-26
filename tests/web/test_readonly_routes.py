@@ -1,14 +1,15 @@
 import json
 from collections.abc import AsyncIterator, Generator
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 
 from observatory import db
-from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
+from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, RefreshSchedule, Topic
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
 from observatory.web.app import create_app
 from observatory.web.routes.harness import get_refresh_runner_factory
@@ -46,6 +47,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[TestCli
             yield session
 
     app = create_app()
+    app.state.test_engine = engine
     app.dependency_overrides[db.get_session] = override_session
     app.dependency_overrides[get_refresh_runner_factory] = lambda: lambda _runner_name: FakeRefreshRunner()
     with TestClient(app) as test_client:
@@ -314,4 +316,31 @@ def test_job_dashboard_empty_state(client: TestClient) -> None:
     response = client.get("/jobs")
 
     assert response.status_code == 200
+    assert "Refresh schedules" in response.text
+    assert "No refresh schedules configured yet." in response.text
     assert "No AgentJobs yet" in response.text
+
+
+def test_job_dashboard_renders_refresh_schedule_metadata(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        harness = session.exec(select(Harness).where(Harness.slug == "opencode")).one()
+        schedule = RefreshSchedule(
+            harness_id=harness.id or 0,
+            enabled=True,
+            runner_name="codex",
+            interval_minutes=120,
+            status="idle",
+        )
+        session.add(schedule)
+        session.commit()
+
+    response = client.get("/jobs")
+
+    assert response.status_code == 200
+    assert "Refresh schedules" in response.text
+    assert "OpenCode" in response.text
+    assert "codex" in response.text
+    assert "120 min" in response.text
+    assert "not scheduled" in response.text
+    assert "idle" in response.text

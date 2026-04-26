@@ -54,8 +54,8 @@ class RefreshJobService:
         self.semantic_log = semantic_log or SemanticLogWriter(log_dir / "semantic-events.jsonl")
 
     # START_JOB_REFRESH:
-    def refresh_harness(self, session: Session, harness: Harness) -> AgentJob:
-        """Run a minimal manual refresh job for any configured harness target."""
+    def refresh_harness(self, session: Session, harness: Harness, trigger: str = "manual") -> AgentJob:
+        """Run a minimal refresh job for any configured harness target."""
         template = ensure_refresh_prompt_template(session)
         job = AgentJob(
             type="refresh",
@@ -64,7 +64,7 @@ class RefreshJobService:
             prompt_template_id=template.id,
             runner_name=self.runner.name,
             runner_version=self.runner.version,
-            trigger="manual",
+            trigger=trigger,
             status="queued",
         )
         session.add(job)
@@ -77,7 +77,7 @@ class RefreshJobService:
             expected="AgentJob queued before runner execution",
             actual=f"queued refresh job {job.id}",
             job=job,
-            metadata={"harness_slug": harness.slug},
+            metadata={"harness_slug": harness.slug, "trigger": trigger},
         )
 
         job.started_at = utc_now()
@@ -92,7 +92,7 @@ class RefreshJobService:
             expected="AgentJob enters running state before preflight",
             actual=f"running refresh job {job.id}",
             job=job,
-            metadata={"harness_slug": harness.slug},
+            metadata={"harness_slug": harness.slug, "trigger": trigger},
         )
 
         # START_JOB_PREFLIGHT:

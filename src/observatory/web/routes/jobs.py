@@ -4,7 +4,7 @@
 # PURPOSE: Read-only Job Dashboard for AgentJob lifecycle and semantic trace visibility.
 # PRD_REF: docs/PRD.md §11.9, §24, §1162
 # WHY_REF: docs/why-graph.xml#UC-JOB-DASHBOARD
-# SCOPE: job list; job detail; raw log view
+# SCOPE: job list; schedule list; job detail; raw log view
 # INVARIANTS:
 # - Dashboard exposes raw logs but does not parse them into Insights.
 # - Missing log files render a clear 404 instead of crashing.
@@ -20,7 +20,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
 from observatory import db
-from observatory.models import AgentJob, Harness
+from observatory.models import AgentJob, Harness, RefreshSchedule
 from observatory.runtime.semantic_log import DEFAULT_SEMANTIC_EVENT_LOG
 
 
@@ -46,6 +46,12 @@ class SemanticEventView:
     component: str
 
 
+@dataclass(frozen=True)
+class ScheduleView:
+    schedule: RefreshSchedule
+    harness_label: str
+
+
 def _job_view(session: Session, job: AgentJob) -> JobView:
     target_label = f"{job.target_kind or 'unknown'} {job.target_id or ''}".strip()
     if job.target_kind == "Harness" and job.target_id is not None:
@@ -54,6 +60,14 @@ def _job_view(session: Session, job: AgentJob) -> JobView:
             target_label = f"Harness: {harness.name}"
     runner_label = f"{job.runner_name or 'unknown'} {job.runner_version or ''}".strip()
     return JobView(job=job, target_label=target_label, runner_label=runner_label)
+
+
+def _schedule_view(session: Session, schedule: RefreshSchedule) -> ScheduleView:
+    harness_label = f"Harness {schedule.harness_id}"
+    harness = session.get(Harness, schedule.harness_id)
+    if harness is not None:
+        harness_label = harness.name
+    return ScheduleView(schedule=schedule, harness_label=harness_label)
 
 
 # START_ROUTE_JOBS_SEMANTIC_EVENTS:
@@ -105,12 +119,18 @@ def _semantic_events_for_job(
 def job_list(request: Request, session: Session = Depends(db.get_session)) -> HTMLResponse:
     jobs = sorted(session.exec(select(AgentJob)).all(), key=lambda job: job.created_at, reverse=True)
     job_views = [_job_view(session, job) for job in jobs]
+    schedules = sorted(
+        session.exec(select(RefreshSchedule)).all(),
+        key=lambda schedule: (schedule.next_run_at is None, str(schedule.next_run_at or "")),
+    )
+    schedule_views = [_schedule_view(session, schedule) for schedule in schedules]
     return templates.TemplateResponse(
         request,
         "jobs/index.html",
         {
             "active_nav": "jobs",
             "job_views": job_views,
+            "schedule_views": schedule_views,
         },
     )
 

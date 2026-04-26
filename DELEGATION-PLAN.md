@@ -163,9 +163,10 @@ This plan is harness-independent. A lead agent maps each task to the delegation 
 Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer. Completed Codex subagents should be closed promptly after their evidence is summarized into durable state, so the configured thread cap remains available for real work.
 
 When Codex subagents are used, record the stable dispatch label from
-`docs/codex-subagent-profile.md`: `<profile>[<model>/<reasoning>] (<nickname>, <agent-id>)`.
+`docs/codex-subagent-profile.md`: `<profile>[<model>/<reasoning>] (<nickname>)`.
 The profile/model/reasoning is the analyzable part for future orchestration
-quality reviews; the nickname is only a session alias.
+quality reviews; the nickname is the human-readable session alias. Long agent
+ids are recorded only when a live technical operation needs them.
 
 ### How subagents are dispatched
 
@@ -351,6 +352,31 @@ Acceptance:
 - existing OpenCode refresh tests still pass;
 - `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green;
 - live smoke confirms at least one non-OpenCode dossier can create a durable refresh job without OpenCode-specific rejection.
+
+### v0.3b addendum — First guarded scheduler slice
+
+Preferred execution: lead owns PRD/WHY/WORKLOG and the guardrail decision; delegate bounded model/service/UI implementation.
+
+Deliverable:
+
+- DB-backed per-harness refresh schedule model.
+- APScheduler dependency pinned to the latest stable 3.x release; do not use 4.x alpha.
+- Scheduler service computes next-run metadata and registers enabled schedules without dispatching on import.
+- FastAPI app owns startup/shutdown lifecycle, but automatic scheduled dispatch is disabled by default unless an explicit setting/env enables it.
+- Job Dashboard displays schedule rows and next-run metadata.
+
+Non-goals:
+
+- no cron UI editor yet;
+- no background model calls by default on dev server startup;
+- no separate worker process;
+- no schedule persistence in APScheduler's own job store yet; SQLite remains the durable schedule source.
+
+Acceptance:
+
+- tests cover schedule model roundtrip, registration/next-run calculation, and Job Dashboard rendering;
+- test app startup does not call real Codex/Claude;
+- `uv run pytest`, `ruff`, `mypy`, anchor validator, and relevant visual smoke stay green.
 
 ---
 

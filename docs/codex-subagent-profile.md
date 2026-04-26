@@ -77,18 +77,20 @@ For WORKLOG and durable process notes, use this compact dispatch label on first
 dispatch and first completion:
 
 ```text
-<profile>[<model>/<reasoning>] (<nickname>, <agent-id>)
+<profile>[<model>/<reasoning>] (<nickname>)
 ```
 
 Example:
 
 ```text
-implementation_worker[gpt-5.5/medium] (Leibniz, 019d...)
+implementation_worker[gpt-5.5/medium] (Leibniz)
 ```
 
-Later entries may refer to the nickname or agent id if the dispatch label was
-already recorded. The stable part is profile/model/reasoning; the nickname is
-lookup metadata for the current Codex session.
+Later entries may refer to the nickname if the dispatch label was already
+recorded. Omit the long agent id from ordinary notes because it consumes
+attention without helping Roman or students. Include it only when a live
+technical operation needs that exact id, such as `wait_agent`, `send_input`,
+`resume_agent`, or `close_agent`.
 
 Recommended report format:
 

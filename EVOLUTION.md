@@ -348,3 +348,24 @@ Rule added:
 - A failing visual smoke after a UI patch is not noise. First ask whether the
   live app is stale, then verify with a fresh server before judging the code.
   The browser view tests the actual development harness, not just templates.
+
+## 2026-04-26 — Schedulers Need Guarded Startup
+
+Observation:
+- v0.3b adds in-process APScheduler, which is powerful but risky in an
+  agent-run project: a dev server restart could accidentally trigger expensive
+  model-backed refresh jobs.
+- The product wants scheduled work, but the development harness must stay
+  predictable and cheap by default.
+
+Decision:
+- Scheduler startup is opt-in through `OBSERVATORY_SCHEDULER_ENABLED`.
+- Registration computes and records the next run, but does not call the job
+  function immediately.
+- Scheduled dispatch uses the same `RefreshJobService` path as manual refresh
+  and labels `AgentJob.trigger` as `cron`.
+
+Rule added:
+- Cron features should first prove visibility and registration before automatic
+  execution. The default local/test posture is "show schedules, do not spend
+  model calls."

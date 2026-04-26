@@ -12,6 +12,7 @@ from observatory.models import (
     MediaAttachment,
     ObservationReview,
     PromptTemplate,
+    RefreshSchedule,
     RevisionNote,
     Score,
     Source,
@@ -120,12 +121,23 @@ def test_future_stub_tables_round_trip() -> None:
             produced_artifact_ids=[],
         )
         score = Score(lens_id=lens.id, harness_id=harness.id, topic_id=topic.id, value=0.75)
+        schedule = RefreshSchedule(
+            harness_id=harness.id,
+            enabled=True,
+            runner_name="codex",
+            interval_minutes=60,
+            status="idle",
+        )
         review = ObservationReview(reviewer="agent", change_summary="Initial review")
         revision = RevisionNote(note="Historical context placeholder")
-        session.add_all([job, score, review, revision])
+        session.add_all([job, score, schedule, review, revision])
         session.commit()
 
         assert session.exec(select(AgentJob)).one().status == "queued"
+        stored_schedule = session.exec(select(RefreshSchedule)).one()
+        assert stored_schedule.harness_id == harness.id
+        assert stored_schedule.enabled is True
+        assert stored_schedule.runner_name == "codex"
         assert session.exec(select(Score)).one().value == 0.75
         assert session.exec(select(ObservationReview)).one().reviewer == "agent"
         assert session.exec(select(RevisionNote)).one().note == "Historical context placeholder"

@@ -1,8 +1,8 @@
 # FILE: src/observatory/models/__init__.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: SQLModel entity definitions for the v0.1 observatory database.
-# PRD_REF: docs/PRD.md §7, §26.1, §26.3
+# PURPOSE: SQLModel entity definitions for the observatory database.
+# PRD_REF: docs/PRD.md §7, §24, §26.1, §26.3
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
 # SCOPE: core entity tables; lightweight future tables; relationship names for importer and read-only views
 # INVARIANTS:
@@ -20,6 +20,7 @@
 # - MediaAttachment: optional media linked to an Insight or EvidenceItem.
 # - EcosystemObject: non-harness object in the agent tooling ecosystem.
 # - AgentJob: future audit trail for runtime agent invocations.
+# - RefreshSchedule: per-harness refresh cadence consumed by the scheduler slice.
 # - PromptTemplate: future versioned prompt template table.
 # - RevisionNote: future historical note table.
 # - ObservationReview: future concrete review event table.
@@ -312,6 +313,25 @@ class AgentJob(SQLModel, table=True):
     cost_estimate: float | None = None
 
 
+class RefreshSchedule(SQLModel, table=True):
+    """Per-harness refresh cadence for the first APScheduler slice."""
+
+    __table_args__ = (UniqueConstraint("harness_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    harness_id: int = Field(foreign_key="harness.id", index=True)
+    enabled: bool = Field(default=False, index=True)
+    runner_name: str = Field(default="codex", index=True)
+    interval_minutes: int = Field(default=1440)
+    next_run_at: datetime | None = Field(default=None, index=True)
+    last_run_at: datetime | None = None
+    last_job_id: int | None = Field(default=None, foreign_key="agentjob.id")
+    status: str = Field(default="idle", index=True)
+    note: str | None = None
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
 # :END_MODELS_AGENT_JOB
 
 
@@ -327,6 +347,7 @@ __all__ = [
     "MediaAttachment",
     "ObservationReview",
     "PromptTemplate",
+    "RefreshSchedule",
     "RevisionNote",
     "Score",
     "Source",

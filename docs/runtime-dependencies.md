@@ -14,6 +14,7 @@ Checked on 2026-04-26:
 |---|---:|---|
 | Python | 3.14.4 | Project runtime and validation target. |
 | Codex CLI (`@openai/codex`) | 0.125.0 | `CodexRunner` uses `codex exec`; `gpt-5.5` no-op prompt succeeds on this version. |
+| APScheduler | 3.11.2 | In-process schedule registration for v0.3b. 4.0.0a6 exists but is pre-release, so the project pins latest stable 3.x. |
 
 ## Rule
 

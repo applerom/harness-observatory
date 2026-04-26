@@ -139,6 +139,30 @@ def test_refresh_service_parses_successful_non_opencode_job_log(tmp_path: Path) 
     assert semantic_events[0]["metadata"]["harness_slug"] == "codex-cli"
 
 
+def test_refresh_service_can_label_cron_trigger(tmp_path: Path) -> None:
+    with make_session() as session:
+        harness = Harness(
+            name="OpenCode",
+            slug="opencode",
+            local_upstream_path=".",
+        )
+        session.add(harness)
+        session.commit()
+        session.refresh(harness)
+
+        job = RefreshJobService(SuccessfulRunner(), log_dir=tmp_path).refresh_harness(
+            session,
+            harness,
+            trigger="cron",
+        )
+        persisted_job = session.get(AgentJob, job.id)
+
+    assert persisted_job is not None
+    assert persisted_job.trigger == "cron"
+    semantic_events = read_semantic_events(tmp_path)
+    assert semantic_events[0]["metadata"]["trigger"] == "cron"
+
+
 def test_refresh_service_marks_parser_failure_failed_and_appends_error(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

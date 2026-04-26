@@ -262,3 +262,25 @@ Evidence:
 What's now possible: v0.3 can proceed toward APScheduler/cron knowing the manual refresh path is no longer a one-target special case.
 
 What's now blocking: no product blocker. A future real model-backed Codex CLI refresh can be run when useful, but v0.3a's code path is already covered without spending a long `gpt-5.5` runtime call.
+
+## Update 2026-04-26 — v0.3b guarded scheduler slice
+
+Roman asked Codex to increase autonomous work chunk size again. Codex took the next PRD v0.3 product step as a larger loop: first scheduler slice from PRD/WHY through implementation, validation, visual smoke, live smoke, and commit.
+
+What changed:
+- Added `RefreshSchedule` as the DB-backed per-harness cadence table.
+- Added APScheduler `3.11.2`, deliberately choosing latest stable 3.x over `4.0.0a6` alpha.
+- Added `observatory.scheduler.service` for opt-in registration, next-run calculation, and testable scheduler boundaries.
+- FastAPI lifespan can start/shutdown a `BackgroundScheduler`, guarded by `OBSERVATORY_SCHEDULER_ENABLED`; default local/test startup does not dispatch background jobs.
+- Job Dashboard now shows refresh schedule metadata before recent jobs.
+- Scheduled dispatch reuses `RefreshJobService` and labels jobs with `trigger="cron"`.
+- Durable dispatch labels now omit long Codex agent ids unless a live technical operation needs the id.
+
+Evidence:
+- `uv run pytest` passed with 57 tests.
+- `ruff`, `mypy`, and anchor validator passed.
+- `uv run alembic upgrade head` applied the schedule migration to the real local SQLite DB.
+- `npm run visual:jobs`, `npm run visual:harness`, and `npm run visual:matrix` passed.
+- Live `/jobs` showed schedule metadata, and a registration smoke produced `registered=1`, `calls=0`.
+
+What's now possible: v0.3 can proceed to the first Curation Queue for proposed Insights, or to enabling a narrow real cron run once Roman wants to spend a model-backed scheduled refresh.

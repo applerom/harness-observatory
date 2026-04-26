@@ -178,10 +178,12 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_SEMANTIC_RUNTIME_TRACE>
 
-  <FEATURE_CRON_SCHEDULER ID="FEAT-CRON-SCHEDULER" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>APScheduler integration that fires configured job types on a schedule (e.g. nightly refresh, weekly discovery), with schedule configuration in a settings file.</INTENT>
+  <FEATURE_CRON_SCHEDULER ID="FEAT-CRON-SCHEDULER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>APScheduler integration that registers DB-backed per-harness refresh schedules, exposes next-run metadata, and can be enabled for in-process scheduled dispatch while staying off by default for safe local/test startup.</INTENT>
     <PRD_REF>docs/PRD.md §14 Automation Strategy</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-APP"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-SCHEDULER"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_CRON_SCHEDULER>
 
@@ -280,11 +282,19 @@
   <MODULE_WEB_APP ID="MOD-WEB-APP"
                   FILE="src/observatory/web/app.py"
                   STATE="STARTED">
-    <INTENT>FastAPI application factory: registers all routers, configures DB engine, sets up lifespan (including APScheduler for cron jobs in later phases), and serves static assets.</INTENT>
+    <INTENT>FastAPI application factory: registers all routers, configures DB engine, sets up optional guarded scheduler lifespan, and serves static assets.</INTENT>
     <ANCHOR NAME="START_APP_FACTORY"       COORD="src/observatory/web/app.py#START_APP_FACTORY"/>
     <ANCHOR NAME="START_APP_ROUTERS"       COORD="src/observatory/web/app.py#START_APP_ROUTERS"/>
     <ANCHOR NAME="START_APP_DB_INIT"       COORD="src/observatory/web/app.py#START_APP_DB_INIT"/>
+    <ANCHOR NAME="START_APP_SCHEDULER"     COORD="src/observatory/web/app.py#START_APP_SCHEDULER"/>
   </MODULE_WEB_APP>
+
+  <MODULE_SCHEDULER ID="MOD-SCHEDULER"
+                    FILE="src/observatory/scheduler/service.py"
+                    STATE="STARTED">
+    <INTENT>v0.3b scheduler service: reads DB-backed refresh schedules, computes next-run times, registers APScheduler interval jobs, and dispatches through the existing RefreshJobService boundary only when explicitly enabled.</INTENT>
+    <ANCHOR NAME="START_SCHEDULER_SERVICE" COORD="src/observatory/scheduler/service.py#START_SCHEDULER_SERVICE"/>
+  </MODULE_SCHEDULER>
 
   <MODULE_WEB_ROUTES_DASHBOARD ID="MOD-WEB-ROUTES-DASHBOARD"
                                 FILE="src/observatory/web/routes/dashboard.py"
