@@ -51,9 +51,11 @@ class RecordingRunner:
 
     def __init__(self) -> None:
         self.called = False
+        self.context: AgentContext | None = None
 
-    async def run(self, _context: AgentContext) -> AgentResult:
+    async def run(self, context: AgentContext) -> AgentResult:
         self.called = True
+        self.context = context
         return AgentResult(status="done", output=FIXTURE.read_text(encoding="utf-8"))
 
     async def _empty_stream(self) -> AsyncIterator[AgentEvent]:
@@ -161,6 +163,31 @@ def test_refresh_service_can_label_cron_trigger(tmp_path: Path) -> None:
     assert persisted_job.trigger == "cron"
     semantic_events = read_semantic_events(tmp_path)
     assert semantic_events[0]["metadata"]["trigger"] == "cron"
+
+
+def test_refresh_service_persists_exact_rendered_prompt_text(tmp_path: Path) -> None:
+    runner = RecordingRunner()
+
+    with make_session() as session:
+        harness = Harness(
+            name="Codex CLI",
+            slug="codex-cli",
+            upstream_url="https://github.com/openai/codex",
+            local_upstream_path=".",
+        )
+        session.add(harness)
+        session.commit()
+        session.refresh(harness)
+
+        job = RefreshJobService(runner, log_dir=tmp_path).refresh_harness(session, harness)
+        persisted_job = session.get(AgentJob, job.id)
+
+    assert persisted_job is not None
+    assert persisted_job.prompt_text is not None
+    assert "Inspect the Codex CLI harness" in persisted_job.prompt_text
+    assert "https://github.com/openai/codex" in persisted_job.prompt_text
+    assert runner.context is not None
+    assert runner.context.prompt == persisted_job.prompt_text
 
 
 def test_refresh_service_marks_parser_failure_failed_and_appends_error(

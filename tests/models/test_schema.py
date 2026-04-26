@@ -116,6 +116,7 @@ def test_future_stub_tables_round_trip() -> None:
             target_kind="Harness",
             target_id=harness.id,
             prompt_template_id=prompt.id,
+            prompt_text="Find one useful observation.",
             runner_name="StubRunner",
             status="queued",
             produced_artifact_ids=[],
@@ -133,7 +134,9 @@ def test_future_stub_tables_round_trip() -> None:
         session.add_all([job, score, schedule, review, revision])
         session.commit()
 
-        assert session.exec(select(AgentJob)).one().status == "queued"
+        stored_job = session.exec(select(AgentJob)).one()
+        assert stored_job.status == "queued"
+        assert stored_job.prompt_text == "Find one useful observation."
         stored_schedule = session.exec(select(RefreshSchedule)).one()
         assert stored_schedule.harness_id == harness.id
         assert stored_schedule.enabled is True

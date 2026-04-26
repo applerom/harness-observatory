@@ -8,6 +8,40 @@
 > process friction, tool/version drift, and rule changes that future agents and
 > students should understand.
 
+## 2026-04-26 — Live Streaming Must Be End-To-End
+
+Observation:
+- The v0.4a Live Agent Studio slice initially had an SSE endpoint and fake-runner
+  tests, but concrete `CodexRunner.stream()` / `ClaudeRunner.stream()` still
+  delegated to `run()`, which buffered stdout/stderr with `communicate()`.
+- A reviewer subagent caught the cross-boundary mismatch: the route was shaped
+  like live streaming, but real CLI output would not appear until process exit.
+- The same review caught three smaller semantic risks: live cancellation could
+  leave `AgentJob.status="running"`, refresh jobs did not persist the exact
+  rendered prompt, and a quick `Mark corrected` button implied a real correction
+  workflow that did not exist.
+
+Impact:
+- Agent-visible UI tests are necessary but not sufficient for runtime truth.
+- Product words like "live", "corrected", and "exact prompt" are contracts
+  across routes, services, runners, data, and tests.
+- Reviewer agents are valuable when the main implementation has passed local
+  tests but may still be semantically false.
+
+Action:
+- Concrete runner `stream()` methods now launch subprocesses directly and pump
+  stdout/stderr incrementally.
+- Live stream cancellation marks the job failed and runner stream cleanup kills
+  the subprocess.
+- Refresh jobs persist `AgentJob.prompt_text` using the same rendered prompt
+  passed to `AgentContext`.
+- The unsupported `corrected` quick action was removed until a real correction
+  flow can capture replacement text and preserve old content.
+
+Teaching extraction:
+- This episode is now a reusable lesson:
+  `docs/lessons/live-streaming-is-a-contract.md`.
+
 ## 2026-04-26 — Runtime Freshness And Agent Version Inertia
 
 Observation:

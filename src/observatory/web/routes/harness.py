@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Harness list, dossier, and manual refresh entry point.
-# PRD_REF: docs/PRD.md §26.2, §1162
+# PRD_REF: docs/PRD.md §11.3, §26.2
 # WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-HARNESS
 # SCOPE: harness index; harness dossier; target-generic refresh trigger
 # INVARIANTS:

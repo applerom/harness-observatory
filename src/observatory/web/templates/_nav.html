@@ -5,7 +5,7 @@ START_MODULE_CONTRACT:
 PURPOSE: Shared top navigation for observatory web surfaces.
 PRD_REF: docs/PRD.md §26.2, §11.9
 WHY_REF: docs/why-graph.xml MOD-WEB-APP
-SCOPE: dashboard, harness, topic, matrix, and jobs entry links
+SCOPE: dashboard, harness, topic, matrix, jobs, curation, and live entry links
 INVARIANTS:
 - Navigation names stay aligned with PRD §26.2 surfaces.
 :END_MODULE_CONTRACT
@@ -19,6 +19,8 @@ INVARIANTS:
       <a class="nav-link {% if active_nav == 'topics' %}nav-link-active{% endif %}" href="/topics">Topics</a>
       <a class="nav-link {% if active_nav == 'matrix' %}nav-link-active{% endif %}" href="/matrix">Matrix</a>
       <a class="nav-link {% if active_nav == 'jobs' %}nav-link-active{% endif %}" href="/jobs">Jobs</a>
+      <a class="nav-link {% if active_nav == 'curation' %}nav-link-active{% endif %}" href="/curation">Curation</a>
+      <a class="nav-link {% if active_nav == 'live' %}nav-link-active{% endif %}" href="/live">Live</a>
     </div>
   </nav>
 </header>

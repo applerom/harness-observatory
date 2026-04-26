@@ -66,6 +66,12 @@
     <REL TYPE="DEPENDS_ON" TARGET="USECASE:UC-DISPATCH"/>
   </USECASE_LIVE_DISCOVERY>
 
+  <USECASE_CURATION ID="UC-CURATION" NAME="Curate agent-produced insights">
+    <INTENT>Owner opens a workbench queue of proposed or disputed Insights produced by agent jobs, scans their status and evidence count, and applies confidence labels such as human-verified, disputed, or historical. The goal is post-publication curation, not approval gating.</INTENT>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CURATION-QUEUE"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CONFIDENCE-BANDS"/>
+  </USECASE_CURATION>
+
   <USECASE_LECTURER_DEMO ID="UC-LECTURER-DEMO" NAME="Lecturer walks through insight and proof">
     <INTENT>Lecturer opens a dossier or matrix cell and uses it as a teaching surface. They show an Insight at the top, then click "Show the proof" to reveal the EvidenceItem (file:line citation from upstream). For surprising or contested insights, they press "Ask the agent why" to spawn an explanation job live. The goal is demonstrating agent-first epistemology: assertion on top, evidence below, always reachable.</INTENT>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-EVIDENCE-RICH-VIEW"/>
@@ -187,12 +193,26 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_CRON_SCHEDULER>
 
-  <FEATURE_LIVE_AGENT_STUDIO ID="FEAT-LIVE-AGENT-STUDIO" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Projector-optimized SSE streaming UI for live agent runs — shows the agent's output token by token in real time, designed for large screens and live lecture use.</INTENT>
+  <FEATURE_LIVE_AGENT_STUDIO ID="FEAT-LIVE-AGENT-STUDIO" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Projector-optimized SSE streaming UI for live agent runs: select a target and runner, create a live AgentJob, stream AgentRunner events, preserve raw logs, and show the run state to a classroom.</INTENT>
     <PRD_REF>docs/PRD.md §11.8 Live Agent Studio</PRD_REF>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LIVE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-LIVE-SERVICE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_LIVE_AGENT_STUDIO>
+
+  <FEATURE_CURATION_QUEUE ID="FEAT-CURATION-QUEUE" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Workbench queue that surfaces proposed and disputed Insights with target labels, evidence counts, and small curation actions. It is not an approval gate; Insights remain visible elsewhere while labels improve trust calibration.</INTENT>
+    <PRD_REF>docs/PRD.md §11.7 Curation Queue</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-CURATION"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_CURATION_QUEUE>
+
+  <FEATURE_ABSTRACT_JOB ID="FEAT-ABSTRACT-JOB" PRIORITY="MEDIUM" STATE="PLANNED">
+    <INTENT>Abstract job type that turns EvidenceItems into diagrams, ascii art, or other higher-level teaching artifacts. v0.4a names this next slice after Live Studio streaming works.</INTENT>
+    <PRD_REF>docs/PRD.md §14.2 Job types, §24 v0.4</PRD_REF>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_ABSTRACT_JOB>
 
   <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="PLANNED">
     <INTENT>Student attribution on fresh-finding Insights: Insight.first_observed_by field stores the student's name when they claim a discovery during a live session; UI surfaces the attribution visibly.</INTENT>
@@ -299,10 +319,34 @@
   <MODULE_WEB_ROUTES_DASHBOARD ID="MOD-WEB-ROUTES-DASHBOARD"
                                 FILE="src/observatory/web/routes/dashboard.py"
                                 STATE="STARTED">
-    <INTENT>FastAPI router for the home/dashboard page: shows harness count, topic count, insight count, entry links to matrix and dossiers. Also hosts the Live Agent Studio SSE endpoint in later phases.</INTENT>
+    <INTENT>FastAPI router for the home/dashboard page: shows harness count, topic count, insight count, and entry links to the major workbench/reference surfaces.</INTENT>
     <ANCHOR NAME="START_ROUTE_DASHBOARD"   COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_DASHBOARD"/>
-    <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_LIVE_STUDIO"/>
   </MODULE_WEB_ROUTES_DASHBOARD>
+
+  <MODULE_WEB_ROUTES_CURATION ID="MOD-WEB-ROUTES-CURATION"
+                               FILE="src/observatory/web/routes/curation.py"
+                               STATE="STARTED">
+    <INTENT>FastAPI router for the Curation Queue: lists proposed/disputed Insights and applies confidence labels without hiding the underlying agent-produced content.</INTENT>
+    <ANCHOR NAME="START_ROUTE_CURATION_LIST" COORD="src/observatory/web/routes/curation.py#START_ROUTE_CURATION_LIST"/>
+    <ANCHOR NAME="START_ROUTE_CURATION_ACTION" COORD="src/observatory/web/routes/curation.py#START_ROUTE_CURATION_ACTION"/>
+  </MODULE_WEB_ROUTES_CURATION>
+
+  <MODULE_WEB_ROUTES_LIVE ID="MOD-WEB-ROUTES-LIVE"
+                          FILE="src/observatory/web/routes/live.py"
+                          STATE="STARTED">
+    <INTENT>FastAPI router for Live Agent Studio: creates live AgentJobs, renders the projector surface, and streams runner events through SSE while preserving raw logs.</INTENT>
+    <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STUDIO"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_START" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_START"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_STREAM" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STREAM"/>
+  </MODULE_WEB_ROUTES_LIVE>
+
+  <MODULE_LIVE_SERVICE ID="MOD-LIVE-SERVICE"
+                       FILE="src/observatory/live/service.py"
+                       STATE="STARTED">
+    <INTENT>Service boundary for Live Agent Studio: persists queued live discovery AgentJobs, starts runner.stream only when the SSE endpoint is consumed, writes raw logs, and emits semantic runtime events.</INTENT>
+    <ANCHOR NAME="START_LIVE_JOB_CREATE" COORD="src/observatory/live/service.py#START_LIVE_JOB_CREATE"/>
+    <ANCHOR NAME="START_LIVE_JOB_STREAM" COORD="src/observatory/live/service.py#START_LIVE_JOB_STREAM"/>
+  </MODULE_LIVE_SERVICE>
 
   <MODULE_WEB_ROUTES_HARNESS ID="MOD-WEB-ROUTES-HARNESS"
                               FILE="src/observatory/web/routes/harness.py"

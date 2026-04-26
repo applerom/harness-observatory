@@ -1,12 +1,12 @@
 # FILE: src/observatory/runners/base.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: AgentRunner protocol and small DTOs for future runtime agent dispatch.
+# PURPOSE: AgentRunner protocol and small DTOs for runtime agent dispatch.
 # PRD_REF: docs/PRD.md §24, §26.3
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
 # SCOPE: runner protocol; event context; result envelope; optional preflight envelope
 # INVARIANTS:
-# - v0.1 defines types only; no AgentJob is created, started, or dispatched here.
+# - Concrete subprocess details stay inside runner implementations, not web/routes.
 # - Runner implementations must report progress through AgentEvent and final state through AgentResult.
 # START_MODULE_MAP:
 # - AgentEvent: append-only event emitted by future runner implementations.
@@ -24,7 +24,7 @@ from typing import Protocol
 
 @dataclass(frozen=True, slots=True)
 class AgentEvent:
-    """Single append-only event produced during a future AgentJob run."""
+    """Single append-only event produced during an AgentJob run."""
 
     kind: str
     message: str
@@ -33,7 +33,7 @@ class AgentEvent:
 
 @dataclass(frozen=True, slots=True)
 class AgentContext:
-    """Input envelope for future runtime agent execution."""
+    """Input envelope for runtime agent execution."""
 
     job_id: int
     job_type: str
@@ -46,7 +46,7 @@ class AgentContext:
 # START_RUNNER_JOB_RESULT:
 @dataclass(frozen=True, slots=True)
 class AgentResult:
-    """Final outcome from a future AgentRunner invocation."""
+    """Final outcome from an AgentRunner invocation."""
 
     status: str
     output: str

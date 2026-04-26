@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Read-only Job Dashboard for AgentJob lifecycle and semantic trace visibility.
-# PRD_REF: docs/PRD.md §11.9, §24, §1162
+# PRD_REF: docs/PRD.md §11.9, §24
 # WHY_REF: docs/why-graph.xml#UC-JOB-DASHBOARD
 # SCOPE: job list; schedule list; job detail; raw log view
 # INVARIANTS:

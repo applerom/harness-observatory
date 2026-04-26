@@ -1175,6 +1175,8 @@ Current phase status (2026-04-26):
 - Full v0.2 is functionally complete for the one-harness vertical.
 - v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed `Insight` / `EvidenceItem` rows.
 - v0.3b is complete locally: DB-backed refresh schedules exist, APScheduler is wired through an opt-in FastAPI lifespan, and Job Dashboard shows schedule metadata.
+- v0.3c is complete locally: Curation Queue surfaces proposed/disputed/unverified Insights, applies confidence labels, and writes `RevisionNote` audit entries without becoming an approval gate.
+- v0.4a is complete locally: Live Agent Studio creates live discover jobs, streams real runner stdout/stderr through SSE, preserves raw logs, emits semantic runtime events, and stores exact prompt text.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1227,12 +1229,31 @@ v0.3b acceptance:
 - Job Dashboard shows a compact schedule section with next-run metadata.
 - The first scheduler slice reuses the existing `AgentJob` / `RefreshJobService` path instead of inventing a separate cron execution path.
 
+v0.3c acceptance:
+
+- A Curation Queue route surfaces `proposed` and `disputed` Insights without hiding them from dossiers or the matrix.
+- Queue rows show status, confidence band, harness/topic labels when known, and evidence count.
+- Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
+- The navigation exposes Curation as an owner/workbench surface.
+
+Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.
+
 ### v0.4 — Live Agent Studio and abstract job type
 
 - SSE streaming UI for live agent stdout
 - Live Agent Studio surface (§11.8) — projector-optimized
 - `abstract` job type for diagram and ascii art generation from EvidenceItems
 - First live discovery demo possible: lecturer dispatches, students watch, finding claimed
+
+v0.4a acceptance:
+
+- `/live` renders a projector-friendly Live Agent Studio with harness, runner, and task prompt controls.
+- Posting the form creates an `AgentJob(type="discover", trigger="live")` through the `AgentRunner` abstraction and redirects to a live job page.
+- `/live/{job_id}` shows target, runner, status, raw-log link when available, and a stream panel.
+- `/live/{job_id}/stream` is an SSE endpoint that starts execution only for a queued live job, streams runner events, writes the raw log, emits semantic runtime events, and updates the `AgentJob` terminal status.
+- `AgentJob.prompt_text` stores the exact prompt used for live/runtime replay; `PromptTemplate` remains the reusable prompt library, not a per-run prompt dump.
+- Tests use fake runners and never call real Codex/Claude.
+- A first `abstract` job type placeholder is visible in code/docs as a next v0.4 slice, but diagram generation itself is deferred until the live stream surface works.
 
 ### v0.5 — Multi-pass verification and confidence labels in UI
 

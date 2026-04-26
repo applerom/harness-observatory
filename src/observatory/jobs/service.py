@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Minimal AgentJob creation and execution service.
-# PRD_REF: docs/PRD.md §24, §1162
+# PRD_REF: docs/PRD.md §24, §26.3
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
 # SCOPE: manual refresh job spine; prompt template seed; target cwd preflight; raw log persistence; semantic event logging; successful log parsing
 # INVARIANTS:
@@ -57,11 +57,13 @@ class RefreshJobService:
     def refresh_harness(self, session: Session, harness: Harness, trigger: str = "manual") -> AgentJob:
         """Run a minimal refresh job for any configured harness target."""
         template = ensure_refresh_prompt_template(session)
+        rendered_prompt = render_refresh_prompt(template, harness)
         job = AgentJob(
             type="refresh",
             target_kind="Harness",
             target_id=harness.id,
             prompt_template_id=template.id,
+            prompt_text=rendered_prompt,
             runner_name=self.runner.name,
             runner_version=self.runner.version,
             trigger=trigger,
@@ -179,7 +181,7 @@ class RefreshJobService:
         context = AgentContext(
             job_id=job.id or 0,
             job_type=job.type,
-            prompt=render_refresh_prompt(template, harness),
+            prompt=job.prompt_text or rendered_prompt,
             target_kind=job.target_kind,
             target_id=job.target_id,
             metadata={"cwd": resolved_cwd.path, "harness_slug": harness.slug},

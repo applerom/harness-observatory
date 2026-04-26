@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Claude CLI backed AgentRunner implementation for v0.2 refresh jobs.
-# PRD_REF: docs/PRD.md §24, §26.3, §1162
+# PRD_REF: docs/PRD.md §24, §26.3
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
 # SCOPE: subprocess execution boundary; stdout/stderr capture; failure envelope
 # INVARIANTS:
@@ -13,6 +13,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from contextlib import suppress
 
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
 
@@ -75,15 +76,111 @@ class ClaudeRunner:
         )
 
     def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
-        """Yield a small event stream for callers that want progress shape now."""
+        """Yield subprocess output incrementally for Live Agent Studio callers."""
         return self._stream(context)
 
     async def _stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
         yield AgentEvent(kind="status", message="started")
-        result = await self.run(context)
-        for event in result.events:
-            if event.message:
-                yield event
-        yield AgentEvent(kind="status", message=result.status)
+        cwd = context.metadata.get("cwd") or None
+        try:
+            process = await asyncio.create_subprocess_exec(
+                self.executable_name,
+                "-p",
+                context.prompt,
+                cwd=cwd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError as exc:
+            yield AgentEvent(
+                kind="error",
+                message=f"Claude CLI executable not found: {exc.filename}",
+            )
+            yield AgentEvent(kind="status", message="failed")
+            return
+
+        async for event in _stream_process_output(
+            process=process,
+            timeout_seconds=self.timeout_seconds,
+            timeout_message=f"Claude CLI timed out after {self.timeout_seconds:g} seconds",
+        ):
+            yield event
 
     # :END_CLAUDE_RUN
+
+
+async def _stream_process_output(
+    *,
+    process: asyncio.subprocess.Process,
+    timeout_seconds: float,
+    timeout_message: str,
+) -> AsyncIterator[AgentEvent]:
+    """Stream stdout/stderr chunks until the process reaches a terminal state."""
+    queue: asyncio.Queue[AgentEvent] = asyncio.Queue()
+    pump_tasks = [
+        asyncio.create_task(_pump_stream("stdout", process.stdout, queue)),
+        asyncio.create_task(_pump_stream("stderr", process.stderr, queue)),
+    ]
+    wait_task = asyncio.create_task(process.wait())
+    deadline = asyncio.get_running_loop().time() + timeout_seconds
+
+    try:
+        while True:
+            if wait_task.done() and all(task.done() for task in pump_tasks) and queue.empty():
+                break
+
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                await _clean_up_timed_out_process(process)
+                yield AgentEvent(kind="error", message=timeout_message)
+                yield AgentEvent(kind="status", message="failed")
+                return
+
+            get_task = asyncio.create_task(queue.get())
+            done, _pending = await asyncio.wait(
+                [get_task, wait_task, *pump_tasks],
+                timeout=remaining,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            if get_task in done:
+                yield get_task.result()
+            else:
+                get_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await get_task
+    finally:
+        for task in pump_tasks:
+            if not task.done():
+                task.cancel()
+        for task in pump_tasks:
+            with suppress(asyncio.CancelledError):
+                await task
+        if not wait_task.done():
+            wait_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await wait_task
+        if process.returncode is None:
+            await _clean_up_timed_out_process(process)
+
+    yield AgentEvent(kind="status", message="done" if process.returncode == 0 else "failed")
+
+
+async def _pump_stream(
+    kind: str,
+    stream: asyncio.StreamReader | None,
+    queue: asyncio.Queue[AgentEvent],
+) -> None:
+    if stream is None:
+        return
+    while chunk := await stream.read(4096):
+        queue.put_nowait(AgentEvent(kind=kind, message=chunk.decode("utf-8", errors="replace")))
+
+
+async def _clean_up_timed_out_process(process: asyncio.subprocess.Process) -> None:
+    if process.returncode is None:
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+    with suppress(ProcessLookupError):
+        await process.communicate()

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from collections.abc import AsyncIterator, Generator
 from pathlib import Path
@@ -9,10 +10,21 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from observatory import db
-from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, RefreshSchedule, Topic
+from observatory.live.service import stream_live_job
+from observatory.models import (
+    AgentJob,
+    ComparisonCell,
+    EvidenceItem,
+    Harness,
+    Insight,
+    RefreshSchedule,
+    RevisionNote,
+    Topic,
+)
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
 from observatory.web.app import create_app
 from observatory.web.routes.harness import get_refresh_runner_factory
+from observatory.web.routes.live import get_live_runner_factory
 
 
 class FakeRefreshRunner:
@@ -28,6 +40,37 @@ class FakeRefreshRunner:
 
     def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
         return self._empty_stream()
+
+
+class FakeLiveRunner:
+    name = "fake-live"
+    version = "test"
+
+    async def run(self, context: AgentContext) -> AgentResult:
+        return AgentResult(status="done", output=f"Live run {context.job_id}")
+
+    async def _stream_events(self) -> AsyncIterator[AgentEvent]:
+        yield AgentEvent(kind="stdout", message="first live chunk")
+        yield AgentEvent(kind="stdout", message="second live chunk")
+        yield AgentEvent(kind="status", message="done")
+
+    def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
+        return self._stream_events()
+
+
+class CancellingLiveRunner:
+    name = "cancel-live"
+    version = "test"
+
+    async def run(self, context: AgentContext) -> AgentResult:
+        return AgentResult(status="failed", output=f"Cancelled {context.job_id}")
+
+    async def _stream_events(self) -> AsyncIterator[AgentEvent]:
+        yield AgentEvent(kind="stdout", message="partial live chunk")
+        raise asyncio.CancelledError
+
+    def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
+        return self._stream_events()
 
 
 @pytest.fixture()
@@ -50,6 +93,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[TestCli
     app.state.test_engine = engine
     app.dependency_overrides[db.get_session] = override_session
     app.dependency_overrides[get_refresh_runner_factory] = lambda: lambda _runner_name: FakeRefreshRunner()
+    app.dependency_overrides[get_live_runner_factory] = lambda: lambda _runner_name: FakeLiveRunner()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
@@ -344,3 +388,164 @@ def test_job_dashboard_renders_refresh_schedule_metadata(client: TestClient) -> 
     assert "120 min" in response.text
     assert "not scheduled" in response.text
     assert "idle" in response.text
+
+
+def test_curation_queue_lists_unverified_insights_and_actions_write_revision_note(
+    client: TestClient,
+) -> None:
+    queue_response = client.get("/curation")
+
+    assert queue_response.status_code == 200
+    assert "Unverified Insights" in queue_response.text
+    assert "Instruction files change authority" in queue_response.text
+    assert "Any harness" in queue_response.text
+    assert "Instruction Files" in queue_response.text
+    assert "1 evidence" in queue_response.text
+    assert "Mark corrected" not in queue_response.text
+
+    invalid_action_response = client.post(
+        "/curation/1/status",
+        data={"status": "corrected"},
+        follow_redirects=False,
+    )
+    assert invalid_action_response.status_code == 400
+
+    action_response = client.post(
+        "/curation/1/status",
+        data={"status": "disputed"},
+        follow_redirects=False,
+    )
+    assert action_response.status_code == 303
+    assert action_response.headers["location"] == "/curation"
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 1)
+        revisions = session.exec(select(RevisionNote)).all()
+
+    assert insight is not None
+    assert insight.status == "disputed"
+    assert insight.confidence_band == "disputed"
+    assert len(revisions) == 1
+    assert revisions[0].insight_id == 1
+    assert "from proposed/unverified to disputed/disputed" in (revisions[0].note or "")
+
+    disputed_queue_response = client.get("/curation")
+    assert disputed_queue_response.status_code == 200
+    assert "Instruction files change authority" in disputed_queue_response.text
+    assert "disputed" in disputed_queue_response.text
+
+
+def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> None:
+    form_response = client.get("/live")
+    assert form_response.status_code == 200
+    assert "Live Agent Studio" in form_response.text
+    assert "OpenCode" in form_response.text
+    assert "CodexRunner" in form_response.text
+
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a live teaching detail.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+    assert create_response.headers["location"] == "/live/1"
+
+    detail_response = client.get("/live/1")
+    assert detail_response.status_code == 200
+    assert "Live Job #1" in detail_response.text
+    assert "Harness: OpenCode" in detail_response.text
+    assert "fake-live test" in detail_response.text
+    assert "queued" in detail_response.text
+    assert "Find a live teaching detail." in detail_response.text
+    assert 'href="/jobs/1/log"' in detail_response.text
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job_before_stream = session.get(AgentJob, 1)
+    assert job_before_stream is not None
+    assert job_before_stream.status == "queued"
+    assert job_before_stream.prompt_text == "Find a live teaching detail."
+    assert job_before_stream.stdout_log_path is None
+
+    with client.stream("GET", "/live/1/stream") as stream_response:
+        stream_text = stream_response.read().decode("utf-8")
+
+    assert stream_response.status_code == 200
+    assert 'event: status\ndata: {"message": "running", "job_status": "running"}' in stream_text
+    assert "first live chunk" in stream_text
+    assert "second live chunk" in stream_text
+    assert stream_text.index("first live chunk") < stream_text.index("second live chunk")
+    assert 'event: status\ndata: {"message": "done", "job_status": "done"}' in stream_text
+
+    with Session(app.state.test_engine) as session:
+        job_after_stream = session.get(AgentJob, 1)
+
+    assert job_after_stream is not None
+    assert job_after_stream.status == "done"
+    assert job_after_stream.stdout_log_path is not None
+    log_text = Path(job_after_stream.stdout_log_path).read_text(encoding="utf-8")
+    assert "first live chunk" in log_text
+    assert "second live chunk" in log_text
+
+    semantic_events = [
+        json.loads(line)
+        for line in (Path("live-sessions") / "semantic-events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert [event["code"] for event in semantic_events] == [
+        "live_job_running",
+        "live_target_cwd_preflight_succeeded",
+        "live_runner_stream_result",
+    ]
+    assert semantic_events[-1]["anchor"] == "START_ROUTE_LIVE_STREAM"
+    assert semantic_events[-1]["actual"] == "runner stream status: done"
+
+
+def test_live_stream_cancellation_marks_job_failed(client: TestClient) -> None:
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a cancellable detail.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    async def consume_cancelled_stream() -> list[str]:
+        app = cast(Any, client.app)
+        with Session(app.state.test_engine) as session:
+            chunks: list[str] = []
+            async for chunk in stream_live_job(
+                session,
+                job_id=1,
+                runner_factory=lambda _runner_name: CancellingLiveRunner(),
+            ):
+                chunks.append(chunk)
+            return chunks
+
+    chunks = asyncio.run(consume_cancelled_stream())
+    assert "partial live chunk" in "".join(chunks)
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+
+    assert job is not None
+    assert job.status == "failed"
+    assert job.error_message == "Live stream cancelled before terminal runner status"
+    assert job.stdout_log_path is not None
+    log_text = Path(job.stdout_log_path).read_text(encoding="utf-8")
+    assert "partial live chunk" in log_text
+    assert "Live stream cancelled before terminal runner status" in log_text
+
+    semantic_events = [
+        json.loads(line)
+        for line in (Path("live-sessions") / "semantic-events.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert semantic_events[-1]["code"] == "live_runner_stream_cancelled"

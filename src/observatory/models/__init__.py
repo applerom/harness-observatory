@@ -301,6 +301,7 @@ class AgentJob(SQLModel, table=True):
     target_kind: str | None = None
     target_id: int | None = None
     prompt_template_id: int | None = Field(default=None, foreign_key="prompttemplate.id")
+    prompt_text: str | None = None
     model: str | None = None
     runner_name: str | None = None
     runner_version: str | None = None

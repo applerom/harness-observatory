@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Central router registration for the web app.
-# PRD_REF: docs/PRD.md §26.2, §26.6, §1162
+# PRD_REF: docs/PRD.md §26.2, §26.6
 # WHY_REF: docs/why-graph.xml MOD-WEB-APP
 # SCOPE: include route modules without adding feature logic
 # INVARIANTS:
@@ -11,7 +11,7 @@
 
 from fastapi import FastAPI
 
-from observatory.web.routes import dashboard, harness, jobs, matrix, topic
+from observatory.web.routes import curation, dashboard, harness, jobs, live, matrix, topic
 
 
 def register_routes(app: FastAPI) -> None:
@@ -21,3 +21,5 @@ def register_routes(app: FastAPI) -> None:
     app.include_router(topic.router)
     app.include_router(matrix.router)
     app.include_router(jobs.router)
+    app.include_router(curation.router)
+    app.include_router(live.router)

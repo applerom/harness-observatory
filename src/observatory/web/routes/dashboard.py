@@ -64,9 +64,3 @@ async def dashboard_pulse() -> HTMLResponse:
 
 
 # :END_ROUTE_DASHBOARD
-
-
-# START_ROUTE_LIVE_STUDIO:
-# Live Agent Studio is intentionally absent in v0.1; PRD §26.2 limits this slice
-# to read-only dashboard navigation and imported-data counts.
-# :END_ROUTE_LIVE_STUDIO

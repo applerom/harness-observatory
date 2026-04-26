@@ -648,13 +648,13 @@ Do not let a mini model own architecture or final correctness.
 ## 11. Project-specific hazards to guard against
 
 1. **Confusing process subagents with product AgentRunner.**  
-   `lead agent` / `subagent` are development-process roles. `AgentRunner` is the application's future runtime abstraction.
+   `lead agent` / `subagent` are development-process roles. `AgentRunner` is the application's runtime abstraction.
 
 2. **Hardcoding `claude -p` below the abstraction.**  
    v1 may use ClaudeRunner, but the code should preserve runner-agnostic boundaries.
 
-3. **Scope creep past v0.1.**  
-   v0.1 is read-only viewer + markdown importer. No cron, no live studio, no real agent jobs, no Ask-the-agent-why.
+3. **Scope creep past the active phase.**  
+   Keep PRD/WHY updated before implementation and make deferred slices explicit instead of smuggling them into a nearby feature.
 
 4. **WORKLOG drift.**  
    `WORKLOG.md` must be updated after meaningful steps and committed with the relevant change.

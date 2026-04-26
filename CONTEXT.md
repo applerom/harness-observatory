@@ -284,3 +284,27 @@ Evidence:
 - Live `/jobs` showed schedule metadata, and a registration smoke produced `registered=1`, `calls=0`.
 
 What's now possible: v0.3 can proceed to the first Curation Queue for proposed Insights, or to enabling a narrow real cron run once Roman wants to spend a model-backed scheduled refresh.
+
+## Update 2026-04-26 — v0.3c/v0.4a Curation Queue and Live Agent Studio
+
+Roman pushed for a larger milestone-sized pass instead of minor substeps. Codex combined the remaining v0.3 Curation Queue with the first v0.4a Live Agent Studio SSE vertical, while deferring abstract teaching artifacts to v0.4b.
+
+What changed:
+- Added `/curation` as a post-publication curation workbench for proposed/disputed/unverified Insights.
+- Curation actions mark `human-verified`, `disputed`, or `historical` and write `RevisionNote` audit entries. `corrected` is deliberately not a quick action until there is a real correction workflow.
+- Added `AgentJob.prompt_text` with Alembic migration `20260426_0003`; refresh and live jobs now preserve the exact prompt text used at runtime.
+- Added `/live`, `/live/{job_id}`, and `/live/{job_id}/stream` for Live Agent Studio.
+- Live execution creates `AgentJob(type="discover", trigger="live")`, streams `AgentRunner.stream()` events via SSE, writes raw log chunks, and emits semantic runtime events.
+- `CodexRunner.stream()` and `ClaudeRunner.stream()` now read subprocess stdout/stderr incrementally instead of buffering through `run()`.
+- Live cancellation marks the job failed and runner stream cleanup kills the child subprocess.
+
+Evidence:
+- `uv run pytest` passed with 70 tests.
+- `ruff`, `mypy`, and anchor validator passed; anchor validator checked 45 anchors.
+- `uv run alembic upgrade head` applied `20260426_0003` to the real SQLite DB.
+- `npm run visual:curation` and `npm run visual:live` passed on the refreshed local server.
+- Live smoke job #6 used the real SQLite DB with a fake live runner, ended `done`, wrote raw log chunks, and produced `live_job_running`, `live_target_cwd_preflight_succeeded`, and `live_runner_stream_result` semantic events.
+
+What's now possible: v0.4b can add the first `abstract` job type for EvidenceItem-to-teaching-artifact generation.
+
+What's now blocking: no product blocker. A real model-backed live session can be run when Roman wants to spend a live Codex/Claude invocation.
