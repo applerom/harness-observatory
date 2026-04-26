@@ -195,3 +195,17 @@ What changed:
 What's now possible: Codex can run as a full lead-agent/orchestrator for this repo when the active session permits subagent spawning; Claude Code can do the same through its own Task/Agent tooling. Future agents should preserve the same delegation contract: bounded task, clear ownership, evidence report, lead-owned review/integration/commit.
 
 What's now blocking: no code has started yet. v0.1 implementation still waits for Roman's explicit implementation start signal after this process alignment is reviewed.
+
+## Update 2026-04-26 — Codex subagent operating profile added
+
+Roman provided `docs/codex-subagents-recommendations.md`, an advisory memo on how Codex should use subagents for this project. Codex checked it against current official OpenAI docs and converted it into a smaller project operating profile.
+
+What changed:
+- Added `docs/codex-subagent-profile.md` as the Codex-specific operating profile: small hierarchy, at most 1-2 scouts before write-heavy work, bounded worker ownership, no subagent commits, lead-owned integration.
+- Added project-local `.codex/config.toml` with `agents.max_threads = 4` and `agents.max_depth = 1`, plus default lead model posture.
+- Added custom Codex agent profiles under `.codex/agents/`: `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`.
+- Linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`.
+
+What's now possible: a future Codex lead can start v0.1 with a known subagent scheme instead of redesigning delegation each session.
+
+What's now blocking: still no production code. Next implementation start should begin from `WORKLOG.md` and `DELEGATION-PLAN.md`, using the Codex profile only as an operating aid.

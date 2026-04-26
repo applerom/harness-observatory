@@ -157,10 +157,10 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 This plan is harness-independent. A lead agent maps each task to the delegation primitive available in its current environment:
 
 - **Claude Code:** create one TaskCreate item per subagent, then dispatch through Claude Code's Agent/Task tool. Use Opus/Sonnet/Haiku according to task risk and owner subscription availability.
-- **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
+- **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Follow `docs/codex-subagent-profile.md` and the `.codex/agents/*.toml` profiles when available. Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
 - **Other harnesses:** use their equivalent bounded-agent mechanism only if it can preserve the same contract: self-contained brief, disjoint write ownership, evidence report, no commits by subagents, and lead-owned integration.
 
-Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary.
+Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer.
 
 ### How subagents are dispatched
 

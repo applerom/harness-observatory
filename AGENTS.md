@@ -56,6 +56,8 @@ Roman grants standing project-level authorization for lead agents to use subagen
 
 Lead agents should run **serially across harnesses**, not concurrently, unless Roman explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates WORKLOG/CONTEXT/git, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low for a personal-subscription educational project.
 
+When working in Codex, read `docs/codex-subagent-profile.md` before dispatching subagents. The profile and `.codex/agents/*.toml` files are Codex-specific operating aids; they do not override this file, WORKLOG, CONTEXT, the PRD, or the WHY graph.
+
 ### Interrupt-and-Resume Pattern
 
 This project runs on the owner's personal Claude Pro and ChatGPT Plus / Codex Plus subscriptions, both of which use 5-hour rolling rate windows. Agent sessions can also be compacted, terminated, or otherwise lose context without warning. Plan as if any session can stop mid-action — because it can.
