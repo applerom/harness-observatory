@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   WHY GRAPH — harness-observatory
-  Schema: 0.8  |  State: STEM (PRD-layer only, no code exists yet)
+  Schema: 0.8  |  State: LIVE (implemented anchors enforced for STARTED/DONE nodes)
 
-  This is the initial intent-navigation stem for harness-observatory.
-  It covers use cases and features derived from docs/PRD.md and SPIRIT.md.
-  MODULE nodes are PLANNED stubs — anchors will be confirmed when code lands.
-  All edges declared here represent intended structure, not implemented reality.
+  This is the live intent-navigation map for harness-observatory.
+  It covers use cases, features, and modules derived from docs/PRD.md and SPIRIT.md.
+  Some MODULE nodes are PLANNED stubs; STARTED/DONE nodes must have real anchors.
+  Edges may represent intended or implemented structure; node STATE carries that distinction.
   Update this graph alongside every code commit that changes feature scope.
 
   Validator policy: anchors inside MODULE_* nodes with STATE="PLANNED" are
@@ -229,10 +229,9 @@
   </FEATURE_DOC_GENERATION>
 
   <!-- ================================================================
-       MODULE STUBS — v0.1 slice, STATE="PLANNED"
-       Anchors listed here assert what WILL exist when code lands.
-       Validator skips PLANNED nodes (see header comment) — these are
-       checked only when STATE flips to STARTED or DONE.
+       MODULES
+       Validator skips PLANNED nodes (see header comment). STARTED/DONE modules
+       are live contracts and their anchors must exist in source.
   ================================================================ -->
 
   <MODULE_IMPORTER ID="MOD-IMPORTER"

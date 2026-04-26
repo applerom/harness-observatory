@@ -1144,13 +1144,19 @@ Mitigation: Job Dashboard shows status before session starts. Manual dispatch al
 
 ### 23.8 AgentRunner abstraction eroding
 
-Risk: Developers hardcode `claude -p` below the `AgentRunner` interface, defeating §4.10 and Level 3 dogfooding.
+Risk: Developers hardcode runner-specific CLI commands below the `AgentRunner` interface, defeating §4.10 and Level 3 dogfooding.
 
-Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `ClaudeRunner` is a stub raising `NotImplementedError` per §26.3). The concrete subprocess body lands in v0.2 — and lives only inside `ClaudeRunner`. Code review, the anchor validator script, and a `grep "claude -p" src/ scripts/` acceptance check (DELEGATION-PLAN Task E) enforce that the literal subprocess invocation cannot leak below the abstraction.
+Mitigation: `AgentRunner` is a defined Protocol from v0.1. Concrete subprocess bodies landed in v0.2a and live only inside runner modules (`ClaudeRunner`, `CodexRunner`, later peers). Code review, the anchor validator script, and grep checks for runner CLI literals enforce that runner-specific invocation does not leak into web, job-service, importer, or script layers.
 
 ---
 
 ## 24. Implementation Phases
+
+Current phase status (2026-04-26):
+
+- v0.1 is complete locally: importer, schema, read-only dashboard/dossiers/matrix.
+- v0.2a is complete locally: OpenCode refresh job spine, selectable Codex/Claude runners, raw logs, Job Dashboard, and Playwright CLI visual QA.
+- Full v0.2 is not complete until one real refresh raw log is parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1353,7 +1359,7 @@ This section commits to constraints, not implementation. The following are delib
 - Directory layout (`orchestration/` at repo root vs inside `src/observatory/orchestrator/` module vs separate `harness-orchestrator/` repo)
 - Exact plan format (YAML schema, top-level fields, item shape)
 - Whether to build the orchestrator *before* v0.1 dispatch (delaying dispatch ~1-2 days but running v0.1 under the orchestrator) or *alongside* v0.1 (using v0.1's 5 hand-dispatches as empirical input for orchestrator design — Task F in DELEGATION-PLAN)
-- Exactly which runners ship in the first version (likely ClaudeRunner only at first, since v0.1 has no working ClaudeRunner anyway)
+- Exactly which runners ship in the first automated orchestrator version. Product-level `ClaudeRunner` and `CodexRunner` already exist in v0.2a, but the future long-haul orchestrator may choose a narrower initial runner set based on empirical rate-window behavior.
 - Windows scheduled-task setup script (PowerShell `Register-ScheduledTask` per global CLAUDE.md preference) vs cron on Linux/Mac
 
 ### 27.4 What this section *does* commit

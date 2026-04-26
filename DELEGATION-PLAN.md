@@ -289,6 +289,37 @@ Acceptance:
 - grep confirms the concrete CLI invocation text does not leak outside the runner boundary.
 - Playwright CLI visual QA confirms matrix top-scroll and cell-detail reveal behavior.
 
+Lead-implementation note:
+
+- v0.2a matrix/Playwright work was implemented directly by the lead because it established the project's first visual-QA pattern.
+- This should not become the default. Similar bounded UI/test follow-ups should be delegated to a subagent after the lead updates PRD/WHY and writes the acceptance contract.
+
+### v0.2b addendum — Parse one real refresh log into Insights
+
+Preferred execution: delegate implementation to a bounded subagent after a useful raw log exists. Lead owns PRD/WHY updates, prompt contract decisions, and final integration review.
+
+Deliverable:
+
+- Use one real OpenCode refresh raw log from `live-sessions/agent-job-*.log`.
+- Parse the log into at least one proposed `Insight` and supporting `EvidenceItem` when evidence is present.
+- Show the parsed result in the OpenCode dossier using the existing Insight-over-proof layout.
+- Preserve the raw log as evidence of runner behavior; do not overwrite or delete it.
+
+Non-goals:
+
+- no all-harness parsing;
+- no cron;
+- no multi-pass verification;
+- no engagement hooks;
+- no invented parser format before a real log exists.
+
+Acceptance:
+
+- parser/service tests cover one successful parse and one no-evidence/ambiguous log path;
+- web route/test proves the parsed Insight appears in the OpenCode dossier;
+- Playwright CLI visual QA covers the changed dossier or job-to-dossier path if UI behavior changes;
+- `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green.
+
 ---
 
 ## 9. Anti-patterns to avoid in delegation

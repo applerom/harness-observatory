@@ -180,3 +180,30 @@ Rule added:
   Sources:
   - https://developers.openai.com/api/docs/guides/tools-computer-use
   - https://developers.openai.com/codex/cli
+
+## 2026-04-26 — Lead Agent Over-Execution
+
+Observation:
+- Roman noted that the lead agent directly implemented the matrix scrollbar and
+  visual QA work.
+- The result worked, but part of that work was bounded enough for a subagent
+  after the PRD/WHY decision had been made.
+- This consumed lead-agent context on implementation details instead of keeping
+  the lead focused on orchestration, contracts, and integration.
+
+Nuance:
+- Some direct work was reasonable because this was the first Playwright CLI setup
+  in the project and the lead needed to establish the pattern.
+- After the pattern exists, similar UI polish and test additions should be
+  delegated by default.
+
+Rule added:
+- Lead agent owns intent, PRD/WHY changes, scope cuts, delegation contracts,
+  integration review, and final evidence.
+- Bounded implementation tasks should be delegated whenever the active harness
+  exposes suitable subagents.
+- If the lead implements directly, record why the work was not delegated.
+
+Teaching extraction:
+- This episode is now a reusable lesson:
+  `docs/lessons/orchestrator-over-execution.md`.

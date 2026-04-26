@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — CodexRunner and visual QA implemented
+**Last update:** 2026-04-26 — delegation discipline lesson and status cleanup complete
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** v0.2a+ complete — multi-runner refresh controls and matrix UX hardening
+**Current phase:** v0.2b ready — raw-log capture before parser
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, and Job Dashboard before any parser writes new Insights.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, and Job Dashboard before any parser writes new Insights. The next product move is to capture/review one real OpenCode refresh raw log, then delegate the parser slice.
 
 ## 2. Active items
 
@@ -32,18 +32,16 @@ v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardenin
 | D | Read-only dossier + matrix routes (`DELEGATION-PLAN` Task D). Codex subagent Pascal `019dc92c-e752-7011-b201-2e5a86625949`; owns web route/template/test integration. | Codex implementation_worker | completed | 2026-04-26 | integrated; real DB smoke and full validation green |
 | V02A | OpenCode refresh execution spine: create/run `AgentJob`, preserve raw log, expose Job Dashboard; parser into Insights deferred. | Codex lead | completed | 2026-04-26 | full validation green; server restarted and `/jobs` smoke returned 200 |
 | V02A-MULTIRUNNER-UX | Add `CodexRunner`, clarify target vs runner UI, and add CLI Playwright visual QA for matrix UX. | Codex lead | completed | 2026-04-26 | pytest/ruff/mypy/anchors/Playwright CLI visual check green |
+| ORCH-LESSON | Record lead-agent over-execution lesson and tighten delegation discipline for future bounded implementation tasks. | Codex lead | completed | 2026-04-26 | EVOLUTION/lesson/docs status cleanup complete |
 
 ## 3. Next ordered queue
 
-When Roman gives the implementation start signal, the v0.1 first wave dispatches. Decomposition lives in `DELEGATION-PLAN.md §3`; condensed here:
+Current ordered queue after v0.2a+:
 
 | ID | Brief | Runner | Status | Blocked by |
 |---|---|---|---|---|
-| FINAL-V0.1 | Start local dev server and hand owner the URL for hands-on testing | Codex lead | completed | 2026-04-26 | server running at http://127.0.0.1:8000/ |
-| PY314 | Move project runtime target from Python 3.12 to latest stable Python 3.14 and record dependency-freshness rules | Codex lead | completed | 2026-04-26 | 3.14.4 validation green; docs/log updates complete |
-| V02B | Parse one real OpenCode refresh raw log into proposed Insight/Evidence rows | Codex lead/subagent TBD | pending | V02A validation and at least one useful raw log |
-
-A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches when A returns green. See `DELEGATION-PLAN.md §5` for the sequencing diagram.
+| V02B-RUN | Run one OpenCode refresh with `CodexRunner` and inspect the raw log | Codex lead + possible validator subagent | pending | owner/lead decision to spend Codex runner quota |
+| V02B-PARSER | Parse one useful OpenCode refresh raw log into proposed Insight/Evidence rows | subagent preferred | pending | at least one useful raw log |
 
 ## 4. Blocked / waiting
 
@@ -68,6 +66,7 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 - **2026-04-26** — v0.2 planning decision: split full PRD v0.2 into v0.2a job spine first, parser second. Rationale: do not design an Insight parser around imagined freeform output; first capture real raw logs through an OpenCode refresh `AgentJob` and Job Dashboard.
 - **2026-04-26** — Implemented v0.2a: `ClaudeRunner` now performs the CLI subprocess inside the runner boundary and returns failed `AgentResult` on missing CLI/non-zero/timeout; `RefreshJobService` creates/runs OpenCode refresh jobs and writes `live-sessions/agent-job-*.log`; `/jobs`, `/jobs/{id}`, and `/jobs/{id}/log` expose the Job Dashboard; OpenCode dossier Refresh posts to the service. Validation: `pytest` 23 passed, `ruff` passed, `mypy` passed, anchor validator checked 30/skipped 0, no `claude -p` literal in `src/` or `scripts/`, local server restarted and `/`, `/harnesses/opencode`, `/jobs` returned 200.
 - **2026-04-26** — Roman caught target/runner ambiguity and matrix UX gaps. Codex updated PRD/WHY first, then added `CodexRunner` (`codex exec` in read-only non-interactive mode), selectable "Run with Codex" / "Run with Claude" controls, clearer Job Dashboard target/runner labels, matrix top horizontal scrollbar, scroll-to-detail after cell click, and CLI Playwright visual QA. Validation: `pytest` 26 passed, `ruff` passed, `mypy` passed, anchor validator checked 31/skipped 0, `npm run visual:matrix` passed after Playwright Chromium install. Added lesson `docs/lessons/visual-qa-for-agents.md`.
+- **2026-04-26** — Roman flagged lead-agent over-execution: the matrix/Playwright patch worked, but bounded implementation should have been delegated after the lead made PRD/WHY decisions. Codex delegated a read-only status audit to Franklin, added `docs/lessons/orchestrator-over-execution.md`, recorded the rule in `EVOLUTION.md`, fixed stale CONTEXT/PRD/WHY/WORKLOG/DELEGATION status text, and added a v0.2b delegation contract. Anchor validator checked 31/skipped 0; stale-text grep returned no matches.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.
