@@ -1307,7 +1307,7 @@ A future Typer CLI (`uv run observatory <subcmd>`) would unify these behind one 
 
 ## 27. Long-Haul Orchestration on Personal Subscriptions
 
-> **Status:** named concern + locked design constraints. Design and scaffolding deferred to a separate checkpoint — see CONTEXT.md "open sequencing question". This section commits the project to *handling* the problem; it does not yet specify directory layout, file formats, or scripts.
+> **Status:** named concern + locked design constraints. Design and scaffolding deferred to a far-future checkpoint per CONTEXT.md "Update 2026-04-25 — interrupt-and-resume runbook + sequencing question closed". This section commits the project to *handling* the problem; it does not yet specify directory layout, file formats, or scripts.
 
 ### 27.1 The concern
 
@@ -1354,4 +1354,4 @@ Future work on orchestration must:
 - treat the constraints as load-bearing decisions worth defending against future "let's just hardcode it" refactors — same posture as §4.10 (AgentRunner agnosticism) and §4.7 (popular over optimal)
 - update this section if a constraint is *replaced* by empirical evidence (e.g., when actual `claude -p` rate-limit output is captured, constraint (b) gets a Class A entry; output-pattern detection becomes a usable layer on top of timing)
 
-The mechanism's actual design lives in a future PRD section (likely §28 or a separate `docs/orchestrator.md`) and is dispatched as its own work item once the sequencing question in CONTEXT.md is resolved.
+The mechanism's actual design lives in a future PRD section (likely §28 or a separate `docs/orchestrator.md`) and is dispatched as its own work item only after manual interrupt-and-resume proves insufficient in practice.

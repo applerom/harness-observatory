@@ -48,8 +48,9 @@ evidence themselves.
 | Agent dispatch | `claude -p` subprocess (v1) | Works with Claude Pro; runner-agnostic interface |
 | Task queue | APScheduler (v1) | Lightweight cron for refresh jobs |
 
-All decisions are explained in `docs/why-graph.xml` with intent-to-implementation traceability.
-If you see something and wonder "why not X instead?" — the WHY graph probably has the answer.
+Core decisions are recorded in `docs/PRD.md`; `docs/why-graph.xml` maps that intent toward
+implementation. If you see something and wonder "why not X instead?" — start with the PRD, then
+use the WHY graph to find where that decision should land in code.
 
 ---
 

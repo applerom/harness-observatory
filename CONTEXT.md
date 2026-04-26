@@ -209,3 +209,15 @@ What changed:
 What's now possible: a future Codex lead can start v0.1 with a known subagent scheme instead of redesigning delegation each session.
 
 What's now blocking: still no production code. Next implementation start should begin from `WORKLOG.md` and `DELEGATION-PLAN.md`, using the Codex profile only as an operating aid.
+
+## Update 2026-04-26 — v0.1 implementation start authorized in Codex
+
+Roman gave the Codex lead agent the explicit v0.1 implementation start signal and reaffirmed session-level authorization to use Codex subagents as an orchestration mechanism. The intended posture is not "spawn subagents ritualistically"; it is lead-agent judgment: delegate when it preserves lead context, parallelizes bounded work, or improves validation.
+
+What changed:
+- `WORKLOG.md` moved from awaiting implementation start to v0.1 implementation in progress.
+- Small documentation drift noted during the Codex project read-through is being cleaned before the first code wave: PRD §27 no longer refers to an open sequencing question, DELEGATION task dependencies/count thresholds are aligned, README no longer overstates WHY graph completeness, and AGENTS records the Codex session-level subagent authorization.
+
+What's now possible: v0.1 Tasks A/B/C can begin under the existing delegation plan after the drift cleanup lands.
+
+What's now blocking: no project-level blocker. The first implementation risk is importer reality against `../harness-architecture`; keep v0.1 minimal and iterate from real feedback rather than trying to design the final data model upfront.

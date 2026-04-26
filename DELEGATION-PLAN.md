@@ -34,13 +34,13 @@ When v0.1 is "done", the owner can:
 7. Run `uv run pytest` — all tests pass.
 8. Run `uv run python scripts/validate_anchors.py` — every `<ANCHOR>` in `why-graph.xml` resolves to a real `START_*` marker in source (or reports concrete failures).
 
-**NOT in v0.1 (deferred to later phases):** any AgentJob execution, any cron, Live Studio, "Ask the agent why", confidence label rendering (data model has the field; UI just shows the raw status), engagement hooks, doc generation.
+**NOT in v0.1 (deferred to later phases):** any AgentJob execution, any cron, Live Studio, "Ask the agent why", full confidence-band automation or per-pass breakdowns (v0.1 may show raw status badges and "not yet verified" placeholders), engagement hooks, doc generation.
 
 ---
 
 ## 3. Subagent decomposition
 
-Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except for shared seed of types). Tasks D–E are **sequential** (depend on A and C respectively).
+Five subagent tasks. Tasks A–C can run **in parallel** once file ownership is clear. Task D depends on A+B+C. Task E depends on A.
 
 ### Task A — Data model + migrations (sequential prerequisite for D and E)
 
@@ -97,7 +97,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 - Tests in `tests/importers/` — sample fixture markdown files exercise each parser path; the real `harness-architecture/` is read in an end-to-end test.
 
 **Acceptance:**
-- Running the importer against the real `D:/ai/harnesses/harness-architecture/` populates SQLite with ≥8 Harnesses and ≥10 Topics. (Empty DB → populated → re-run is idempotent.)
+- Running the importer against the real `D:/ai/harnesses/harness-architecture/` populates SQLite with ≥8 Harnesses and ≥11 Topics. (Empty DB → populated → re-run is idempotent.)
 - Importer handles markdown-table edge cases: footnotes, code spans inside cells, non-ASCII characters.
 - For markdown that doesn't parse cleanly (e.g., row with merged cells), the importer logs a warning and continues — does NOT silently drop data, does NOT crash.
 - `pytest tests/importers/` green.

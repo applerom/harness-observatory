@@ -54,6 +54,8 @@ The project role is **lead agent**, not "Claude-only lead." Claude Code, Codex, 
 
 Roman grants standing project-level authorization for lead agents to use subagents when the active harness permits it. Use delegation to protect lead context, parallelize independent work, and route low-risk or highly bounded tasks to cheaper/faster agents. If a harness-level policy still requires a fresh session-level user request before spawning subagents, ask Roman to restate the authorization in that session instead of silently falling back.
 
+Codex session note: on 2026-04-26 Roman explicitly reaffirmed session-level authorization for the Codex lead agent to use Codex subagents as an efficiency mechanism during v0.1 work. Subagents are encouraged when they help the lead preserve context, parallelize bounded work, or validate results; they are not mandatory ritual. Future sessions should treat this as durable project intent while still obeying any active harness policy that requires fresh confirmation.
+
 Lead agents should run **serially across harnesses**, not concurrently, unless Roman explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates WORKLOG/CONTEXT/git, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low for a personal-subscription educational project.
 
 When working in Codex, read `docs/codex-subagent-profile.md` before dispatching subagents. The profile and `.codex/agents/*.toml` files are Codex-specific operating aids; they do not override this file, WORKLOG, CONTEXT, the PRD, or the WHY graph.

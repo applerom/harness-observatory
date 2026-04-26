@@ -10,21 +10,21 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — Codex subagent operating profile added
+**Last update:** 2026-04-26 — v0.1 implementation start signal received
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** Pre-v0.1 — foundational docs aligned; Codex subagent profile recorded; awaiting implementation start signal
+**Current phase:** v0.1 implementation — first-wave docs alignment and subagent dispatch in progress
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-Foundational docs landed and aligned through six commits through `0cbf888` (cross-harness lead delegation), then pushed to the public GitHub repo with `main` as a squash snapshot and `development` as the working branch with full history. Manual interrupt-and-resume runbook is in place, Roman has granted standing project authorization for harness-local subagents, and Codex now has a project-local subagent operating profile in `docs/codex-subagent-profile.md` plus `.codex/agents/`. Implementation has not started yet.
+Foundational docs landed and aligned through six commits through `0cbf888` (cross-harness lead delegation), then pushed to the public GitHub repo with `main` as a squash snapshot and `development` as the working branch with full history. Manual interrupt-and-resume runbook is in place, Roman has granted standing project authorization for harness-local subagents, and on 2026-04-26 explicitly gave this Codex session the v0.1 implementation start signal plus permission to use Codex subagents as the lead agent sees fit.
 
 ## 2. Active items
 
 | ID | Brief | Runner | Status | Started | Last update |
 |---|---|---|---|---|---|
-| _(none — ready for v0.1 implementation start)_ | | | | | |
+| DOCS-ALIGN | Small pre-start drift cleanup in PRD/DELEGATION/README/AGENTS/WORKLOG/CONTEXT before first code wave | Codex lead | in progress | 2026-04-26 | removing drift noted during project read-through |
 
 ## 3. Next ordered queue
 
@@ -42,11 +42,11 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 
 ## 4. Blocked / waiting
 
-- **All v0.1 implementation work** — waiting for Roman's implementation start signal.
 - **Future orchestrator (PRD §27)** — deferred to far horizon per owner direction 2026-04-25. Manual interrupt-and-resume runbook is the v0 substitute. Reopen only if/when manual handoff proves too painful in practice.
 
 ## 5. Recent history (append-only, dated)
 
+- **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.
