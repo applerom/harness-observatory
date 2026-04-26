@@ -1,4 +1,6 @@
+import json
 from collections.abc import AsyncIterator, Generator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -28,7 +30,8 @@ class FakeRefreshRunner:
 
 
 @pytest.fixture()
-def client() -> Generator[TestClient, None, None]:
+def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]:
+    monkeypatch.chdir(tmp_path)
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -188,9 +191,92 @@ def test_opencode_refresh_creates_job_and_raw_log(client: TestClient) -> None:
     assert "fake test" in detail_response.text
     assert log_response.status_code == 200
     assert "Refreshed Harness 1" in log_response.text
+    assert "runner_result" not in log_response.text
     assert jobs_response.status_code == 200
     assert "Job Dashboard" in jobs_response.text
     assert "#1" in jobs_response.text
+
+
+def test_job_detail_renders_semantic_trace_for_job(client: TestClient) -> None:
+    response = client.post("/harnesses/opencode/refresh", follow_redirects=False)
+    assert response.status_code == 303
+
+    semantic_log = Path("live-sessions") / "semantic-events.jsonl"
+    semantic_log.parent.mkdir(parents=True, exist_ok=True)
+    semantic_log.write_text(
+        "\n".join(
+            [
+                "{not-json",
+                json.dumps(
+                    {
+                        "job_id": 2,
+                        "level": "error",
+                        "code": "wrong_job",
+                        "anchor": "START_JOB_REFRESH",
+                        "expected": "filtered out",
+                        "actual": "filtered out",
+                        "component": "RefreshJobService",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "job_id": 1,
+                        "level": "info",
+                        "code": "target_cwd_preflight_succeeded",
+                        "anchor": "START_JOB_REFRESH",
+                        "expected": "target cwd is available before runner execution",
+                        "actual": "target cwd available: .",
+                        "component": "RefreshJobService",
+                    }
+                ),
+                json.dumps(
+                    {
+                        "job_id": "1",
+                        "level": "info",
+                        "code": "runner_result",
+                        "anchor": "START_JOB_REFRESH",
+                        "expected": "runner returns a terminal AgentResult",
+                        "actual": "runner status: done",
+                        "component": "RefreshJobService",
+                    }
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    detail_response = client.get("/jobs/1")
+    log_response = client.get("/jobs/1/log")
+
+    assert detail_response.status_code == 200
+    assert "Semantic Trace" in detail_response.text
+    assert "target_cwd_preflight_succeeded" in detail_response.text
+    assert "runner_result" in detail_response.text
+    assert "START_JOB_REFRESH" in detail_response.text
+    assert "runner returns a terminal AgentResult" in detail_response.text
+    assert "runner status: done" in detail_response.text
+    assert "RefreshJobService" in detail_response.text
+    assert "wrong_job" not in detail_response.text
+    assert detail_response.text.index("target_cwd_preflight_succeeded") < detail_response.text.index(
+        "runner_result"
+    )
+    assert log_response.status_code == 200
+    assert "runner_result" not in log_response.text
+
+
+def test_job_detail_semantic_trace_empty_state_when_file_missing(client: TestClient) -> None:
+    response = client.post("/harnesses/opencode/refresh", follow_redirects=False)
+    assert response.status_code == 303
+
+    semantic_log = Path("live-sessions") / "semantic-events.jsonl"
+    if semantic_log.exists():
+        semantic_log.unlink()
+
+    detail_response = client.get("/jobs/1")
+
+    assert detail_response.status_code == 200
+    assert "Semantic Trace" in detail_response.text
+    assert "No semantic events recorded for this job yet." in detail_response.text
 
 
 def test_job_dashboard_empty_state(client: TestClient) -> None:

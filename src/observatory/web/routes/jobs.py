@@ -10,8 +10,9 @@
 # - Missing log files render a clear 404 instead of crashing.
 # :END_MODULE_CONTRACT
 
-from pathlib import Path
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
@@ -20,6 +21,7 @@ from sqlmodel import Session, select
 
 from observatory import db
 from observatory.models import AgentJob, Harness
+from observatory.runtime.semantic_log import DEFAULT_SEMANTIC_EVENT_LOG
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -34,6 +36,16 @@ class JobView:
     runner_label: str
 
 
+@dataclass(frozen=True)
+class SemanticEventView:
+    level: str
+    code: str
+    anchor: str
+    expected: str
+    actual: str
+    component: str
+
+
 def _job_view(session: Session, job: AgentJob) -> JobView:
     target_label = f"{job.target_kind or 'unknown'} {job.target_id or ''}".strip()
     if job.target_kind == "Harness" and job.target_id is not None:
@@ -42,6 +54,50 @@ def _job_view(session: Session, job: AgentJob) -> JobView:
             target_label = f"Harness: {harness.name}"
     runner_label = f"{job.runner_name or 'unknown'} {job.runner_version or ''}".strip()
     return JobView(job=job, target_label=target_label, runner_label=runner_label)
+
+
+# START_ROUTE_JOBS_SEMANTIC_EVENTS:
+def _semantic_events_for_job(
+    job_id: int,
+    path: Path = DEFAULT_SEMANTIC_EVENT_LOG,
+    limit: int = 20,
+) -> list[SemanticEventView]:
+    if not path.exists():
+        return []
+
+    events: list[SemanticEventView] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        raw_job_id = payload.get("job_id")
+        if not isinstance(raw_job_id, int | str):
+            continue
+        try:
+            event_job_id = int(raw_job_id)
+        except ValueError:
+            continue
+        if event_job_id != job_id:
+            continue
+        events.append(
+            SemanticEventView(
+                level=str(payload.get("level") or ""),
+                code=str(payload.get("code") or ""),
+                anchor=str(payload.get("anchor") or ""),
+                expected=str(payload.get("expected") or ""),
+                actual=str(payload.get("actual") or ""),
+                component=str(payload.get("component") or ""),
+            )
+        )
+    return events[-limit:]
+
+
+# :END_ROUTE_JOBS_SEMANTIC_EVENTS
 
 
 # START_ROUTE_JOBS_LIST:
@@ -78,6 +134,7 @@ def job_detail(
         {
             "active_nav": "jobs",
             "job_view": _job_view(session, job),
+            "semantic_events": _semantic_events_for_job(job_id),
         },
     )
 

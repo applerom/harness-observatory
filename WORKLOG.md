@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — v0.2c preflight and semantic runtime trace integrated
+**Last update:** 2026-04-26 — Job Dashboard semantic trace visible
 **Active session lead:** Codex GPT-5.5-class (interactive)
 **Current phase:** v0.2c complete locally — one-harness refresh vertical with preflight trace
 
@@ -18,7 +18,7 @@
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2c now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows, target/runner preflight, and append-only semantic runtime events in `live-sessions/semantic-events.jsonl`.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2c now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows, target/runner preflight, append-only semantic runtime events in `live-sessions/semantic-events.jsonl`, and a compact per-job Semantic Trace panel in Job Detail.
 
 ## 2. Active items
 
@@ -43,6 +43,7 @@ Current ordered queue after v0.2a+:
 | V02B-RUN | Run one OpenCode refresh with `CodexRunner` and inspect the raw log | Codex lead + implementation subagents Pasteur/Chandrasekhar | completed | AgentJob #3 done; raw log at `live-sessions/agent-job-00003.log` |
 | V02B-PARSER | Parse `live-sessions/agent-job-00003.log` into proposed Insight/Evidence rows | Codex implementation/review subagents Galileo/Euler/Poincare/Socrates/Volta | completed | Job #3 produced Insight #35 and EvidenceItems #73-#78; parser failure and partial-persist risks hardened |
 | V02C-PREFLIGHT | Add runner/target preflight checks before broadening refresh beyond OpenCode | Codex lead + repo_explorer[gpt-5.4-mini/medium] (Mill, `019dca91-a02a-7f23-8925-a9c0750579ee`) + implementation_worker[gpt-5.5/medium] (Leibniz, `019dca92-b5b6-7070-8aa7-d86c7579b089`) + implementation_worker[gpt-5.5/medium] (Maxwell, `019dca9e-37e5-73b0-a17b-6677c717a3cf`) | completed | Codex CLI upgraded to 0.125.0; `gpt-5.5` no-op preflight passed; target/runner preflight and semantic JSONL events integrated; Job #4 captured timeout evidence before timeout fix |
+| V02C-JOBTRACE-UI | Show semantic runtime events on Job Detail | Codex lead + implementation_worker[gpt-5.5/medium] (Jason, `019dcab8-b25e-75e0-a908-55a7e5898e03`) | completed | `/jobs/{id}` now renders compact Semantic Trace from JSONL, filtered by job id, separate from raw log |
 | ORCH-WORKTREE | Evaluate git worktree isolation for parallel implementation subagents | Codex lead + delegated scout/implementation | pending | Based on OpenAI harness-engineering article; needed before scaling write-heavy fan-out beyond modest disjoint slices |
 | V03-REFRESH-GENERALIZE | Start PRD v0.3 by generalizing refresh to more harnesses | Codex lead + delegated implementation | pending | Safe next product move; decide whether to first add a compact `/jobs/{id}` semantic-event panel or move directly to another harness refresh |
 
@@ -81,6 +82,7 @@ Current ordered queue after v0.2a+:
 - **2026-04-26** — Integrated V02C-PREFLIGHT. Mill recommended JSONL sidecar tracing over a new DB table; Tesla recommended stable Codex dispatch labels; Leibniz implemented semantic events, target cwd preflight, optional runner preflight, and Codex CLI version gating; Maxwell fixed a real Windows timeout misclassification found by Job #4 and increased only the `gpt-5.5` refresh timeout to 900 seconds. New docs: `docs/runtime-dependencies.md`, `docs/lessons/agent-visible-runtime-tracing.md`, and Codex dispatch-label rules.
 - **2026-04-26** — V02C validation complete: `pytest` 43 passed, `ruff` passed, `mypy` passed, anchor validator checked 36/skipped 0, `npm run visual:matrix` passed, live `/harnesses/opencode` returned 200, and `live-sessions/semantic-events.jsonl` captured Job #4 events including target preflight success, runner preflight success (`codex-cli 0.125.0`), and the timeout evidence that drove the Maxwell fix.
 - **2026-04-26** — Roman asked whether 3 parallel subagents is a real limit and pointed to OpenAI's harness-engineering article. Lead recorded the current operating judgment in `EVOLUTION.md`: 2-3 active subagents is comfortable in the current shared workspace, the configured 5-thread cap is useful headroom, and scaling write-heavy fan-out should come with git worktree isolation rather than only prompt warnings.
+- **2026-04-26** — Implemented Job Dashboard Semantic Trace panel. Lead updated PRD/WHY first, then delegated UI/route/test implementation to Jason (`019dcab8-b25e-75e0-a908-55a7e5898e03`). Validation: `pytest` 45 passed, `ruff` passed, `mypy` passed, anchor validator checked 37/skipped 0, and live `/jobs/4` returned 200 with `Semantic Trace`, `runner_preflight_succeeded`, timeout evidence, and raw-log link visible.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

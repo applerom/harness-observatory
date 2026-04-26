@@ -52,8 +52,9 @@
   </USECASE_DISPATCH>
 
   <USECASE_JOB_DASHBOARD ID="UC-JOB-DASHBOARD" NAME="Inspect agent job history">
-    <INTENT>Owner or lead agent opens the Job Dashboard to inspect recent AgentJobs, their status, runner identity, errors, and raw logs. The goal is operational transparency before freeform runner output is parsed into durable Insights.</INTENT>
+    <INTENT>Owner or lead agent opens the Job Dashboard to inspect recent AgentJobs, their status, runner identity, errors, raw logs, and semantic runtime events. The goal is operational transparency from high-level job status down to the project concepts involved in a failure.</INTENT>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-SEMANTIC-RUNTIME-TRACE"/>
     <REL TYPE="DEPENDS_ON" TARGET="USECASE:UC-DISPATCH"/>
   </USECASE_JOB_DASHBOARD>
 
@@ -169,10 +170,11 @@
   </FEATURE_JOB_PREFLIGHT>
 
   <FEATURE_SEMANTIC_RUNTIME_TRACE ID="FEAT-SEMANTIC-RUNTIME-TRACE" PRIORITY="MEDIUM" STATE="STARTED">
-    <INTENT>Refresh jobs emit append-only semantic JSONL events that name the step, WHY anchor, expected state, actual state, component, and job id so future agents can debug from project concepts instead of raw stdout alone.</INTENT>
+    <INTENT>Refresh jobs emit append-only semantic JSONL events that name the step, WHY anchor, expected state, actual state, component, and job id; Job Dashboard detail renders those events so future agents and humans can debug from project concepts instead of raw stdout alone.</INTENT>
     <PRD_REF>docs/PRD.md §4.11 Semantic runtime tracing for agents</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNTIME-SEMANTIC-LOG"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_SEMANTIC_RUNTIME_TRACE>
 
@@ -368,9 +370,10 @@
   <MODULE_WEB_ROUTES_JOBS ID="MOD-WEB-ROUTES-JOBS"
                           FILE="src/observatory/web/routes/jobs.py"
                           STATE="STARTED">
-    <INTENT>FastAPI router for Job Dashboard list/detail/log views.</INTENT>
+    <INTENT>FastAPI router for Job Dashboard list/detail/log views, including compact semantic event traces for a job.</INTENT>
     <ANCHOR NAME="START_ROUTE_JOBS_LIST"   COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LIST"/>
     <ANCHOR NAME="START_ROUTE_JOBS_DETAIL" COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_DETAIL"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_SEMANTIC_EVENTS" COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_SEMANTIC_EVENTS"/>
     <ANCHOR NAME="START_ROUTE_JOBS_LOG"    COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LOG"/>
   </MODULE_WEB_ROUTES_JOBS>
 

@@ -179,7 +179,7 @@ The observatory treats runtime logs as future agent context, not only as human d
 
 This is deliberately different from ordinary "print a line" logging. The trace is an agent-readable learning surface. It should reduce future debugging tokens by making failure shape visible near the failure, instead of forcing the next agent to reconstruct intent from code and raw stdout.
 
-The first v0.2c slice is small: write append-only semantic events for refresh jobs into `live-sessions/semantic-events.jsonl`, and mirror critical failures into the per-job raw log. Later versions may promote these events into a DB table and a richer Job Dashboard panel if the JSONL trace proves useful.
+The first v0.2c slice is small: write append-only semantic events for refresh jobs into `live-sessions/semantic-events.jsonl`, mirror critical failures into the per-job raw log, and show a compact per-job trace on the Job Dashboard detail page. Later versions may promote these events into a DB table if the JSONL trace proves useful.
 
 ---
 
@@ -758,6 +758,7 @@ Operational surface for job management:
 - manual trigger forms for all six job types
 - chained-job DAG view for parent/child job chains
 - link to raw stdout log for any job
+- compact semantic trace for any job that has structured runtime events
 - cost estimate display where available
 
 ---

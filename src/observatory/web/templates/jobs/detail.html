@@ -8,6 +8,7 @@ WHY_REF: docs/why-graph.xml#UC-JOB-DASHBOARD
 SCOPE: status fields; raw-log link; error surface
 INVARIANTS:
 - Raw log is evidence of runner behavior, not a verified Insight.
+- Semantic runtime events are rendered separately from raw runner output.
 :END_MODULE_CONTRACT
 -->
 {% extends "_base.html" %}
@@ -41,6 +42,43 @@ INVARIANTS:
         <p class="mt-2 whitespace-pre-wrap">{{ job.error_message }}</p>
       </section>
     {% endif %}
+
+    <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col gap-1">
+        <h2 class="text-lg font-semibold tracking-normal text-slate-950">Semantic Trace</h2>
+        <p class="text-sm text-slate-500">Compact runtime events for this job.</p>
+      </div>
+      {% if semantic_events %}
+        <div class="mt-4 overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <thead class="text-xs font-semibold uppercase tracking-normal text-slate-500">
+              <tr>
+                <th class="py-2 pr-4">Level</th>
+                <th class="py-2 pr-4">Code</th>
+                <th class="py-2 pr-4">Anchor</th>
+                <th class="py-2 pr-4">Expected</th>
+                <th class="py-2 pr-4">Actual</th>
+                <th class="py-2 pr-4">Component</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              {% for event in semantic_events %}
+                <tr>
+                  <td class="py-2 pr-4 align-top"><span class="status-badge">{{ event.level or "unknown" }}</span></td>
+                  <td class="py-2 pr-4 align-top font-medium text-slate-900">{{ event.code or "unknown" }}</td>
+                  <td class="py-2 pr-4 align-top font-mono text-xs text-slate-600">{{ event.anchor or "unknown" }}</td>
+                  <td class="py-2 pr-4 align-top">{{ event.expected or "not recorded" }}</td>
+                  <td class="py-2 pr-4 align-top">{{ event.actual or "not recorded" }}</td>
+                  <td class="py-2 pr-4 align-top">{{ event.component or "not recorded" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="mt-4 text-sm text-slate-500">No semantic events recorded for this job yet.</p>
+      {% endif %}
+    </section>
 
     <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <h2 class="text-lg font-semibold tracking-normal text-slate-950">Raw Log</h2>
