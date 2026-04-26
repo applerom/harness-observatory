@@ -283,7 +283,7 @@
 
   <MODULE_RUNNER_BASE ID="MOD-RUNNER-BASE"
                       FILE="src/observatory/runners/base.py"
-                      STATE="PLANNED">
+                      STATE="STARTED">
     <INTENT>AgentRunner abstract Protocol class defining the interface for all agent runner implementations. v0.1 provides the interface only; ClaudeRunner concrete implementation lands in a later phase. No `claude -p` invocation is allowed below this abstraction boundary.</INTENT>
     <ANCHOR NAME="START_RUNNER_PROTOCOL"       COORD="src/observatory/runners/base.py#START_RUNNER_PROTOCOL"/>
     <ANCHOR NAME="START_RUNNER_JOB_RESULT"     COORD="src/observatory/runners/base.py#START_RUNNER_JOB_RESULT"/>
