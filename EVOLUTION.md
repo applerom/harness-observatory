@@ -230,13 +230,19 @@ Action:
   options before `exec`, and catches launch errors.
 - `RefreshJobService` marks unexpected runner exceptions as failed instead of
   leaving jobs stuck in `running`.
-- The current web route uses `gpt-5.4` for Codex runtime refresh until the local
-  Codex CLI can run the desired default model.
+- The web route temporarily used `gpt-5.4` for Codex runtime refresh until the
+  local Codex CLI could run the desired default model.
+- Roman flagged that Codex CLI is itself a project runtime dependency. Codex
+  checked npm, found local `@openai/codex` at `0.104.0` and stable latest at
+  `0.125.0`, upgraded the local CLI, and verified `codex exec --model gpt-5.5`
+  with a no-op prompt.
 
 Rule added:
 - Before calling a CLI runner from the app, probe the concrete command form with
   `--help` or a tiny no-op prompt and record any version/model compatibility
   mismatch.
+- Runtime runner CLIs are dependencies, not invisible personal tools. Record
+  their minimum useful versions and add preflight checks before broadening runs.
 
 ## 2026-04-26 — Parser Failure Is A Runtime Boundary Too
 
@@ -257,3 +263,24 @@ Action:
 Rule added:
 - A job is not only the external CLI call. Every transformation from raw output
   to database artifacts is part of the runtime boundary and needs failure tests.
+
+## 2026-04-26 — Agent-Visible Runtime Tracing
+
+Observation:
+- Playwright CLI gave the lead agent eyes for frontend work: it could verify
+  scroll affordances and clicked-cell behavior without waiting for Roman's
+  manual report.
+- The equivalent backend/runtime need is not more freeform logs, but semantic
+  traces that say which step and WHY anchor expected what, and what actually
+  happened.
+
+Decision:
+- Add a v0.2c semantic-event JSONL trace for refresh jobs before expanding to
+  more harnesses.
+- Keep it small and append-only first; promote to a DB table/UI only after the
+  trace proves useful.
+
+Teaching extraction:
+- The lesson is not "agents magically see." They see when the harness gives
+  them durable, inspectable instruments: screenshots for UI and structured
+  semantic events for runtime behavior.

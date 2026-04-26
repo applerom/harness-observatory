@@ -162,6 +162,11 @@ This plan is harness-independent. A lead agent maps each task to the delegation 
 
 Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer. Completed Codex subagents should be closed promptly after their evidence is summarized into durable state, so the configured thread cap remains available for real work.
 
+When Codex subagents are used, record the stable dispatch label from
+`docs/codex-subagent-profile.md`: `<profile>[<model>/<reasoning>] (<nickname>, <agent-id>)`.
+The profile/model/reasoning is the analyzable part for future orchestration
+quality reviews; the nickname is only a session alias.
+
 ### How subagents are dispatched
 
 Lead agent creates the harness-local tracking item for each subagent, then dispatches with a self-contained prompt that:

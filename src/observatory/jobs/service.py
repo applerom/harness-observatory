@@ -4,7 +4,7 @@
 # PURPOSE: Minimal v0.2 AgentJob creation and execution service.
 # PRD_REF: docs/PRD.md §24, §1162
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
-# SCOPE: OpenCode refresh job spine; prompt template seed; raw log persistence; successful log parsing
+# SCOPE: OpenCode refresh job spine; prompt template seed; raw log persistence; semantic event logging; successful log parsing
 # INVARIANTS:
 # - Only OpenCode refresh is enabled in v0.2.
 # - Freeform runner output is preserved as a raw log before successful logs are parsed into Insights.
@@ -15,12 +15,14 @@
 import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Protocol, cast
 
 from sqlmodel import Session, select
 
 from observatory.jobs.log_parser import parse_job_log
 from observatory.models import AgentJob, Harness, PromptTemplate
-from observatory.runners.base import AgentContext, AgentResult, AgentRunner
+from observatory.runners.base import AgentContext, AgentPreflightResult, AgentResult, AgentRunner
+from observatory.runtime.semantic_log import SemanticLogWriter
 
 
 REFRESH_TEMPLATE_NAME = "opencode-refresh-v0.2a"
@@ -35,9 +37,15 @@ class RefreshNotAvailableError(ValueError):
 class RefreshJobService:
     """Create and run one manual refresh AgentJob."""
 
-    def __init__(self, runner: AgentRunner, log_dir: Path = DEFAULT_LOG_DIR) -> None:
+    def __init__(
+        self,
+        runner: AgentRunner,
+        log_dir: Path = DEFAULT_LOG_DIR,
+        semantic_log: SemanticLogWriter | None = None,
+    ) -> None:
         self.runner = runner
         self.log_dir = log_dir
+        self.semantic_log = semantic_log or SemanticLogWriter(log_dir / "semantic-events.jsonl")
 
     # START_JOB_REFRESH:
     def refresh_harness(self, session: Session, harness: Harness) -> AgentJob:
@@ -59,12 +67,103 @@ class RefreshJobService:
         session.add(job)
         session.commit()
         session.refresh(job)
+        self.emit_event(
+            level="info",
+            code="job_queued",
+            anchor="START_JOB_REFRESH",
+            expected="AgentJob queued before runner execution",
+            actual=f"queued refresh job {job.id}",
+            job=job,
+            metadata={"harness_slug": harness.slug},
+        )
 
         job.started_at = utc_now()
         job.status = "running"
         session.add(job)
         session.commit()
         session.refresh(job)
+        self.emit_event(
+            level="info",
+            code="job_running",
+            anchor="START_JOB_REFRESH",
+            expected="AgentJob enters running state before preflight",
+            actual=f"running refresh job {job.id}",
+            job=job,
+            metadata={"harness_slug": harness.slug},
+        )
+
+        # START_JOB_PREFLIGHT:
+        cwd = harness.local_upstream_path or "."
+        target_preflight_error = validate_target_cwd(cwd, harness.local_upstream_path)
+        if target_preflight_error is not None:
+            result = AgentResult(status="failed", output="", error_message=target_preflight_error)
+            log_path = write_job_log(self.log_dir, job, result.output, result.error_message)
+            job.finished_at = utc_now()
+            job.status = result.status
+            job.stdout_log_path = log_path.as_posix()
+            job.error_message = result.error_message
+            session.add(job)
+            session.commit()
+            session.refresh(job)
+            self.emit_event(
+                level="error",
+                code="target_cwd_preflight_failed",
+                anchor="START_JOB_REFRESH",
+                expected="harness.local_upstream_path exists before runner execution",
+                actual=target_preflight_error,
+                job=job,
+                metadata={"cwd": cwd, "harness_slug": harness.slug},
+            )
+            return job
+
+        self.emit_event(
+            level="info",
+            code="target_cwd_preflight_succeeded",
+            anchor="START_JOB_REFRESH",
+            expected="target cwd is available before runner execution",
+            actual=f"target cwd available: {cwd}",
+            job=job,
+            metadata={"cwd": cwd, "harness_slug": harness.slug},
+        )
+
+        runner_preflight = run_optional_runner_preflight(self.runner)
+        if runner_preflight is not None and not runner_preflight.ok:
+            error_message = runner_preflight.error_message or "AgentRunner preflight failed"
+            result = AgentResult(
+                status="failed",
+                output=runner_preflight.output,
+                error_message=error_message,
+            )
+            log_path = write_job_log(self.log_dir, job, result.output, result.error_message)
+            job.finished_at = utc_now()
+            job.status = result.status
+            job.stdout_log_path = log_path.as_posix()
+            job.error_message = result.error_message
+            session.add(job)
+            session.commit()
+            session.refresh(job)
+            self.emit_event(
+                level="error",
+                code="runner_preflight_failed",
+                anchor="START_JOB_REFRESH",
+                expected="runner cheap preflight succeeds before model execution",
+                actual=error_message,
+                job=job,
+                metadata=dict(runner_preflight.metadata),
+            )
+            return job
+
+        if runner_preflight is not None:
+            self.emit_event(
+                level="info",
+                code="runner_preflight_succeeded",
+                anchor="START_JOB_REFRESH",
+                expected="runner cheap preflight succeeds before model execution",
+                actual=runner_preflight.output or "runner preflight succeeded",
+                job=job,
+                metadata=dict(runner_preflight.metadata),
+            )
+        # :END_JOB_PREFLIGHT
 
         context = AgentContext(
             job_id=job.id or 0,
@@ -72,7 +171,7 @@ class RefreshJobService:
             prompt=render_refresh_prompt(template, harness),
             target_kind=job.target_kind,
             target_id=job.target_id,
-            metadata={"cwd": harness.local_upstream_path or "."},
+            metadata={"cwd": cwd},
         )
         try:
             result = asyncio.run(self.runner.run(context))
@@ -85,6 +184,18 @@ class RefreshJobService:
                     f"{type(exc).__name__}: {exc}"
                 ),
             )
+        self.emit_event(
+            level="info" if result.status == "done" else "error",
+            code="runner_result",
+            anchor="START_JOB_REFRESH",
+            expected="runner returns a terminal AgentResult",
+            actual=f"runner status: {result.status}",
+            job=job,
+            metadata={
+                "runner_name": self.runner.name,
+                "error_message": result.error_message or "",
+            },
+        )
 
         log_path = write_job_log(self.log_dir, job, result.output, result.error_message)
         job.finished_at = utc_now()
@@ -97,7 +208,22 @@ class RefreshJobService:
         session.refresh(job)
         if job.status == "done" and job.stdout_log_path and not job.produced_artifact_ids:
             try:
-                parse_job_log(session, job)
+                parse_result = parse_job_log(session, job)
+                self.emit_event(
+                    level="info",
+                    code="parser_succeeded",
+                    anchor="START_JOB_REFRESH",
+                    expected="successful refresh raw log is parsed without crashing",
+                    actual=(
+                        f"parsed {len(parse_result.insight_ids)} insights and "
+                        f"{len(parse_result.evidence_item_ids)} evidence items"
+                    ),
+                    job=job,
+                    metadata={
+                        "insight_ids": list(parse_result.insight_ids),
+                        "evidence_item_ids": list(parse_result.evidence_item_ids),
+                    },
+                )
             except Exception as exc:
                 parser_error = (
                     f"Parser failed after successful runner output: {type(exc).__name__}: {exc}"
@@ -107,10 +233,46 @@ class RefreshJobService:
                 job.error_message = parser_error
                 session.add(job)
                 session.commit()
+                self.emit_event(
+                    level="error",
+                    code="parser_failed",
+                    anchor="START_JOB_REFRESH",
+                    expected="successful refresh raw log is parsed without crashing",
+                    actual=parser_error,
+                    job=job,
+                )
             session.refresh(job)
         return job
 
+    def emit_event(
+        self,
+        *,
+        level: str,
+        code: str,
+        anchor: str,
+        expected: str,
+        actual: str,
+        job: AgentJob,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
+        self.semantic_log.emit(
+            level=level,
+            code=code,
+            anchor=anchor,
+            expected=expected,
+            actual=actual,
+            job_id=job.id,
+            component="RefreshJobService",
+            metadata=metadata,
+        )
+
     # :END_JOB_REFRESH
+
+
+class PreflightCapableRunner(Protocol):
+    async def preflight(self) -> AgentPreflightResult:
+        """Run a cheap readiness check without invoking a model."""
+        ...
 
 
 def utc_now() -> datetime:
@@ -150,6 +312,22 @@ def render_refresh_prompt(template: PromptTemplate, harness: Harness) -> str:
         harness_slug=harness.slug,
         upstream_url=harness.upstream_url or "unknown upstream",
     )
+
+
+def validate_target_cwd(cwd: str, configured_path: str | None) -> str | None:
+    if configured_path is None:
+        return None
+    if Path(cwd).exists():
+        return None
+    return f"Target cwd preflight failed: harness.local_upstream_path does not exist: {cwd}"
+
+
+def run_optional_runner_preflight(runner: AgentRunner) -> AgentPreflightResult | None:
+    preflight = getattr(runner, "preflight", None)
+    if preflight is None:
+        return None
+    capable_runner = cast(PreflightCapableRunner, runner)
+    return asyncio.run(capable_runner.preflight())
 
 
 def write_job_log(log_dir: Path, job: AgentJob, output: str, error_message: str | None) -> Path:

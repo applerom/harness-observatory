@@ -68,6 +68,28 @@ Every Codex subagent prompt must include:
 - no-commit rule;
 - short report format.
 
+### Dispatch Labels
+
+Codex may assign human-readable nicknames automatically. Treat those nicknames
+as aliases, not the stable identity of the delegation.
+
+For WORKLOG and durable process notes, use this compact dispatch label on first
+dispatch and first completion:
+
+```text
+<profile>[<model>/<reasoning>] (<nickname>, <agent-id>)
+```
+
+Example:
+
+```text
+implementation_worker[gpt-5.5/medium] (Leibniz, 019d...)
+```
+
+Later entries may refer to the nickname or agent id if the dispatch label was
+already recorded. The stable part is profile/model/reasoning; the nickname is
+lookup metadata for the current Codex session.
+
 Recommended report format:
 
 ```text

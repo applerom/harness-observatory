@@ -1,11 +1,13 @@
 import asyncio
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from observatory.runners.base import AgentContext, AgentEvent, AgentRunner
 from observatory.runners import codex
-from observatory.runners.codex import CodexRunner, build_codex_exec_args
+from observatory.runners.codex import CodexRunner, build_codex_exec_args, parse_codex_version
+from observatory.web.routes.harness import CODEX_REFRESH_MODEL, CODEX_REFRESH_TIMEOUT_SECONDS, make_refresh_runner
 
 
 def _context() -> AgentContext:
@@ -21,7 +23,7 @@ def test_codex_runner_satisfies_protocol_shape() -> None:
     runner: AgentRunner = CodexRunner()
 
     assert runner.name == "codex"
-    assert runner.version == "0.2b-cli"
+    assert runner.version == "0.2c-cli"
 
 
 def test_codex_exec_args_put_global_approval_before_exec() -> None:
@@ -40,6 +42,14 @@ def test_codex_exec_args_put_global_approval_before_exec() -> None:
     assert args[exec_index + 1 : exec_index + 3] == ["--sandbox", "read-only"]
     assert "--model" in args[exec_index:]
     assert args[-1] == "Inspect one harness."
+
+
+def test_codex_refresh_factory_uses_gpt_5_5_timeout() -> None:
+    runner = make_refresh_runner("codex")
+
+    assert isinstance(runner, CodexRunner)
+    assert runner.model == CODEX_REFRESH_MODEL
+    assert runner.timeout_seconds == CODEX_REFRESH_TIMEOUT_SECONDS
 
 
 def test_codex_run_reports_missing_cli_without_crashing() -> None:
@@ -65,6 +75,55 @@ def test_codex_runner_prefers_windows_runnable_extension(
     assert codex.resolve_runnable_command("codex") == str(command_shim)
 
 
+def test_parse_codex_version_reads_semantic_version() -> None:
+    assert parse_codex_version("codex-cli 0.124.0") == (0, 124, 0)
+    assert parse_codex_version("codex v0.125.1") == (0, 125, 1)
+
+
+def test_codex_preflight_rejects_gpt_5_5_on_old_cli_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class VersionProcess:
+        returncode = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return b"codex-cli 0.124.0\n", b""
+
+    async def fake_create_subprocess_exec(*args: str, **_kwargs: object) -> VersionProcess:
+        assert args[-1] == "--version"
+        return VersionProcess()
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    runner = CodexRunner(model="gpt-5.5")
+
+    result = asyncio.run(runner.preflight())
+
+    assert not result.ok
+    assert "requires Codex CLI >= 0.125.0" in (result.error_message or "")
+    assert result.metadata["version"] == "0.124.0"
+
+
+def test_codex_preflight_accepts_gpt_5_5_on_new_cli_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class VersionProcess:
+        returncode = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return b"codex-cli 0.125.0\n", b""
+
+    async def fake_create_subprocess_exec(*_args: str, **_kwargs: object) -> VersionProcess:
+        return VersionProcess()
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    runner = CodexRunner(model="gpt-5.5")
+
+    result = asyncio.run(runner.preflight())
+
+    assert result.ok
+    assert result.metadata["version"] == "0.125.0"
+
+
 def test_codex_run_reports_permission_launch_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -79,6 +138,81 @@ def test_codex_run_reports_permission_launch_failure(
     assert result.status == "failed"
     assert "failed to launch" in (result.error_message or "")
     assert "Access is denied" in (result.error_message or "")
+
+
+def test_codex_run_reports_timeout_and_kills_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class TimeoutProcess:
+        returncode: int | None = None
+
+        def __init__(self) -> None:
+            self.communicate_calls = 0
+            self.killed = False
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            self.communicate_calls += 1
+            if self.communicate_calls == 1:
+                await asyncio.sleep(60)
+            return b"", b""
+
+        def kill(self) -> None:
+            self.killed = True
+            self.returncode = -9
+
+    process = TimeoutProcess()
+
+    async def fake_create_subprocess_exec(*_args: str, **_kwargs: object) -> TimeoutProcess:
+        return process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    runner = CodexRunner(timeout_seconds=0.001)
+
+    result = asyncio.run(runner.run(_context()))
+
+    assert result.status == "failed"
+    assert result.error_message == "Codex CLI timed out after 0.001 seconds"
+    assert process.killed is True
+    assert process.communicate_calls == 2
+
+
+def test_codex_run_timeout_cleanup_tolerates_already_exited_process(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class AlreadyExitedProcess:
+        returncode: int | None = 0
+
+        def __init__(self) -> None:
+            self.communicate_calls = 0
+            self.kill_calls = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            self.communicate_calls += 1
+            return b"", b""
+
+        def kill(self) -> None:
+            self.kill_calls += 1
+
+    process = AlreadyExitedProcess()
+
+    async def fake_create_subprocess_exec(*_args: str, **_kwargs: object) -> AlreadyExitedProcess:
+        return process
+
+    async def fake_wait_for(awaitable: Any, timeout: float) -> object:
+        assert timeout == 2.0
+        awaitable.close()
+        raise asyncio.TimeoutError
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
+    runner = CodexRunner(timeout_seconds=2.0)
+
+    result = asyncio.run(runner.run(_context()))
+
+    assert result.status == "failed"
+    assert result.error_message == "Codex CLI timed out after 2 seconds"
+    assert process.kill_calls == 0
+    assert process.communicate_calls == 1
 
 
 def test_codex_stream_reports_status_events() -> None:

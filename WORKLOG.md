@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — v0.2b real refresh log parsed into dossier artifacts
+**Last update:** 2026-04-26 — v0.2c preflight and semantic runtime trace integrated
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** v0.2b complete locally — one-harness refresh vertical
+**Current phase:** v0.2c complete locally — one-harness refresh vertical with preflight trace
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2b now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, and the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows visible from the OpenCode dossier.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2c now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows, target/runner preflight, and append-only semantic runtime events in `live-sessions/semantic-events.jsonl`.
 
 ## 2. Active items
 
@@ -42,8 +42,8 @@ Current ordered queue after v0.2a+:
 |---|---|---|---|---|
 | V02B-RUN | Run one OpenCode refresh with `CodexRunner` and inspect the raw log | Codex lead + implementation subagents Pasteur/Chandrasekhar | completed | AgentJob #3 done; raw log at `live-sessions/agent-job-00003.log` |
 | V02B-PARSER | Parse `live-sessions/agent-job-00003.log` into proposed Insight/Evidence rows | Codex implementation/review subagents Galileo/Euler/Poincare/Socrates/Volta | completed | Job #3 produced Insight #35 and EvidenceItems #73-#78; parser failure and partial-persist risks hardened |
-| V02C-PREFLIGHT | Add runner/target preflight checks before broadening refresh beyond OpenCode | Codex lead + delegated implementation | pending | Use V02B lessons: stale local paths, CLI command shape, and model/version mismatch should fail early with clear AgentJob evidence |
-| V03-REFRESH-GENERALIZE | Start PRD v0.3 by generalizing refresh to more harnesses | Codex lead + delegated implementation | pending | Wait until V02C preflight is in place so multi-harness runs do not multiply known operational drift |
+| V02C-PREFLIGHT | Add runner/target preflight checks before broadening refresh beyond OpenCode | Codex lead + repo_explorer[gpt-5.4-mini/medium] (Mill, `019dca91-a02a-7f23-8925-a9c0750579ee`) + implementation_worker[gpt-5.5/medium] (Leibniz, `019dca92-b5b6-7070-8aa7-d86c7579b089`) + implementation_worker[gpt-5.5/medium] (Maxwell, `019dca9e-37e5-73b0-a17b-6677c717a3cf`) | completed | Codex CLI upgraded to 0.125.0; `gpt-5.5` no-op preflight passed; target/runner preflight and semantic JSONL events integrated; Job #4 captured timeout evidence before timeout fix |
+| V03-REFRESH-GENERALIZE | Start PRD v0.3 by generalizing refresh to more harnesses | Codex lead + delegated implementation | pending | Safe next product move; decide whether to first add a compact `/jobs/{id}` semantic-event panel or move directly to another harness refresh |
 
 ## 4. Blocked / waiting
 
@@ -76,6 +76,9 @@ Current ordered queue after v0.2a+:
 - **2026-04-26** — Galileo returned parser callable and tests, but not service wiring. Lead verified the real raw log parses to 6 evidence paths and delegated auto-parse integration to Euler (`019dca61-537d-7cd0-8bef-379da2519a2f`). Acceptance: successful refresh job persists proposed Insight/Evidence automatically; failure path does not parse; avoid duplicate parse on retry.
 - **2026-04-26** — Integrated V02B-PARSER. Euler wired successful refresh jobs to parse raw logs automatically; reviewer Poincare found three parser-boundary risks; Socrates hardened parser failure handling in `RefreshJobService`; Volta made parser persistence rollback-safe and records Insight plus EvidenceItem ids in `AgentJob.produced_artifact_ids`. Lead applied the parser to real AgentJob #3: Insight #35 and EvidenceItems #73-#78 now exist in the local DB. Process lesson recorded in `EVOLUTION.md`: parser/output-to-DB transformation is part of the runtime job boundary, not harmless post-processing.
 - **2026-04-26** — V02B-PARSER validation complete: `pytest` 35 passed, `ruff` passed, `mypy` passed, anchor validator checked 32/skipped 0, `npm run visual:matrix` passed, and live `http://127.0.0.1:8000/harnesses/opencode` returned 200 with the parsed refresh Insight and evidence path visible. Local server restarted on the Python 3.14.4 uv environment after a PowerShell restart-string interpolation issue briefly launched through `.venv`.
+- **2026-04-26** — Roman reframed the `gpt-5.4` fallback as correct emergency continuation but not final dependency management. Codex checked npm, found local `@openai/codex` `0.104.0` behind stable latest `0.125.0`, upgraded the local Codex CLI, verified `codex exec --model gpt-5.5` with a no-op prompt, and returned the web refresh factory to `gpt-5.5`.
+- **2026-04-26** — Integrated V02C-PREFLIGHT. Mill recommended JSONL sidecar tracing over a new DB table; Tesla recommended stable Codex dispatch labels; Leibniz implemented semantic events, target cwd preflight, optional runner preflight, and Codex CLI version gating; Maxwell fixed a real Windows timeout misclassification found by Job #4 and increased only the `gpt-5.5` refresh timeout to 900 seconds. New docs: `docs/runtime-dependencies.md`, `docs/lessons/agent-visible-runtime-tracing.md`, and Codex dispatch-label rules.
+- **2026-04-26** — V02C validation complete: `pytest` 43 passed, `ruff` passed, `mypy` passed, anchor validator checked 36/skipped 0, `npm run visual:matrix` passed, live `/harnesses/opencode` returned 200, and `live-sessions/semantic-events.jsonl` captured Job #4 events including target preflight success, runner preflight success (`codex-cli 0.125.0`), and the timeout evidence that drove the Maxwell fix.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

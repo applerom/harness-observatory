@@ -32,7 +32,8 @@ from observatory.runners.codex import CodexRunner
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 router = APIRouter(prefix="/harnesses", tags=["harnesses"])
-CODEX_REFRESH_MODEL = "gpt-5.4"
+CODEX_REFRESH_MODEL = "gpt-5.5"
+CODEX_REFRESH_TIMEOUT_SECONDS = 900.0
 
 
 @dataclass(frozen=True)
@@ -50,7 +51,7 @@ def make_refresh_runner(runner_name: str) -> AgentRunner:
     if runner_name == "claude":
         return ClaudeRunner()
     if runner_name == "codex":
-        return CodexRunner(model=CODEX_REFRESH_MODEL)
+        return CodexRunner(model=CODEX_REFRESH_MODEL, timeout_seconds=CODEX_REFRESH_TIMEOUT_SECONDS)
     raise HTTPException(status_code=400, detail="Unknown AgentRunner")
 
 

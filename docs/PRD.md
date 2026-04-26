@@ -167,6 +167,20 @@ This enables:
 
 Concrete CLI commands must never be hardcoded below the `AgentRunner` abstraction boundary. Each runner owns its own subprocess command.
 
+### 4.11 Semantic runtime tracing for agents
+
+The observatory treats runtime logs as future agent context, not only as human debug output. A job should leave enough structured trace for a later agent to answer:
+
+- what semantic step was happening;
+- which WHY/module anchor the step belongs to;
+- what was expected;
+- what actually happened;
+- whether the issue was target data, runner dependency, parser logic, UI, or orchestration.
+
+This is deliberately different from ordinary "print a line" logging. The trace is an agent-readable learning surface. It should reduce future debugging tokens by making failure shape visible near the failure, instead of forcing the next agent to reconstruct intent from code and raw stdout.
+
+The first v0.2c slice is small: write append-only semantic events for refresh jobs into `live-sessions/semantic-events.jsonl`, and mirror critical failures into the per-job raw log. Later versions may promote these events into a DB table and a richer Job Dashboard panel if the JSONL trace proves useful.
+
 ---
 
 ## 5. Users and Primary Jobs

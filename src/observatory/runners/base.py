@@ -4,7 +4,7 @@
 # PURPOSE: AgentRunner protocol and small DTOs for future runtime agent dispatch.
 # PRD_REF: docs/PRD.md §24, §26.3
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
-# SCOPE: runner protocol; event context; result envelope
+# SCOPE: runner protocol; event context; result envelope; optional preflight envelope
 # INVARIANTS:
 # - v0.1 defines types only; no AgentJob is created, started, or dispatched here.
 # - Runner implementations must report progress through AgentEvent and final state through AgentResult.
@@ -12,6 +12,7 @@
 # - AgentEvent: append-only event emitted by future runner implementations.
 # - AgentContext: immutable job input envelope passed to a runner.
 # - AgentResult: final runner outcome envelope.
+# - AgentPreflightResult: cheap runner readiness outcome envelope.
 # - AgentRunner: structural Protocol for concrete runners.
 # :END_MODULE_MAP
 # :END_MODULE_CONTRACT
@@ -55,6 +56,20 @@ class AgentResult:
 
 
 # :END_RUNNER_JOB_RESULT
+
+
+# START_RUNNER_PREFLIGHT_RESULT:
+@dataclass(frozen=True, slots=True)
+class AgentPreflightResult:
+    """Cheap runner readiness check result, with no model invocation."""
+
+    ok: bool
+    output: str = ""
+    error_message: str | None = None
+    metadata: Mapping[str, str] = field(default_factory=dict)
+
+
+# :END_RUNNER_PREFLIGHT_RESULT
 
 
 # START_RUNNER_PROTOCOL:
