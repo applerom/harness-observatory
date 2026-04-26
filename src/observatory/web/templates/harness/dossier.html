@@ -2,12 +2,12 @@
 FILE: src/observatory/web/templates/harness/dossier.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: Harness dossier with topic coverage, Insights, and collapsed EvidenceItems.
+PURPOSE: Harness dossier with topic coverage, Insights, refresh controls, and collapsed EvidenceItems.
 PRD_REF: docs/PRD.md §26.2, §26.3, §1162
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-HARNESS
-SCOPE: harness identity; OpenCode refresh; topic sections; evidence-rich view
+SCOPE: harness identity; target-generic refresh; topic sections; evidence-rich view
 INVARIANTS:
-- Refresh dispatch is enabled only for OpenCode in v0.2a.
+- Refresh dispatch is available for harness targets; path support is decided by job preflight.
 - Insight remains above EvidenceItem proof in every section.
 :END_MODULE_CONTRACT
 -->
@@ -56,7 +56,7 @@ INVARIANTS:
         <button
           class="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500"
           disabled
-          title="Only OpenCode refresh is enabled in v0.2a"
+          title="Refresh is not enabled for this target"
           type="button"
         >
           Refresh

@@ -325,6 +325,33 @@ Acceptance:
 - Playwright CLI visual QA covers the changed dossier or job-to-dossier path if UI behavior changes;
 - `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green.
 
+### v0.3a addendum — Generalize manual refresh beyond OpenCode
+
+Preferred execution: lead owns PRD/WHY/WORKLOG and target-selection judgment; delegate the bounded service/route/parser/test implementation to a worker after a read-only scout identifies OpenCode-specific assumptions.
+
+Deliverable:
+
+- Harness dossiers show refresh controls for non-OpenCode harnesses.
+- `RefreshJobService.refresh_harness` no longer rejects all non-OpenCode targets.
+- Target cwd preflight can use a current local sibling architecture directory when imported registry paths are stale.
+- Prompt template naming/body are target-generic.
+- Parser stores proposed Insight/Evidence rows against the actual target harness, not a fallback OpenCode row.
+- Semantic events include the target harness slug and resolved cwd.
+
+Non-goals:
+
+- no cron scheduler yet;
+- no Curation Queue yet;
+- no multi-pass verification;
+- no full rewrite of the freeform parser.
+
+Acceptance:
+
+- focused tests cover a successful non-OpenCode refresh and stale-path cwd resolution;
+- existing OpenCode refresh tests still pass;
+- `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green;
+- live smoke confirms at least one non-OpenCode dossier can create a durable refresh job without OpenCode-specific rejection.
+
 ---
 
 ## 9. Anti-patterns to avoid in delegation

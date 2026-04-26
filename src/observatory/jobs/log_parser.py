@@ -9,6 +9,7 @@
 # - Raw job logs are read-only inputs and are never mutated by this module.
 # - Parsed agent output is published as proposed/unverified content.
 # - Parser rules stay conservative and evidence-backed; ambiguous topics remain harness-level.
+# - Parsed rows attach to the AgentJob target harness; there is no default target fallback.
 # START_MODULE_MAP:
 # - parse_refresh_report: extracts the first useful Insight candidate and evidence links.
 # - parse_job_log: reads an AgentJob log and persists Insight/EvidenceItem rows.
@@ -199,10 +200,9 @@ def parse_markdown_link_target(target: str) -> tuple[str, int | None]:
 
 def trim_known_repo_prefix(file_path: str) -> str:
     normalized = file_path.replace("\\", "/")
-    marker = "/opencode-architecture/"
-    marker_index = normalized.lower().find(marker)
-    if marker_index >= 0:
-        return normalized[marker_index + len(marker) :]
+    marker_match = re.search(r"/[^/]+-architecture/", normalized, flags=re.IGNORECASE)
+    if marker_match is not None:
+        return normalized[marker_match.end() :]
     return normalized
 
 
@@ -223,10 +223,10 @@ def infer_topic_slug(text: str) -> str | None:
 def infer_short_title(summary: str, notable_changes: str) -> str:
     combined = f"{summary}\n{notable_changes}".lower()
     if "teaching" in combined or "curriculum" in combined:
-        return "OpenCode refresh found curriculum-focused changes"
+        return "Refresh found curriculum-focused changes"
     if "prompt" in combined:
-        return "OpenCode refresh found prompt-system changes"
-    return "OpenCode refresh produced a new finding"
+        return "Refresh found prompt-system changes"
+    return "Refresh produced a new finding"
 
 
 def infer_why_it_matters(summary: str, notable_changes: str) -> str | None:
@@ -245,7 +245,7 @@ def resolve_job_harness(session: Session, job: AgentJob) -> Harness | None:
         harness = session.get(Harness, job.target_id)
         if harness is not None:
             return harness
-    return session.exec(select(Harness).where(Harness.slug == "opencode")).first()
+    return None
 
 
 def resolve_topic(session: Session, slug: str | None) -> Topic | None:

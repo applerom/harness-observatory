@@ -241,3 +241,24 @@ What changed:
 What's now possible: future agents and students can see not just the final stack choice, but the path by which the project corrected stale agent defaults.
 
 What's now blocking: local developer machines need Python 3.14 available. On this Windows machine, current `uv python install 3.14.4` did not have a managed download yet, so Codex used the official Python.org Windows installer into a local runtime directory. This is environment friction, not a product blocker.
+
+## Update 2026-04-26 — v0.3a manual refresh generalized beyond OpenCode
+
+Roman asked Codex to take larger autonomous product slices now that Playwright visual QA and semantic runtime traces exist. Codex framed v0.3a as "manual refresh generalization before cron" and delegated the bounded implementation after a read-only scout confirmed the main blocker: imported non-OpenCode `local_upstream_path` values were stale, while sibling architecture directories exist under `D:/ai/harnesses`.
+
+What changed:
+- Manual refresh is target-generic in service and UI; non-OpenCode dossiers now show `Run with Codex` / `Run with Claude`.
+- The refresh prompt template is `harness-refresh-v0.3a`.
+- Target cwd preflight can repair stale imported paths to obvious sibling architecture directories, and semantic events record configured vs resolved cwd.
+- Parser output no longer hardcodes OpenCode titles, trims any `*-architecture` repo prefix, and attaches parsed artifacts to the actual `AgentJob.target_id` harness without defaulting to OpenCode.
+- Added Playwright CLI visual coverage for non-OpenCode dossier refresh controls.
+
+Evidence:
+- `uv run pytest` passed with 51 tests.
+- `ruff`, `mypy`, and anchor validator passed.
+- `npm run visual:harness` and `npm run visual:matrix` passed after a stale dev server restart.
+- Live smoke job #5 for Codex CLI used the real SQLite DB with a fake runner, resolved `d:/ai/codex-architecture/` to `D:/ai/harnesses/codex-architecture`, rendered `/jobs/5`, and parsed proposed artifacts #36/#79.
+
+What's now possible: v0.3 can proceed toward APScheduler/cron knowing the manual refresh path is no longer a one-target special case.
+
+What's now blocking: no product blocker. A future real model-backed Codex CLI refresh can be run when useful, but v0.3a's code path is already covered without spending a long `gpt-5.5` runtime call.

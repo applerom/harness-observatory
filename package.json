@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "visual:matrix": "playwright test tests/visual/matrix.spec.mjs --config=playwright.config.mjs"
+    "visual:matrix": "playwright test tests/visual/matrix.spec.mjs --config=playwright.config.mjs",
+    "visual:harness": "playwright test tests/visual/harness.spec.mjs --config=playwright.config.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.59.1"

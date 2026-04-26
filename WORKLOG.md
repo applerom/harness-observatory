@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — Job Dashboard semantic trace visible
+**Last update:** 2026-04-26 — v0.3a manual refresh generalization complete
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** v0.2c complete locally — one-harness refresh vertical with preflight trace
+**Current phase:** v0.3a complete locally — target-generic manual refresh
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2c now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows, target/runner preflight, append-only semantic runtime events in `live-sessions/semantic-events.jsonl`, and a compact per-job Semantic Trace panel in Job Detail.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2c has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, Job Dashboard, the first real raw log parsed into proposed `Insight` / `EvidenceItem` rows, target/runner preflight, append-only semantic runtime events in `live-sessions/semantic-events.jsonl`, and a compact per-job Semantic Trace panel in Job Detail. v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed artifacts.
 
 ## 2. Active items
 
@@ -33,6 +33,7 @@ v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardenin
 | V02A | OpenCode refresh execution spine: create/run `AgentJob`, preserve raw log, expose Job Dashboard; parser into Insights deferred. | Codex lead | completed | 2026-04-26 | full validation green; server restarted and `/jobs` smoke returned 200 |
 | V02A-MULTIRUNNER-UX | Add `CodexRunner`, clarify target vs runner UI, and add CLI Playwright visual QA for matrix UX. | Codex lead | completed | 2026-04-26 | pytest/ruff/mypy/anchors/Playwright CLI visual check green |
 | ORCH-LESSON | Record lead-agent over-execution lesson and tighten delegation discipline for future bounded implementation tasks. | Codex lead | completed | 2026-04-26 | EVOLUTION/lesson/docs status cleanup complete |
+| V03A-REFRESH-GENERALIZE | Generalize manual refresh beyond OpenCode, with target-generic prompt, resolved cwd preflight, actual-target parser persistence, and live smoke for a non-OpenCode harness. | Codex lead + repo_explorer[gpt-5.4-mini/medium] (Confucius, `019dcac6-2174-7880-9678-65f445c8c2ad`) + implementation_worker[gpt-5.5/medium] (Cicero, `019dcac7-ad0d-7f92-a1d7-56c788da9ec0`) | completed | 2026-04-26 | Full validation green; Playwright harness/matrix green; live Codex CLI smoke job #5 done with semantic cwd-repair trace and parsed artifacts #36/#79 |
 
 ## 3. Next ordered queue
 
@@ -45,7 +46,8 @@ Current ordered queue after v0.2a+:
 | V02C-PREFLIGHT | Add runner/target preflight checks before broadening refresh beyond OpenCode | Codex lead + repo_explorer[gpt-5.4-mini/medium] (Mill, `019dca91-a02a-7f23-8925-a9c0750579ee`) + implementation_worker[gpt-5.5/medium] (Leibniz, `019dca92-b5b6-7070-8aa7-d86c7579b089`) + implementation_worker[gpt-5.5/medium] (Maxwell, `019dca9e-37e5-73b0-a17b-6677c717a3cf`) | completed | Codex CLI upgraded to 0.125.0; `gpt-5.5` no-op preflight passed; target/runner preflight and semantic JSONL events integrated; Job #4 captured timeout evidence before timeout fix |
 | V02C-JOBTRACE-UI | Show semantic runtime events on Job Detail | Codex lead + implementation_worker[gpt-5.5/medium] (Jason, `019dcab8-b25e-75e0-a908-55a7e5898e03`) | completed | `/jobs/{id}` now renders compact Semantic Trace from JSONL, filtered by job id, separate from raw log |
 | ORCH-WORKTREE | Evaluate git worktree isolation for parallel implementation subagents | Codex lead + delegated scout/implementation | pending | Based on OpenAI harness-engineering article; needed before scaling write-heavy fan-out beyond modest disjoint slices |
-| V03-REFRESH-GENERALIZE | Start PRD v0.3 by generalizing refresh to more harnesses | Codex lead + delegated implementation | pending | Safe next product move; decide whether to first add a compact `/jobs/{id}` semantic-event panel or move directly to another harness refresh |
+| V03-REFRESH-GENERALIZE | Continue PRD v0.3 after v0.3a by broadening refresh coverage and then adding cron | Codex lead + delegated implementation | pending | v0.3a manual refresh generalization first; cron remains deferred until multi-target manual refresh is proven |
+| V03B-CRON-SCHEDULER | Add the first in-process APScheduler slice and show next-run metadata in Job Dashboard | Codex lead + delegated implementation | pending | Natural next PRD v0.3 step after target-generic manual refresh |
 
 ## 4. Blocked / waiting
 
@@ -83,6 +85,9 @@ Current ordered queue after v0.2a+:
 - **2026-04-26** — V02C validation complete: `pytest` 43 passed, `ruff` passed, `mypy` passed, anchor validator checked 36/skipped 0, `npm run visual:matrix` passed, live `/harnesses/opencode` returned 200, and `live-sessions/semantic-events.jsonl` captured Job #4 events including target preflight success, runner preflight success (`codex-cli 0.125.0`), and the timeout evidence that drove the Maxwell fix.
 - **2026-04-26** — Roman asked whether 3 parallel subagents is a real limit and pointed to OpenAI's harness-engineering article. Lead recorded the current operating judgment in `EVOLUTION.md`: 2-3 active subagents is comfortable in the current shared workspace, the configured 5-thread cap is useful headroom, and scaling write-heavy fan-out should come with git worktree isolation rather than only prompt warnings.
 - **2026-04-26** — Implemented Job Dashboard Semantic Trace panel. Lead updated PRD/WHY first, then delegated UI/route/test implementation to Jason (`019dcab8-b25e-75e0-a908-55a7e5898e03`). Validation: `pytest` 45 passed, `ruff` passed, `mypy` passed, anchor validator checked 37/skipped 0, and live `/jobs/4` returned 200 with `Semantic Trace`, `runner_preflight_succeeded`, timeout evidence, and raw-log link visible.
+- **2026-04-26** — v0.3a started under the higher-autonomy Codex Pro working posture. Lead framed PRD/WHY/DELEGATION/WORKLOG for manual refresh generalization beyond OpenCode and dispatched read-only scout Confucius (`019dcac6-2174-7880-9678-65f445c8c2ad`) to identify safe next targets, stale local paths, and OpenCode-specific assumptions before assigning implementation.
+- **2026-04-26** — Confucius reported that only OpenCode's DB path currently exists, while sibling architecture dirs exist for Codex CLI, Claude Code, Gemini CLI, Qwen-Code, Cline, Pi, and Copilot Chat under `D:/ai/harnesses`. Lead delegated implementation to Cicero (`019dcac7-ad0d-7f92-a1d7-56c788da9ec0`) for target-generic refresh, sibling cwd resolution, parser title/path generalization, and non-OpenCode tests.
+- **2026-04-26** — Integrated v0.3a from Cicero with lead fixes: removed the now-stale OpenCode-only exception path, prevented missing `local_upstream_path` from silently falling back to `.`, added a Playwright CLI harness-dossier visual check, and restarted the stale dev server after the first visual smoke caught old UI. Validation: `pytest` 51 passed, `ruff` passed, `mypy` passed, anchor validator checked 37/skipped 0, `npm run visual:harness` passed, `npm run visual:matrix` passed, live `/jobs/5` showed Codex CLI target and semantic trace, and service-level live smoke job #5 resolved `d:/ai/codex-architecture/` to `D:/ai/harnesses/codex-architecture` and parsed artifacts #36/#79.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

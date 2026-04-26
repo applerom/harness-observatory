@@ -1,14 +1,14 @@
 # FILE: src/observatory/web/routes/harness.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Harness list, dossier, and v0.2a manual refresh entry point.
+# PURPOSE: Harness list, dossier, and manual refresh entry point.
 # PRD_REF: docs/PRD.md §26.2, §1162
 # WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-HARNESS
-# SCOPE: harness index; harness dossier; OpenCode refresh trigger
+# SCOPE: harness index; harness dossier; target-generic refresh trigger
 # INVARIANTS:
 # - Insight content renders above EvidenceItem proof controls.
 # - EvidenceItem proof is collapsed by default behind the exact label "Show the proof".
-# - Only OpenCode dispatches refresh jobs in v0.2a; other harnesses remain disabled.
+# - Refresh dispatch remains target-generic; path support is decided by job preflight.
 # :END_MODULE_CONTRACT
 
 from dataclasses import dataclass
@@ -22,7 +22,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
 from observatory import db
-from observatory.jobs.service import RefreshJobService, RefreshNotAvailableError
+from observatory.jobs.service import RefreshJobService
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.runners.base import AgentRunner
 from observatory.runners.claude import ClaudeRunner
@@ -97,7 +97,7 @@ def harness_dossier(
         {
             "active_nav": "harnesses",
             "harness": harness,
-            "refresh_enabled": harness.slug == "opencode",
+            "refresh_enabled": True,
             "sections": sections,
             "harness_insights": harness_insights,
         },
@@ -159,10 +159,7 @@ def refresh_harness(
     if harness is None:
         raise HTTPException(status_code=404, detail="Harness not found")
     runner = runner_factory(runner_name)
-    try:
-        job = RefreshJobService(runner).refresh_harness(session, harness)
-    except RefreshNotAvailableError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    job = RefreshJobService(runner).refresh_harness(session, harness)
     return RedirectResponse(url=f"/jobs/{job.id}", status_code=303)
 
 

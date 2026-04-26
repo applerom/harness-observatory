@@ -60,6 +60,15 @@ def seed_minimal_data(session: Session) -> None:
         language="TypeScript",
         source_model="multi-provider",
         status_note="imported",
+        local_upstream_path=".",
+    )
+    codex = Harness(
+        name="Codex CLI",
+        slug="codex-cli",
+        language="Rust",
+        source_model="OpenAI",
+        status_note="imported",
+        local_upstream_path=".",
     )
     topic = Topic(
         name="Instruction Files",
@@ -67,7 +76,7 @@ def seed_minimal_data(session: Session) -> None:
         definition="Project instructions enter different runtime channels.",
         why_it_matters="Channel placement changes authority.",
     )
-    session.add_all([harness, topic])
+    session.add_all([harness, codex, topic])
     session.commit()
 
     insight = Insight(
@@ -122,9 +131,11 @@ def test_dashboard_htmx_partial_returns_html(client: TestClient) -> None:
 def test_harness_list_and_dossier_render_imported_data(client: TestClient) -> None:
     list_response = client.get("/harnesses")
     dossier_response = client.get("/harnesses/opencode")
+    codex_dossier_response = client.get("/harnesses/codex-cli")
 
     assert list_response.status_code == 200
     assert "OpenCode" in list_response.text
+    assert "Codex CLI" in list_response.text
     assert "multi-provider" in list_response.text
     assert dossier_response.status_code == 200
     assert "Instruction Files" in dossier_response.text
@@ -132,6 +143,9 @@ def test_harness_list_and_dossier_render_imported_data(client: TestClient) -> No
     assert "Run with Codex" in dossier_response.text
     assert "Run with Claude" in dossier_response.text
     assert 'action="/harnesses/opencode/refresh"' in dossier_response.text
+    assert codex_dossier_response.status_code == 200
+    assert "Refresh target: Codex CLI" in codex_dossier_response.text
+    assert 'action="/harnesses/codex-cli/refresh"' in codex_dossier_response.text
 
 
 def test_topic_list_and_dossier_render_imported_data(client: TestClient) -> None:
@@ -195,6 +209,23 @@ def test_opencode_refresh_creates_job_and_raw_log(client: TestClient) -> None:
     assert jobs_response.status_code == 200
     assert "Job Dashboard" in jobs_response.text
     assert "#1" in jobs_response.text
+
+
+def test_non_opencode_refresh_creates_job_and_redirects(client: TestClient) -> None:
+    response = client.post("/harnesses/codex-cli/refresh", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/jobs/1"
+
+    detail_response = client.get("/jobs/1")
+    log_response = client.get("/jobs/1/log")
+
+    assert detail_response.status_code == 200
+    assert "Job #1" in detail_response.text
+    assert "Harness: Codex CLI" in detail_response.text
+    assert "fake test" in detail_response.text
+    assert log_response.status_code == 200
+    assert "Refreshed Harness 2" in log_response.text
 
 
 def test_job_detail_renders_semantic_trace_for_job(client: TestClient) -> None:

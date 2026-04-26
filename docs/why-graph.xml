@@ -151,7 +151,7 @@
   </FEATURE_CODEX_RUNNER>
 
   <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
-    <INTENT>AgentJob entity and dispatch mechanism: v0.2 stores manual OpenCode refresh lifecycle, raw logs, parsed Insight/Evidence artifacts, and semantic events around runtime boundaries.</INTENT>
+    <INTENT>AgentJob entity and dispatch mechanism: v0.2 stores the first manual OpenCode refresh lifecycle; v0.3a generalizes the same manual refresh spine to additional harness targets with raw logs, parsed Insight/Evidence artifacts, and semantic events around runtime boundaries.</INTENT>
     <PRD_REF>docs/PRD.md §7 Core Information Model (AgentJob entity), §18.7 Agent job management</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
@@ -348,7 +348,7 @@
   <MODULE_JOBS_SERVICE ID="MOD-JOBS-SERVICE"
                        FILE="src/observatory/jobs/service.py"
                        STATE="STARTED">
-    <INTENT>v0.2 job service: creates OpenCode refresh AgentJobs, runs target/runner preflight, executes via AgentRunner, writes raw logs, emits semantic events, and parses successful logs.</INTENT>
+    <INTENT>v0.2/v0.3 job service: creates manual harness refresh AgentJobs, resolves and preflights target cwd, runs runner preflight, executes via AgentRunner, writes raw logs, emits semantic events, and parses successful logs.</INTENT>
     <ANCHOR NAME="START_JOB_REFRESH" COORD="src/observatory/jobs/service.py#START_JOB_REFRESH"/>
     <ANCHOR NAME="START_JOB_PREFLIGHT" COORD="src/observatory/jobs/service.py#START_JOB_PREFLIGHT"/>
   </MODULE_JOBS_SERVICE>

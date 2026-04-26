@@ -1172,7 +1172,8 @@ Current phase status (2026-04-26):
 - v0.1 is complete locally: importer, schema, read-only dashboard/dossiers/matrix.
 - v0.2a is complete locally: OpenCode refresh job spine, selectable Codex/Claude runners, raw logs, Job Dashboard, and Playwright CLI visual QA.
 - v0.2b is complete locally: one real OpenCode Codex refresh raw log has been parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
-- Full v0.2 is functionally complete for the one-harness vertical; remaining v0.2 work, if any, is hardening and UX polish before moving toward v0.3.
+- Full v0.2 is functionally complete for the one-harness vertical.
+- v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed `Insight` / `EvidenceItem` rows.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1205,6 +1206,17 @@ Implementation sequencing note (2026-04-26): v0.2 was split into smaller feedbac
 - APScheduler in-process; cron schedule configurable per harness
 - Job Dashboard shows cron next-run times
 - Curation Queue surfaces `proposed` Insights
+
+Implementation sequencing note (2026-04-26): v0.3 starts with **v0.3a manual refresh generalization** before cron. The slice enables the existing manual refresh path for additional harness targets through the same `AgentJob` / `AgentRunner` / raw-log / parser / semantic-trace spine proven in v0.2. Cron is intentionally deferred until the target-selection, path-preflight, and parser assumptions work for more than OpenCode.
+
+v0.3a acceptance:
+
+- Refresh controls are available on harness dossiers beyond OpenCode.
+- Refresh no longer rejects non-OpenCode harnesses at the service boundary.
+- Target cwd preflight resolves current local sibling architecture directories when imported paths are stale, and records the resolved cwd in semantic events.
+- The refresh prompt template is target-generic rather than named for OpenCode.
+- Successful refresh logs parse into harness-scoped proposed `Insight` / `EvidenceItem` rows for the actual target harness.
+- Tests cover at least one non-OpenCode harness refresh path and one stale imported path repaired to a local sibling directory.
 
 ### v0.4 — Live Agent Studio and abstract job type
 

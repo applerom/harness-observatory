@@ -309,3 +309,42 @@ Rule added:
 
 Source:
 - https://openai.com/index/harness-engineering/
+
+## 2026-04-26 — Better Agent Visibility Should Increase Autonomy
+
+Observation:
+- Roman noticed that after adding Playwright visual QA and semantic runtime
+  traces, the lead agent still kept stopping after relatively small slices.
+- Some of that was process churn: we were adding the instruments themselves,
+  so short checkpoints were useful.
+- Once those instruments exist, they should let the lead agent take larger
+  product slices, not become a reason to ask for more human confirmation.
+
+Decision:
+- Move v0.3 work in larger autonomous chunks: frame the PRD/WHY slice, delegate
+  bounded implementation, run tests plus live smoke, inspect semantic traces,
+  and report back with evidence.
+- Keep Roman informed with short progress notes, but do not stop after every
+  small internal step when the next step is clear and reversible.
+
+Rule added:
+- Agent visibility tools are autonomy multipliers. If an agent has screenshots,
+  semantic traces, tests, and durable logs, it should use them to complete a
+  larger verified loop before handing control back.
+
+## 2026-04-26 — Stale Dev Servers Are A Visual QA Finding
+
+Observation:
+- The new Playwright harness-dossier check initially failed because the running
+  local Uvicorn process was still serving the old OpenCode-only UI.
+- Unit tests were already green against the new code, but the browser still saw
+  stale runtime state.
+
+Action:
+- Restarted the dev server, reran the Playwright CLI check, and kept the visual
+  test as a durable regression guard.
+
+Rule added:
+- A failing visual smoke after a UI patch is not noise. First ask whether the
+  live app is stale, then verify with a fresh server before judging the code.
+  The browser view tests the actual development harness, not just templates.

@@ -1,6 +1,7 @@
 import json
 from collections.abc import AsyncIterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from sqlalchemy.pool import StaticPool
@@ -109,6 +110,35 @@ def test_refresh_service_parses_successful_job_log_into_artifacts(tmp_path: Path
     ]
 
 
+def test_refresh_service_parses_successful_non_opencode_job_log(tmp_path: Path) -> None:
+    with make_session() as session:
+        harness = Harness(
+            name="Codex CLI",
+            slug="codex-cli",
+            local_upstream_path=".",
+        )
+        prompt_topic = Topic(name="Prompt System", slug="prompt-system")
+        session.add_all([harness, prompt_topic])
+        session.commit()
+        session.refresh(harness)
+        harness_id = harness.id
+
+        job = RefreshJobService(SuccessfulRunner(), log_dir=tmp_path).refresh_harness(session, harness)
+        persisted_job = session.get(AgentJob, job.id)
+        insights = session.exec(select(Insight)).all()
+        evidence_items = session.exec(select(EvidenceItem)).all()
+
+    assert persisted_job is not None
+    assert persisted_job.status == "done"
+    assert len(insights) == 1
+    assert insights[0].harness_id == harness_id
+    assert "OpenCode" not in insights[0].short_title
+    assert len(evidence_items) == 6
+    assert all(item.harness_id == harness_id for item in evidence_items)
+    semantic_events = read_semantic_events(tmp_path)
+    assert semantic_events[0]["metadata"]["harness_slug"] == "codex-cli"
+
+
 def test_refresh_service_marks_parser_failure_failed_and_appends_error(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -193,9 +223,9 @@ def test_refresh_service_fails_missing_target_cwd_before_runner_call(tmp_path: P
 
     with make_session() as session:
         harness = Harness(
-            name="OpenCode",
-            slug="opencode",
-            local_upstream_path=str(tmp_path / "missing-opencode"),
+            name="Missing Harness",
+            slug="missing-harness",
+            local_upstream_path=str(tmp_path / "missing-harness"),
         )
         session.add(harness)
         session.commit()
@@ -224,7 +254,74 @@ def test_refresh_service_fails_missing_target_cwd_before_runner_call(tmp_path: P
     ]
 
 
-def read_semantic_events(log_dir: Path) -> list[dict[str, object]]:
+def test_refresh_service_fails_missing_unresolved_target_path_before_runner_call(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_root = tmp_path / "harness-observatory"
+    repo_root.mkdir()
+    monkeypatch.chdir(repo_root)
+    runner = RecordingRunner()
+
+    with make_session() as session:
+        harness = Harness(
+            name="Unknown Harness",
+            slug="unknown-harness",
+            local_upstream_path=None,
+        )
+        session.add(harness)
+        session.commit()
+        session.refresh(harness)
+
+        job = RefreshJobService(runner, log_dir=tmp_path / "logs").refresh_harness(session, harness)
+        persisted_job = session.get(AgentJob, job.id)
+
+    assert persisted_job is not None
+    assert persisted_job.status == "failed"
+    assert persisted_job.error_message is not None
+    assert "local_upstream_path is not recorded" in persisted_job.error_message
+    assert not runner.called
+
+
+def test_refresh_service_repairs_stale_path_to_sibling_architecture_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = tmp_path / "harnesses"
+    repo_root = workspace / "harness-observatory"
+    resolved_target = workspace / "codex-architecture"
+    repo_root.mkdir(parents=True)
+    resolved_target.mkdir()
+    monkeypatch.chdir(repo_root)
+    runner = RecordingRunner()
+
+    with make_session() as session:
+        harness = Harness(
+            name="Codex CLI",
+            slug="codex-cli",
+            local_upstream_path=str(tmp_path / "codex-architecture"),
+        )
+        session.add(harness)
+        session.commit()
+        session.refresh(harness)
+
+        job = RefreshJobService(runner, log_dir=tmp_path / "logs").refresh_harness(session, harness)
+        persisted_job = session.get(AgentJob, job.id)
+
+    assert persisted_job is not None
+    assert persisted_job.status == "done"
+    assert runner.called
+    semantic_events = read_semantic_events(tmp_path / "logs")
+    preflight_event = next(
+        event for event in semantic_events if event["code"] == "target_cwd_preflight_succeeded"
+    )
+    assert preflight_event["metadata"]["cwd"] == str(resolved_target)
+    assert preflight_event["metadata"]["resolved_from_stale_path"] == str(
+        tmp_path / "codex-architecture"
+    )
+
+
+def read_semantic_events(log_dir: Path) -> list[dict[str, Any]]:
     event_path = log_dir / "semantic-events.jsonl"
     return [
         json.loads(line)

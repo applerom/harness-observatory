@@ -26,7 +26,7 @@ def test_parse_refresh_report_extracts_summary_insight_and_evidence_paths() -> N
     report = parse_refresh_report(FIXTURE.read_text(encoding="utf-8"))
 
     assert report is not None
-    assert report.short_title == "OpenCode refresh found curriculum-focused changes"
+    assert report.short_title == "Refresh found curriculum-focused changes"
     assert "March 27, 2026" in report.body
     assert len(report.evidence) == 6
     assert report.evidence[1].file_path == "architecture/prompt-system.md"
@@ -146,3 +146,81 @@ def test_parse_job_log_rolls_back_if_evidence_creation_fails(
         assert len(retry_result.evidence_item_ids) == 6
         assert len(session.exec(select(Insight)).all()) == 1
         assert len(session.exec(select(EvidenceItem)).all()) == 6
+
+
+def test_parse_codex_cli_log_attaches_to_target_harness_without_opencode_title(
+    tmp_path: Path,
+) -> None:
+    log_text = """## Summary
+Codex CLI added prompt routing notes and a new AGENTS.md handling section.
+
+## Notable Changes
+- Prompt system docs now explain child-session instruction routing.
+
+## Evidence Paths
+- Prompt routing note: [architecture/prompt-system.md](/D:/ai/harnesses/codex-architecture/architecture/prompt-system.md:10)
+"""
+    log_path = tmp_path / "agent-job-00010.log"
+    log_path.write_text(log_text, encoding="utf-8")
+
+    with make_session() as session:
+        opencode = Harness(name="OpenCode", slug="opencode")
+        codex = Harness(name="Codex CLI", slug="codex-cli")
+        prompt_topic = Topic(name="Prompt System", slug="prompt-system")
+        session.add_all([opencode, codex, prompt_topic])
+        session.commit()
+        session.refresh(codex)
+        codex_id = codex.id
+
+        job = AgentJob(
+            type="refresh",
+            target_kind="Harness",
+            target_id=codex.id,
+            runner_name="CodexRunner",
+            status="done",
+            stdout_log_path=log_path.as_posix(),
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        result = parse_job_log(session, job)
+        insight = session.get(Insight, result.insight_ids[0])
+        evidence = session.get(EvidenceItem, result.evidence_item_ids[0])
+
+    assert insight is not None
+    assert insight.harness_id == codex_id
+    assert "OpenCode" not in insight.short_title
+    assert evidence is not None
+    assert evidence.harness_id == codex_id
+    assert evidence.file_path == "architecture/prompt-system.md"
+
+
+def test_parse_job_log_does_not_fallback_to_opencode_for_missing_target(tmp_path: Path) -> None:
+    log_path = tmp_path / "agent-job-00011.log"
+    log_path.write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
+
+    with make_session() as session:
+        opencode = Harness(name="OpenCode", slug="opencode")
+        session.add(opencode)
+        session.commit()
+
+        job = AgentJob(
+            type="refresh",
+            target_kind="Harness",
+            target_id=999,
+            runner_name="CodexRunner",
+            status="done",
+            stdout_log_path=log_path.as_posix(),
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        result = parse_job_log(session, job)
+        insight = session.get(Insight, result.insight_ids[0])
+        evidence_items = session.exec(select(EvidenceItem)).all()
+
+    assert insight is not None
+    assert insight.harness_id is None
+    assert all(item.harness_id is None for item in evidence_items)

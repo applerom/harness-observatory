@@ -1,12 +1,12 @@
 # FILE: src/observatory/jobs/service.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Minimal v0.2 AgentJob creation and execution service.
+# PURPOSE: Minimal AgentJob creation and execution service.
 # PRD_REF: docs/PRD.md §24, §1162
 # WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
-# SCOPE: OpenCode refresh job spine; prompt template seed; raw log persistence; semantic event logging; successful log parsing
+# SCOPE: manual refresh job spine; prompt template seed; target cwd preflight; raw log persistence; semantic event logging; successful log parsing
 # INVARIANTS:
-# - Only OpenCode refresh is enabled in v0.2.
+# - Manual refresh is target-generic; unsupported local paths fail during preflight.
 # - Freeform runner output is preserved as a raw log before successful logs are parsed into Insights.
 # - Jobs with existing produced artifacts are not parsed again.
 # - Web/routes call this service rather than a concrete runner subprocess.
@@ -14,7 +14,9 @@
 
 import asyncio
 from datetime import UTC, datetime
+from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Protocol, cast
 
 from sqlmodel import Session, select
@@ -25,13 +27,17 @@ from observatory.runners.base import AgentContext, AgentPreflightResult, AgentRe
 from observatory.runtime.semantic_log import SemanticLogWriter
 
 
-REFRESH_TEMPLATE_NAME = "opencode-refresh-v0.2a"
-REFRESH_TEMPLATE_VERSION = "0.2a"
+REFRESH_TEMPLATE_NAME = "harness-refresh-v0.3a"
+REFRESH_TEMPLATE_VERSION = "0.3a"
 DEFAULT_LOG_DIR = Path("live-sessions")
 
 
-class RefreshNotAvailableError(ValueError):
-    """Raised when a harness is outside the current v0.2a refresh slice."""
+@dataclass(frozen=True, slots=True)
+class ResolvedTargetCwd:
+    """Resolved cwd with metadata about whether preflight repaired a stale configured path."""
+
+    path: str
+    repaired_from: str | None = None
 
 
 class RefreshJobService:
@@ -49,10 +55,7 @@ class RefreshJobService:
 
     # START_JOB_REFRESH:
     def refresh_harness(self, session: Session, harness: Harness) -> AgentJob:
-        """Run a minimal manual refresh job for the current v0.2a target."""
-        if harness.slug != "opencode":
-            raise RefreshNotAvailableError("v0.2a enables manual refresh only for OpenCode")
-
+        """Run a minimal manual refresh job for any configured harness target."""
         template = ensure_refresh_prompt_template(session)
         job = AgentJob(
             type="refresh",
@@ -93,8 +96,8 @@ class RefreshJobService:
         )
 
         # START_JOB_PREFLIGHT:
-        cwd = harness.local_upstream_path or "."
-        target_preflight_error = validate_target_cwd(cwd, harness.local_upstream_path)
+        resolved_cwd = resolve_target_cwd(harness)
+        target_preflight_error = validate_target_cwd(resolved_cwd.path, harness.local_upstream_path)
         if target_preflight_error is not None:
             result = AgentResult(status="failed", output="", error_message=target_preflight_error)
             log_path = write_job_log(self.log_dir, job, result.output, result.error_message)
@@ -112,7 +115,10 @@ class RefreshJobService:
                 expected="harness.local_upstream_path exists before runner execution",
                 actual=target_preflight_error,
                 job=job,
-                metadata={"cwd": cwd, "harness_slug": harness.slug},
+                metadata={
+                    "configured_cwd": harness.local_upstream_path or "",
+                    "harness_slug": harness.slug,
+                },
             )
             return job
 
@@ -121,9 +127,14 @@ class RefreshJobService:
             code="target_cwd_preflight_succeeded",
             anchor="START_JOB_REFRESH",
             expected="target cwd is available before runner execution",
-            actual=f"target cwd available: {cwd}",
+            actual=f"target cwd available: {resolved_cwd.path}",
             job=job,
-            metadata={"cwd": cwd, "harness_slug": harness.slug},
+            metadata={
+                "cwd": resolved_cwd.path,
+                "configured_cwd": harness.local_upstream_path or "",
+                "harness_slug": harness.slug,
+                "resolved_from_stale_path": resolved_cwd.repaired_from or "",
+            },
         )
 
         runner_preflight = run_optional_runner_preflight(self.runner)
@@ -171,7 +182,7 @@ class RefreshJobService:
             prompt=render_refresh_prompt(template, harness),
             target_kind=job.target_kind,
             target_id=job.target_id,
-            metadata={"cwd": cwd},
+            metadata={"cwd": resolved_cwd.path, "harness_slug": harness.slug},
         )
         try:
             result = asyncio.run(self.runner.run(context))
@@ -295,10 +306,11 @@ def ensure_refresh_prompt_template(session: Session) -> PromptTemplate:
         expected_artifact_kind="raw-refresh-log",
         body=(
             "Inspect the {harness_name} harness for fresh implementation or documentation changes. "
+            "Use upstream URL {upstream_url} when helpful. "
             "Return a concise markdown report with: summary, notable changes, evidence paths, and uncertainty. "
             "Do not edit files."
         ),
-        notes="v0.2a preserves raw output only; parser/import into Insights is deferred.",
+        notes="v0.3a target-generic manual refresh prompt.",
     )
     session.add(template)
     session.commit()
@@ -314,9 +326,56 @@ def render_refresh_prompt(template: PromptTemplate, harness: Harness) -> str:
     )
 
 
+def resolve_target_cwd(harness: Harness) -> ResolvedTargetCwd:
+    configured_path = harness.local_upstream_path
+    if configured_path is not None:
+        configured = Path(configured_path)
+        if configured.exists():
+            return ResolvedTargetCwd(str(configured))
+
+    for candidate in target_cwd_candidates(harness):
+        if candidate.exists():
+            return ResolvedTargetCwd(str(candidate), repaired_from=configured_path)
+
+    return ResolvedTargetCwd(configured_path or "")
+
+
+def target_cwd_candidates(harness: Harness) -> list[Path]:
+    workspace_root = Path.cwd().parent
+    repo_names: list[str] = []
+    if harness.local_upstream_path:
+        repo_names.append(Path(harness.local_upstream_path).name)
+    repo_names.extend(repo_name_candidates(harness))
+
+    candidates: list[Path] = []
+    seen: set[str] = set()
+    for repo_name in repo_names:
+        if not repo_name or repo_name in seen:
+            continue
+        seen.add(repo_name)
+        candidates.append(workspace_root / repo_name)
+    return candidates
+
+
+def repo_name_candidates(harness: Harness) -> list[str]:
+    slug = harness.slug.strip().lower()
+    name_slug = slugify(harness.name)
+    bases = [slug, name_slug]
+    for suffix in ("-cli", "-code"):
+        if slug.endswith(suffix):
+            bases.append(slug.removesuffix(suffix))
+        if name_slug.endswith(suffix):
+            bases.append(name_slug.removesuffix(suffix))
+    return [f"{base}-architecture" for base in bases if base]
+
+
+def slugify(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+
+
 def validate_target_cwd(cwd: str, configured_path: str | None) -> str | None:
-    if configured_path is None:
-        return None
+    if not cwd:
+        return "Target cwd preflight failed: harness.local_upstream_path is not recorded and no sibling architecture directory was found"
     if Path(cwd).exists():
         return None
     return f"Target cwd preflight failed: harness.local_upstream_path does not exist: {cwd}"
