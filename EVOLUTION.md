@@ -284,3 +284,28 @@ Teaching extraction:
 - The lesson is not "agents magically see." They see when the harness gives
   them durable, inspectable instruments: screenshots for UI and structured
   semantic events for runtime behavior.
+
+## 2026-04-26 — Parallel Agents Need Isolation, Not Just Warnings
+
+Observation:
+- Roman noticed the lead warns subagents that they are not alone in the
+  repository.
+- That warning is correct, but it is a weak control compared with giving each
+  concurrent implementation worker an isolated workspace.
+- OpenAI's harness-engineering article describes making the app bootable per
+  git worktree so Codex can run one isolated app instance per change.
+
+Decision:
+- Keep the current default fan-out modest: 2-3 active subagents for normal work,
+  with the configured fifth Codex thread treated as operational headroom.
+- Before increasing parallel write-heavy fan-out, add a worktree strategy:
+  disjoint worktrees, separate app ports/logs/semantic event files, and an
+  integration step owned by the lead.
+
+Rule added:
+- "You are not alone in the repo" is a prompt-level guard. Worktrees are the
+  stronger architectural guard and should be considered before scaling parallel
+  implementation beyond small disjoint slices.
+
+Source:
+- https://openai.com/index/harness-engineering/
