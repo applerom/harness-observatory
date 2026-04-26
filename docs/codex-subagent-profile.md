@@ -12,6 +12,7 @@ The recommendations are adequate for `harness-observatory`:
 
 - They preserve the strict lead/subagent hierarchy already defined in `AGENTS.md`.
 - They keep `max_depth = 1`, which matches the project's bias against recursive delegation and quota surprises.
+- They keep small active fan-out, with `agents.max_threads = 5` treated as headroom rather than a default swarm size.
 - They prefer small fan-out over swarm behavior, which fits a personal-subscription, local-first teaching project.
 - They separate read-only exploration, implementation, validation, and review.
 - They correctly reserve `xhigh` for rare escalation, not normal work.
@@ -21,6 +22,7 @@ Project-specific adjustments:
 - Do not run a broad scout swarm by default. Start with one or two scouts when they can answer a concrete uncertainty.
 - Do not pin a smaller model just because it is cheaper. Use lighter models only when the result is easy for the lead to verify.
 - Do not delegate the immediate critical path if the lead's next action depends on that result.
+- Close completed subagents promptly after their evidence is summarized into WORKLOG, EVOLUTION, or a commit message.
 - Treat custom `.codex/agents/*.toml` files as a convenience for future Codex sessions; if a Codex surface only exposes built-in `explorer` and `worker` roles, map the profile onto those roles in the prompt.
 
 ## Default Codex Shape
@@ -51,6 +53,7 @@ The default v0.1 sequence is:
 5. Dispatch Task E after Task A creates enough project structure for runner stubs and validator tests.
 6. Dispatch Task D after A/B/C are integrated and validated.
 7. Use reviewer/validator subagents after meaningful integration points, not after every tiny edit.
+8. Keep at most 2-4 subagents actively working in normal flow; the fifth thread is operational headroom for a validator or follow-up worker.
 
 ## Subagent Contract
 
@@ -107,4 +110,3 @@ These project choices were checked against official OpenAI docs on 2026-04-26:
 - Codex custom agent files can define `model`, `model_reasoning_effort`, and `sandbox_mode`; omitted fields inherit from the parent session: https://developers.openai.com/codex/subagents
 - GPT-5.5 is a strong fit for complex coding and long-running agent workflows; `medium` is the default balanced reasoning effort, and `high`/`xhigh` should be justified by task complexity: https://developers.openai.com/api/docs/guides/latest-model
 - Reasoning effort trades speed/cost for deeper reasoning; `xhigh` should be reserved for cases where the extra latency/cost has clear value: https://developers.openai.com/api/docs/guides/reasoning
-

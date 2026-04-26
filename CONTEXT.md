@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
 > **Last update:** 2026-04-26
-> **Phase:** Pre-v0.1 — foundational docs landed, cross-harness lead-agent delegation aligned, no code yet
-> **Next milestone:** v0.1 First Working Slice (read-only viewer + markdown import)
+> **Phase:** Post-v0.1 — first working slice implemented; runtime freshness/process hardening in progress
+> **Next milestone:** owner hands-on review of v0.1, then v0.2 planning
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
 
@@ -16,7 +16,7 @@ Decisions were locked through a structured interview between the project owner (
 
 All decisions are written into `docs/PRD.md` (v2). The pedagogical and collaborative spirit is captured in `SPIRIT.md`. The intent-to-implementation map starts in `docs/why-graph.xml` (stem only — modules will gain anchors as code lands).
 
-**No code has been written yet.** The next phase delegates v0.1 implementation to subagents per `DELEGATION-PLAN.md`.
+Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists and the project is in post-v0.1 hardening / owner-review preparation.
 
 ---
 
@@ -29,7 +29,8 @@ All decisions are written into `docs/PRD.md` (v2). The pedagogical and collabora
 5. `docs/why-graph-principles.md` + `docs/why-contracts-v1.md` — how to extend the graph and write contracts (reference)
 6. `CONTEXT.md` (this file) — running decision log
 7. `WORKLOG.md` — durable state of current work (active items, next queue, blocked, recent history)
-8. `DELEGATION-PLAN.md` — if you're coordinating subagents or writing code
+8. `EVOLUTION.md` — development trajectory log and reusable process lessons
+9. `DELEGATION-PLAN.md` — if you're coordinating subagents or writing code
 
 After reading 1–8, output once: `Observatory Agent1st ON`
 
@@ -46,7 +47,8 @@ harness-observatory/
 ├── AGENTS.md                   agent1st core + observatory addendum (237 lines)
 ├── CLAUDE.md                   3-line import file (@AGENTS @SPIRIT @CONTEXT)
 ├── CONTEXT.md                  this file (running decision log)
-├── WORKLOG.md                  durable state of current work in flight (NEW — interrupt-resume substrate)
+├── WORKLOG.md                  durable state of current work in flight (interrupt-resume substrate)
+├── EVOLUTION.md                development trajectory log (lessons, drift, process changes)
 ├── DELEGATION-PLAN.md          orchestration plan for subagents
 ├── docs/
 │   ├── PRD.md                  product spec v2 — interview-locked (1271 lines)
@@ -58,7 +60,7 @@ harness-observatory/
 └── live-sessions/.gitkeep      for raw stdout logs from live agent runs (per-machine, .gitignored)
 ```
 
-**No `src/` yet.** That lands in v0.1 implementation.
+Historical note: this was true at bootstrap. `src/` now exists after v0.1 implementation.
 
 ---
 
@@ -66,7 +68,7 @@ harness-observatory/
 
 - **Scope:** orchestration-first hybrid — agent jobs are the engine, comparison views are the dashboard. (PRD §3, §14)
 - **Location:** `D:/ai/harnesses/harness-observatory/` as a new sibling. `harness-architecture/` stays as constitution + migration input. (CONTEXT this file)
-- **Tech stack:** Python 3.12 + uv + FastAPI + SQLModel + SQLite + Alembic + Jinja2 + HTMX + APScheduler + lxml + asyncio.subprocess + ruff + pytest. NOT: Anthropic SDK, React (in v1), Postgres (in v1), Docker (in v1). (PRD §20)
+- **Tech stack:** Python 3.14 + uv + FastAPI + SQLModel + SQLite + Alembic + Jinja2 + HTMX + APScheduler + lxml + asyncio.subprocess + ruff + pytest. NOT: Anthropic SDK, React (in v1), Postgres (in v1), Docker (in v1). (PRD §20)
 - **Pedagogy:** three-stage learner journey; Insight on top, EvidenceItem ("Show the proof") collapsed below; agent fallibility as pedagogy; engagement > perfection. (PRD §4.7–4.9, SPIRIT)
 - **Agent abstraction:** `AgentRunner` interface — first-class. v1 has only `ClaudeRunner` (calls `claude -p`), but never hardcode below the abstraction. (PRD §4.10)
 - **Autonomy:** L1 auto-merge with confidence labelling. All produced Insights publish as `proposed`. No staging review queue. Multi-pass verification handles raw output. (PRD §7, §12)
@@ -202,7 +204,7 @@ Roman provided `docs/codex-subagents-recommendations.md`, an advisory memo on ho
 
 What changed:
 - Added `docs/codex-subagent-profile.md` as the Codex-specific operating profile: small hierarchy, at most 1-2 scouts before write-heavy work, bounded worker ownership, no subagent commits, lead-owned integration.
-- Added project-local `.codex/config.toml` with `agents.max_threads = 4` and `agents.max_depth = 1`, plus default lead model posture.
+- Added project-local `.codex/config.toml` with `agents.max_threads = 4` and `agents.max_depth = 1`, plus default lead model posture. Superseded 2026-04-26 by the Python 3.14 / EVOLUTION update: current Codex cap is `agents.max_threads = 5` with the fifth slot reserved as operational headroom.
 - Added custom Codex agent profiles under `.codex/agents/`: `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`.
 - Linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`.
 
@@ -221,3 +223,17 @@ What changed:
 What's now possible: v0.1 Tasks A/B/C can begin under the existing delegation plan after the drift cleanup lands.
 
 What's now blocking: no project-level blocker. The first implementation risk is importer reality against `../harness-architecture`; keep v0.1 minimal and iterate from real feedback rather than trying to design the final data model upfront.
+
+## Update 2026-04-26 — Python 3.14 and evolution log
+
+Roman noticed that v0.1 had been scaffolded on Python 3.12, likely from agent/model familiarity rather than current stable runtime evidence. Codex checked official Python.org sources on 2026-04-26: Python 3.14.4 is the latest stable release, while 3.15 is still alpha.
+
+What changed:
+- Project runtime target moved from Python 3.12 to Python 3.14 (`>=3.14,<3.15`).
+- `uv.lock` was regenerated against Python 3.14.4 after installing a local project runtime under `D:/ai/harnesses/.runtimes/python-3.14.4`.
+- Added `EVOLUTION.md` as a teaching-facing trajectory log for agent-version inertia, dependency freshness, subagent process friction, and other lessons from building.
+- Codex subagent thread cap moved from 4 to 5, with an explicit lifecycle rule: close completed agents promptly; treat the fifth slot as headroom, not a swarm default.
+
+What's now possible: future agents and students can see not just the final stack choice, but the path by which the project corrected stale agent defaults.
+
+What's now blocking: local developer machines need Python 3.14 available. On this Windows machine, current `uv python install 3.14.4` did not have a managed download yet, so Codex used the official Python.org Windows installer into a local runtime directory. This is environment friction, not a product blocker.

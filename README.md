@@ -40,7 +40,7 @@ evidence themselves.
 
 | Layer | Choice | Why |
 |---|---|---|
-| Language | Python 3.12 | Readable, mainstream, forkable |
+| Language | Python 3.14 | Current stable CPython line; readable, mainstream, forkable |
 | Package manager | `uv` | Fast, modern, replaces pip/virtualenv |
 | Web framework | FastAPI | Async, typed, popular |
 | Database | SQLite (via SQLModel) | Zero-config, single-file, local-first |

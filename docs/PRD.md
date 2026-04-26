@@ -1024,7 +1024,7 @@ These choices are locked. They are chosen with bias toward popular, well-underst
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Language | Python 3.12+ | |
+| Language | Python 3.14 | Latest stable CPython line at v0.1 implementation time; agents must verify this against upstream before changing it. |
 | Package manager | `uv` | not pip, not poetry |
 | Web framework | FastAPI | async, OpenAPI built-in |
 | Templates | Jinja2 + HTMX | server-render, no SPA in v1 |

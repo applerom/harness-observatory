@@ -1,7 +1,7 @@
 # Delegation Plan — v0.1 First Working Slice
 
 > **Audience:** lead agent (architect) coordinating subagents who will write the v0.1 code.
-> **Status:** Draft — pending owner review of foundational docs before dispatch.
+> **Status:** v0.1 executed — retained as the historical delegation contract and source for post-v0.1 retrospectives.
 > **References:** `SPIRIT.md`, `docs/PRD.md` §24/§26, `docs/why-graph.xml`, `AGENTS.md` §9 Delegation Design.
 
 ---
@@ -160,7 +160,7 @@ This plan is harness-independent. A lead agent maps each task to the delegation 
 - **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Follow `docs/codex-subagent-profile.md` and the `.codex/agents/*.toml` profiles when available. Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
 - **Other harnesses:** use their equivalent bounded-agent mechanism only if it can preserve the same contract: self-contained brief, disjoint write ownership, evidence report, no commits by subagents, and lead-owned integration.
 
-Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer.
+Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer. Completed Codex subagents should be closed promptly after their evidence is summarized into durable state, so the configured thread cap remains available for real work.
 
 ### How subagents are dispatched
 

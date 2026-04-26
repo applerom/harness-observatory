@@ -22,7 +22,8 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 5. `docs/why-contracts-v1.md` — contract and anchor rules for v1 scope
 6. `CONTEXT.md` — current handoff state (where we are, recent decisions, blockers)
 7. `WORKLOG.md` — durable state for *current* work (active items, next queue, blocked, recent history). The runbook explaining how to use it lives in "Interrupt-and-Resume Pattern" below.
-8. `DELEGATION-PLAN.md` — orchestration plan (read this if you are coordinating subagents)
+8. `EVOLUTION.md` — teaching-facing development trajectory log (agent mistakes, process friction, rule changes)
+9. `DELEGATION-PLAN.md` — orchestration plan (read this if you are coordinating subagents)
 
 ### Key Semantic Distinctions (§5 applies immediately)
 
@@ -39,6 +40,7 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - **AGENTS.md** (this file) is the canonical operating rules and required-reading list for agents. If you need to know "what should I read next" — it lives here, not in README and not in CONTEXT.
 - **CONTEXT.md** is the running handoff log — current state, recent decisions, what just changed. Append new dated sections; do not rewrite history.
 - **WORKLOG.md** is the durable state of *current work in flight* — active items, next ordered queue, blocked items, recent history of dispatches and commits. Updated after every meaningful step. See "Interrupt-and-Resume Pattern" below for the discipline. Distinct from CONTEXT.md (CONTEXT = decision log; WORKLOG = task state).
+- **EVOLUTION.md** is the development trajectory log — lessons from actual project evolution, including agent-version inertia, tool friction, subagent-process changes, and reusable teaching observations. It is not current task state; put active work in WORKLOG.
 - **SPIRIT.md** is the constitution — slow-changing intent, pedagogy, anti-patterns. Changes to SPIRIT.md require owner discussion.
 - **DELEGATION-PLAN.md** is the orchestration plan — read it if you are coordinating subagents or are a code-writing subagent.
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.

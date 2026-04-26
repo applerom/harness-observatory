@@ -317,14 +317,14 @@ sandbox_mode = "workspace-write"
 approval_policy = "on-request"
 
 [agents]
-max_threads = 4
+max_threads = 5
 max_depth = 1
 ```
 
 Rationale:
 
 - `gpt-5.5 + high` keeps the lead strong enough for architecture/process control.
-- `max_threads = 4` is a deliberate personal-subscription/local-machine cap. OpenAI's default may allow more, but this project benefits from lower fan-out and easier review.
+- `max_threads = 5` is a deliberate personal-subscription/local-machine cap with one slot of operational headroom. OpenAI's default may allow more, but this project benefits from lower fan-out and easier review.
 - `max_depth = 1` matches OpenAI's default child-agent pattern and prevents recursive delegation from exploding token usage.
 
 ---
