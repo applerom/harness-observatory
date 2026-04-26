@@ -1,0 +1,11 @@
+{
+  "name": "harness-observatory-visual-qa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "visual:matrix": "playwright test tests/visual/matrix.spec.mjs --config=playwright.config.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1"
+  }
+}

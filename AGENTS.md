@@ -46,6 +46,13 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
 - README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.
 
+### Change discipline
+
+- Product or architecture changes start in `docs/PRD.md` and `docs/why-graph.xml`, then move into code in the same working slice. If code already drifted ahead, record the drift in `EVOLUTION.md`/`WORKLOG.md` and fix the docs before adding more behavior.
+- Use correct English technical terms in durable docs and UI when Russian shorthand is ambiguous. Target documentation language is simple English (roughly B1); Russian is acceptable for owner-facing conversation, not as a reason to invent translated terms that create semantic drift.
+- Prefer CLI tools and progressively loaded `SKILL.md` workflows for local project work. Avoid MCP as the default mechanism when a CLI does the job, because unused tool schemas consume model context. Use MCP/connectors when the task genuinely requires connected app data, the user asks for them, or the active harness only exposes that capability through MCP.
+- UI changes require agent-visible visual QA. Do not rely only on route tests or owner screenshots. Prefer Playwright CLI screenshots/tests for local web UI checks; use higher-level computer-use tools when the task needs flexible visual interaction beyond deterministic browser automation.
+
 ### Cross-Harness Lead-Agent Model
 
 The project role is **lead agent**, not "Claude-only lead." Claude Code, Codex, Cursor, or another capable agent harness may host the active lead agent. Treat these as peer implementations of the same process role:

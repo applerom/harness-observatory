@@ -97,3 +97,13 @@ INVARIANTS:
 .matrix-cell-button:hover {
   border-color: rgb(16 185 129);
 }
+
+.matrix-scrollbar-top {
+  background: white;
+  border: 1px solid rgb(226 232 240);
+  border-bottom: 0;
+  border-radius: 0.5rem 0.5rem 0 0;
+  height: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

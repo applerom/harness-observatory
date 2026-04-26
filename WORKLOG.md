@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — v0.2a job spine implemented and validated
+**Last update:** 2026-04-26 — CodexRunner and visual QA implemented
 **Active session lead:** Codex GPT-5.5-class (interactive)
-**Current phase:** v0.2a complete — ready for raw-log review / parser slice
+**Current phase:** v0.2a+ complete — multi-runner refresh controls and matrix UX hardening
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine: durable `AgentJob`, `ClaudeRunner` boundary, raw log, and Job Dashboard before any parser writes new Insights.
+v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardening is complete. v0.2a now has the OpenCode refresh execution spine with selectable `CodexRunner`/`ClaudeRunner`, durable `AgentJob`, raw log, and Job Dashboard before any parser writes new Insights.
 
 ## 2. Active items
 
@@ -31,6 +31,7 @@ v0.1 is implemented and locally smoke-tested. Runtime freshness/process hardenin
 | E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (`DELEGATION-PLAN` Task E). Codex subagent Hooke `019dc925-2b72-7390-8393-9bf278efd12c`; owns `src/observatory/runners/**`, `scripts/validate_anchors.py`, `tests/runners/**`, `tests/scripts/**`. | Codex implementation_worker | completed | 2026-04-26 | integrated with runner tests, mypy, ruff, anchor validator, and forbidden-literal check green |
 | D | Read-only dossier + matrix routes (`DELEGATION-PLAN` Task D). Codex subagent Pascal `019dc92c-e752-7011-b201-2e5a86625949`; owns web route/template/test integration. | Codex implementation_worker | completed | 2026-04-26 | integrated; real DB smoke and full validation green |
 | V02A | OpenCode refresh execution spine: create/run `AgentJob`, preserve raw log, expose Job Dashboard; parser into Insights deferred. | Codex lead | completed | 2026-04-26 | full validation green; server restarted and `/jobs` smoke returned 200 |
+| V02A-MULTIRUNNER-UX | Add `CodexRunner`, clarify target vs runner UI, and add CLI Playwright visual QA for matrix UX. | Codex lead | completed | 2026-04-26 | pytest/ruff/mypy/anchors/Playwright CLI visual check green |
 
 ## 3. Next ordered queue
 
@@ -66,6 +67,7 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 - **2026-04-26** — Roman confirmed real development problems and decisions should become student-facing lessons. Codex added `SPIRIT.md` "Development as Curriculum", created `docs/lessons/development-as-curriculum.md`, `docs/lessons/runtime-freshness.md`, and `docs/lessons/subagent-orchestration.md`, and linked the extracted lessons from `EVOLUTION.md`.
 - **2026-04-26** — v0.2 planning decision: split full PRD v0.2 into v0.2a job spine first, parser second. Rationale: do not design an Insight parser around imagined freeform output; first capture real raw logs through an OpenCode refresh `AgentJob` and Job Dashboard.
 - **2026-04-26** — Implemented v0.2a: `ClaudeRunner` now performs the CLI subprocess inside the runner boundary and returns failed `AgentResult` on missing CLI/non-zero/timeout; `RefreshJobService` creates/runs OpenCode refresh jobs and writes `live-sessions/agent-job-*.log`; `/jobs`, `/jobs/{id}`, and `/jobs/{id}/log` expose the Job Dashboard; OpenCode dossier Refresh posts to the service. Validation: `pytest` 23 passed, `ruff` passed, `mypy` passed, anchor validator checked 30/skipped 0, no `claude -p` literal in `src/` or `scripts/`, local server restarted and `/`, `/harnesses/opencode`, `/jobs` returned 200.
+- **2026-04-26** — Roman caught target/runner ambiguity and matrix UX gaps. Codex updated PRD/WHY first, then added `CodexRunner` (`codex exec` in read-only non-interactive mode), selectable "Run with Codex" / "Run with Claude" controls, clearer Job Dashboard target/runner labels, matrix top horizontal scrollbar, scroll-to-detail after cell click, and CLI Playwright visual QA. Validation: `pytest` 26 passed, `ruff` passed, `mypy` passed, anchor validator checked 31/skipped 0, `npm run visual:matrix` passed after Playwright Chromium install. Added lesson `docs/lessons/visual-qa-for-agents.md`.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.

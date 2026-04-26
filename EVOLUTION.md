@@ -138,3 +138,45 @@ Why:
   designed around imagined output.
 - It also creates teaching material: students can see how an agent-first project
   narrows a milestone without losing the larger intent.
+
+## 2026-04-26 — Target/Runner Semantic Hygiene
+
+Observation:
+- Roman asked why an OpenCode dossier launches `ClaudeRunner`.
+- The implementation was technically correct (`OpenCode` was the target and
+  `ClaudeRunner` was the runtime agent), but the wording made the two roles easy
+  to confuse.
+
+Decision:
+- UI and docs must explicitly label `Target` and `Runner`.
+- `CodexRunner` is added as a second runtime runner so the project can dogfood
+  Codex as both development harness and product-level AgentRunner.
+
+Rule added:
+- Never write "OpenCode launches ClaudeRunner" style copy. Write "Refresh target
+  OpenCode with runner Codex/Claude" or equivalent.
+
+## 2026-04-26 — Visual QA And Current Tooling Checks
+
+Observation:
+- Roman found matrix UX issues by eye: wide tables need a top scrollbar, and
+  clicking a matrix cell changes a lower detail region that may be off-screen.
+- Codex could have missed this if it only ran backend and route tests.
+- Roman also flagged that expert knowledge about agent UI tooling ages quickly.
+
+Evidence:
+- Official OpenAI computer-use docs checked on 2026-04-26 describe GPT-5.5 with
+  the GA `computer` tool for flexible UI operation, while still recommending
+  browser automation frameworks such as Playwright or Selenium as the fastest
+  path for local browser automation.
+- For this project, deterministic local UI QA should use Playwright CLI first.
+  MCP/browser connectors remain optional and task-specific, not the default.
+
+Rule added:
+- UI changes need agent-visible visual QA, preferably Playwright CLI screenshots
+  or tests.
+- When model/tool capabilities affect workflow choice, check current primary
+  docs before encoding the rule.
+  Sources:
+  - https://developers.openai.com/api/docs/guides/tools-computer-use
+  - https://developers.openai.com/codex/cli

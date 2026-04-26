@@ -9,7 +9,7 @@ from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.runners.base import AgentContext, AgentEvent, AgentResult
 from observatory.web.app import create_app
-from observatory.web.routes.harness import get_refresh_runner
+from observatory.web.routes.harness import get_refresh_runner_factory
 
 
 class FakeRefreshRunner:
@@ -44,7 +44,7 @@ def client() -> Generator[TestClient, None, None]:
 
     app = create_app()
     app.dependency_overrides[db.get_session] = override_session
-    app.dependency_overrides[get_refresh_runner] = lambda: FakeRefreshRunner()
+    app.dependency_overrides[get_refresh_runner_factory] = lambda: lambda _runner_name: FakeRefreshRunner()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
@@ -125,7 +125,9 @@ def test_harness_list_and_dossier_render_imported_data(client: TestClient) -> No
     assert "multi-provider" in list_response.text
     assert dossier_response.status_code == 200
     assert "Instruction Files" in dossier_response.text
-    assert "Refresh" in dossier_response.text
+    assert "Refresh target: OpenCode" in dossier_response.text
+    assert "Run with Codex" in dossier_response.text
+    assert "Run with Claude" in dossier_response.text
     assert 'action="/harnesses/opencode/refresh"' in dossier_response.text
 
 
@@ -182,6 +184,7 @@ def test_opencode_refresh_creates_job_and_raw_log(client: TestClient) -> None:
     assert detail_response.status_code == 200
     assert "Job #1" in detail_response.text
     assert "done" in detail_response.text
+    assert "Harness: OpenCode" in detail_response.text
     assert "fake test" in detail_response.text
     assert log_response.status_code == 200
     assert "Refreshed Harness 1" in log_response.text

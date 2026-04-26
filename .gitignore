@@ -45,3 +45,8 @@ Thumbs.db
 dist/
 build/
 *.egg
+
+# Node / visual QA
+node_modules/
+test-results/
+playwright-report/

@@ -11,6 +11,7 @@
 # :END_MODULE_CONTRACT
 
 from pathlib import Path
+from dataclasses import dataclass
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
@@ -18,7 +19,7 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
 from observatory import db
-from observatory.models import AgentJob
+from observatory.models import AgentJob, Harness
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -26,16 +27,34 @@ templates = Jinja2Templates(directory=TEMPLATE_DIR)
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
+@dataclass(frozen=True)
+class JobView:
+    job: AgentJob
+    target_label: str
+    runner_label: str
+
+
+def _job_view(session: Session, job: AgentJob) -> JobView:
+    target_label = f"{job.target_kind or 'unknown'} {job.target_id or ''}".strip()
+    if job.target_kind == "Harness" and job.target_id is not None:
+        harness = session.get(Harness, job.target_id)
+        if harness is not None:
+            target_label = f"Harness: {harness.name}"
+    runner_label = f"{job.runner_name or 'unknown'} {job.runner_version or ''}".strip()
+    return JobView(job=job, target_label=target_label, runner_label=runner_label)
+
+
 # START_ROUTE_JOBS_LIST:
 @router.get("", response_class=HTMLResponse)
 def job_list(request: Request, session: Session = Depends(db.get_session)) -> HTMLResponse:
     jobs = sorted(session.exec(select(AgentJob)).all(), key=lambda job: job.created_at, reverse=True)
+    job_views = [_job_view(session, job) for job in jobs]
     return templates.TemplateResponse(
         request,
         "jobs/index.html",
         {
             "active_nav": "jobs",
-            "jobs": jobs,
+            "job_views": job_views,
         },
     )
 
@@ -58,7 +77,7 @@ def job_detail(
         "jobs/detail.html",
         {
             "active_nav": "jobs",
-            "job": job,
+            "job_view": _job_view(session, job),
         },
     )
 

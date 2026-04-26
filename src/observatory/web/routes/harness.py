@@ -14,7 +14,9 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from collections.abc import Callable
+
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
@@ -24,6 +26,7 @@ from observatory.jobs.service import RefreshJobService, RefreshNotAvailableError
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.runners.base import AgentRunner
 from observatory.runners.claude import ClaudeRunner
+from observatory.runners.codex import CodexRunner
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -39,8 +42,22 @@ class HarnessTopicSection:
     evidence_items: list[EvidenceItem]
 
 
-def get_refresh_runner() -> AgentRunner:
-    return ClaudeRunner()
+RefreshRunnerFactory = Callable[[str], AgentRunner]
+
+
+def make_refresh_runner(runner_name: str) -> AgentRunner:
+    runners: dict[str, type[ClaudeRunner] | type[CodexRunner]] = {
+        "claude": ClaudeRunner,
+        "codex": CodexRunner,
+    }
+    runner_type = runners.get(runner_name)
+    if runner_type is None:
+        raise HTTPException(status_code=400, detail="Unknown AgentRunner")
+    return runner_type()
+
+
+def get_refresh_runner_factory() -> RefreshRunnerFactory:
+    return make_refresh_runner
 
 
 # START_ROUTE_HARNESS_LIST:
@@ -135,12 +152,14 @@ def _harness_topic_sections(session: Session, harness: Harness) -> list[HarnessT
 @router.post("/{slug}/refresh", response_class=RedirectResponse)
 def refresh_harness(
     slug: str,
+    runner_name: str = Form(default="codex"),
     session: Session = Depends(db.get_session),
-    runner: AgentRunner = Depends(get_refresh_runner),
+    runner_factory: RefreshRunnerFactory = Depends(get_refresh_runner_factory),
 ) -> RedirectResponse:
     harness = session.exec(select(Harness).where(Harness.slug == slug)).first()
     if harness is None:
         raise HTTPException(status_code=404, detail="Harness not found")
+    runner = runner_factory(runner_name)
     try:
         job = RefreshJobService(runner).refresh_harness(session, harness)
     except RefreshNotAvailableError as exc:

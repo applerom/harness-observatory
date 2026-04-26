@@ -3,12 +3,13 @@ FILE: src/observatory/web/templates/matrix/index.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
 PURPOSE: Read-only harness x topic matrix grid with HTMX cell expansion controls.
-PRD_REF: docs/PRD.md §26.2
+PRD_REF: docs/PRD.md §11.2, §26.2
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
 SCOPE: matrix table; imported cell states; confidence placeholder
 INVARIANTS:
 - Every cell displays state and "not yet verified" confidence copy for v0.1.
-- Cell expansion uses HTMX and stays read-only.
+- Cell expansion uses HTMX, stays read-only, and scrolls the detail region into view.
+- Wide matrix horizontal scrolling is available above and below the table.
 :END_MODULE_CONTRACT
 -->
 {% extends "_base.html" %}
@@ -22,8 +23,22 @@ INVARIANTS:
       <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Harness x Topic</h1>
     </div>
 
-    <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-      <table class="min-w-full divide-y divide-slate-200 text-sm">
+    {% set matrix_width_rem = 10 + (topics|length * 12) %}
+    <div
+      id="matrix-scroll-top"
+      class="matrix-scrollbar-top"
+      data-testid="matrix-scroll-top"
+      onscroll="window.observatorySyncScroll('matrix-scroll-top', 'matrix-scroll-main')"
+    >
+      <div style="width: {{ matrix_width_rem }}rem; height: 1px;"></div>
+    </div>
+    <div
+      id="matrix-scroll-main"
+      class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm"
+      data-testid="matrix-scroll-main"
+      onscroll="window.observatorySyncScroll('matrix-scroll-main', 'matrix-scroll-top')"
+    >
+      <table class="divide-y divide-slate-200 text-sm" style="min-width: {{ matrix_width_rem }}rem;">
         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-normal text-slate-500">
           <tr>
             <th class="sticky left-0 z-10 bg-slate-50 px-4 py-3">Harness</th>
@@ -43,9 +58,11 @@ INVARIANTS:
                 <td class="align-top px-4 py-3">
                   <button
                     class="matrix-cell-button"
+                    data-testid="matrix-cell-{{ row.harness.slug }}-{{ topic.slug }}"
                     hx-get="/matrix/cells/{{ row.harness.slug }}/{{ topic.slug }}"
                     hx-target="#matrix-cell-detail"
                     hx-swap="innerHTML"
+                    hx-on::after-swap="window.observatoryScrollToMatrixDetail()"
                     type="button"
                   >
                     <span class="font-semibold text-slate-900">{{ cell.state if cell else "unknown" }}</span>

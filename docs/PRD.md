@@ -155,7 +155,9 @@ The design principle: engineer for **honest** agent output and the human's abili
 
 All agent invocations go through an `AgentRunner` interface. The system orchestrates agents, not a specific CLI.
 
-v1 has one implementation: `ClaudeRunner`, which calls `claude -p` as a subprocess (the owner uses Claude Pro subscription — no Anthropic SDK, no API key management). But `AgentJob.runner_name` is a first-class config field from day one.
+Early implementations include `ClaudeRunner` and `CodexRunner`, both using local CLI subprocesses rather than direct API SDKs. `AgentJob.runner_name` is a first-class config field from day one.
+
+Semantic rule: **target** and **runner** are different concepts. A target is what the job studies (`target_kind="Harness"`, `target_id=OpenCode`). A runner is the agent implementation doing the work (`CodexRunner`, `ClaudeRunner`, later `OpenCodeRunner`). "Refresh OpenCode with CodexRunner" means Codex studies OpenCode; it does not mean OpenCode launches Codex.
 
 This enables:
 
@@ -163,7 +165,7 @@ This enables:
 - meta-dogfooding at level 3: the application that studies agents can call any agent, making it a tool for studying how different agents solve the same task
 - students writing their own `AgentRunner` for their harness or bot and plugging it in — a concrete teaching exercise
 
-`claude -p` must never be hardcoded below the `AgentRunner` abstraction boundary.
+Concrete CLI commands must never be hardcoded below the `AgentRunner` abstraction boundary. Each runner owns its own subprocess command.
 
 ---
 
@@ -660,6 +662,8 @@ Capabilities:
 - show absent-by-design vs not-investigated
 - **show aggregated confidence band per cell** — derived from the Insights in that cell
 - click a cell to expand per-pass breakdown showing how many passes agree, how many disagree, and which agents ran
+- wide matrix tables show horizontal scroll affordances both above and below the table
+- after a cell click updates the expanded detail region, the page scrolls to that region so the user sees the result immediately
 
 ### 11.3 Harness Dossier
 
@@ -1034,14 +1038,16 @@ These choices are locked. They are chosen with bias toward popular, well-underst
 | DB | SQLite | single file, portable; Postgres upgrade path via ORM |
 | Migrations | Alembic | standard SQLAlchemy migration tool |
 | Scheduler | APScheduler | in-process with FastAPI; no separate worker process |
-| Agent runner | `asyncio.subprocess` calling `claude -p` | NOT Anthropic SDK; owner uses Claude Pro subscription |
+| Agent runner | `asyncio.subprocess` calling local runner CLIs | NOT direct LLM SDKs in v1; `ClaudeRunner` owns Claude CLI, `CodexRunner` owns Codex CLI |
+| Visual QA | Playwright CLI (`@playwright/test`) | agent-visible screenshots/DOM checks; avoid MCP for routine local UI checks |
 | XML (WHY graph) | lxml | parsing and validation |
 | Tests | pytest | |
 | Lint and format | ruff | not flake8, not black, not isort |
 
 **Explicitly NOT in stack:**
 
-- ❌ Anthropic SDK / OpenAI SDK / any direct LLM API SDK — no API key management
+- ❌ Anthropic SDK / OpenAI SDK / any direct LLM API SDK for v1 runner dispatch — no API key management
+- ❌ MCP as the default local QA mechanism — prefer CLI tools and progressively loaded skills unless a connector is explicitly needed
 - ❌ React / Vue / Svelte in v1 — HTMX server-render is sufficient
 - ❌ Postgres in v1 — SQLite for single-user local-first
 - ❌ Docker in v1 — local-first, no containerization required
@@ -1164,11 +1170,12 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Pick OpenCode (most-covered in canon)
 - Add `refresh` AgentJob type
 - Implement `AgentRunner` interface and `ClaudeRunner` (calls `claude -p` subprocess)
+- Implement `CodexRunner` using `codex exec` so Codex can be used as a runtime runner, not only as the development harness hosting the lead agent
 - Manual trigger button on Harness Dossier dispatches a `refresh` job
 - Watch one full end-to-end cycle work: trigger → subprocess → parse output → Insights stored → visible in dossier
 - Job Dashboard (basic: list of jobs, status, stdout log link)
 
-Implementation sequencing note (2026-04-26): v0.2 is split into smaller feedback slices. v0.2a ships the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → `ClaudeRunner` execution → raw log visible in Job Dashboard. Parsing raw runner output into `Insight` records is the next v0.2 slice, intentionally based on real logs rather than an invented output format.
+Implementation sequencing note (2026-04-26): v0.2 is split into smaller feedback slices. v0.2a ships the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → selected `AgentRunner` execution → raw log visible in Job Dashboard. Parsing raw runner output into `Insight` records is the next v0.2 slice, intentionally based on real logs rather than an invented output format.
 
 ### v0.3 — All harnesses and cron
 

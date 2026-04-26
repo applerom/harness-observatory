@@ -44,6 +44,7 @@
     <INTENT>Owner presses a button or relies on a cron schedule to launch an agent job (refresh, discover, verify, explain). The system dispatches the job to the AgentRunner, tracks its status, and surfaces results in the UI when complete. The goal is keeping the observatory's data fresh without manual effort.</INTENT>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CLAUDE-RUNNER"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CODEX-RUNNER"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CRON-SCHEDULER"/>
   </USECASE_DISPATCH>
@@ -93,7 +94,7 @@
   </FEATURE_MARKDOWN_IMPORT>
 
   <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="STARTED">
-    <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline.</INTENT>
+    <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline. Wide matrix scrolling is usable from both top and bottom, and selecting a cell moves the user to the expanded detail region.</INTENT>
     <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
@@ -137,6 +138,14 @@
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CLAUDE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_CLAUDE_RUNNER>
+
+  <FEATURE_CODEX_RUNNER ID="FEAT-CODEX-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>CodexRunner concrete implementation of AgentRunner that invokes `codex exec` as a read-only subprocess and stores stdout/stderr in the job log.</INTENT>
+    <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §20 Technical Stack</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CODEX"/>
+    <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
+  </FEATURE_CODEX_RUNNER>
 
   <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>AgentJob entity and dispatch mechanism: v0.2a stores manual OpenCode refresh lifecycle and raw logs; linking runner output to Insight records is deliberately deferred until real logs inform the parser.</INTENT>
@@ -305,6 +314,13 @@
     <INTENT>Claude CLI backed AgentRunner implementation. The concrete subprocess invocation lives here and nowhere else.</INTENT>
     <ANCHOR NAME="START_CLAUDE_RUN" COORD="src/observatory/runners/claude.py#START_CLAUDE_RUN"/>
   </MODULE_RUNNER_CLAUDE>
+
+  <MODULE_RUNNER_CODEX ID="MOD-RUNNER-CODEX"
+                       FILE="src/observatory/runners/codex.py"
+                       STATE="STARTED">
+    <INTENT>Codex CLI backed AgentRunner implementation. The concrete `codex exec` subprocess invocation lives here and nowhere else.</INTENT>
+    <ANCHOR NAME="START_CODEX_RUN" COORD="src/observatory/runners/codex.py#START_CODEX_RUN"/>
+  </MODULE_RUNNER_CODEX>
 
   <MODULE_JOBS_SERVICE ID="MOD-JOBS-SERVICE"
                        FILE="src/observatory/jobs/service.py"

@@ -29,14 +29,29 @@ INVARIANTS:
         </dl>
       </div>
       {% if refresh_enabled %}
-        <form action="/harnesses/{{ harness.slug }}/refresh" method="post">
-          <button
-            class="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-            type="submit"
-          >
-            Refresh
-          </button>
-        </form>
+        <div class="space-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
+          <p class="font-medium text-slate-900">Refresh target: {{ harness.name }}</p>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <form action="/harnesses/{{ harness.slug }}/refresh" method="post">
+              <input name="runner_name" type="hidden" value="codex">
+              <button
+                class="inline-flex w-full items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                type="submit"
+              >
+                Run with Codex
+              </button>
+            </form>
+            <form action="/harnesses/{{ harness.slug }}/refresh" method="post">
+              <input name="runner_name" type="hidden" value="claude">
+              <button
+                class="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+                type="submit"
+              >
+                Run with Claude
+              </button>
+            </form>
+          </div>
+        </div>
       {% else %}
         <button
           class="inline-flex cursor-not-allowed items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500"

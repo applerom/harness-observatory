@@ -1,7 +1,7 @@
 # Harness Observatory — Current Context
 
 > **Last update:** 2026-04-26
-> **Phase:** v0.2a complete — OpenCode refresh execution spine
+> **Phase:** v0.2a+ complete — selectable Codex/Claude runner spine and matrix UX hardening
 > **Next milestone:** capture/review raw refresh logs, then parse refresh output into Insights
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
@@ -16,7 +16,7 @@ Decisions were locked through a structured interview between the project owner (
 
 All decisions are written into `docs/PRD.md` (v2). The pedagogical and collaborative spirit is captured in `SPIRIT.md`. The intent-to-implementation map starts in `docs/why-graph.xml` (stem only — modules will gain anchors as code lands).
 
-Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.2a has added an OpenCode refresh job spine.
+Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.2a has added an OpenCode refresh job spine with selectable Codex/Claude runners and CLI Playwright visual QA.
 
 ---
 
@@ -50,6 +50,8 @@ harness-observatory/
 ├── WORKLOG.md                  durable state of current work in flight (interrupt-resume substrate)
 ├── EVOLUTION.md                development trajectory log (lessons, drift, process changes)
 ├── DELEGATION-PLAN.md          orchestration plan for subagents
+├── package.json                Playwright CLI visual QA tooling
+├── playwright.config.mjs       visual QA config
 ├── docs/
 │   ├── PRD.md                  product spec v2 — interview-locked (1271 lines)
 │   ├── lessons/                short student-facing lessons extracted from real development episodes
@@ -85,8 +87,10 @@ v0.1 is shipped locally. The current v0.2a direction is deliberately narrower th
 
 1. Keep OpenCode as the first refresh target.
 2. Use the Harness Dossier Refresh button to create and run a durable `AgentJob`.
-3. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
-4. After real logs exist, implement the parser/import slice that turns refresh output into `Insight`/`EvidenceItem` rows.
+3. Choose a runtime runner explicitly (`CodexRunner` by default, `ClaudeRunner` optional); keep `target` and `runner` labels separate in UI/logs.
+4. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
+5. Maintain agent-visible UI checks with Playwright CLI for matrix/dossier changes.
+6. After real logs exist, implement the parser/import slice that turns refresh output into `Insight`/`EvidenceItem` rows.
 
 Decision note: full PRD v0.2 remains the goal, but parsing freeform agent output before seeing real logs would create a brittle invented format.
 5. **Owner runs the v0.1 app locally**, gives feedback, decides whether to proceed to v0.2 or iterate on v0.1.

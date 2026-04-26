@@ -266,7 +266,7 @@ Deliverable:
 
 - OpenCode dossier has an active Refresh button.
 - POST refresh creates an `AgentJob(type="refresh", target_kind="Harness")`.
-- The job runs through `AgentRunner` and `ClaudeRunner`; concrete CLI subprocess code lives only in `src/observatory/runners/claude.py`.
+- The job runs through selected `AgentRunner` (`CodexRunner` by default, `ClaudeRunner` optional). Concrete CLI subprocess code lives only in the corresponding runner module under `src/observatory/runners/`.
 - Raw runner output is written to `live-sessions/agent-job-*.log`.
 - `/jobs` lists jobs; `/jobs/{id}` shows status/error/log link; `/jobs/{id}/log` serves the raw log.
 
@@ -287,6 +287,7 @@ Acceptance:
 - `uv run mypy src/observatory tests` green;
 - `uv run python scripts/validate_anchors.py` green;
 - grep confirms the concrete CLI invocation text does not leak outside the runner boundary.
+- Playwright CLI visual QA confirms matrix top-scroll and cell-detail reveal behavior.
 
 ---
 
