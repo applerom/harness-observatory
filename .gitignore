@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# uv / venv
+.venv/
+venv/
+
+# DB (local dev DB lives in repo root by convention; production DB excluded)
+*.db
+*.db-shm
+*.db-wal
+observatory.sqlite*
+
+# Live agent session raw logs (stored as flat files, not versioned)
+live-sessions/*.log
+live-sessions/*.jsonl
+!live-sessions/.gitkeep
+
+# Media uploads (binary, not tracked by default; lecturers add per machine)
+media/**
+!media/.gitkeep
+
+# IDE / harness local state
+.vscode/
+.idea/
+.claude/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build / dist
+dist/
+build/
+*.egg
