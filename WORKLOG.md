@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — v0.1 Task A/B integrated
+**Last update:** 2026-04-26 — v0.1 Task C/E dispatched
 **Active session lead:** Codex GPT-5.5-class (interactive)
 **Current phase:** v0.1 implementation — first-wave docs alignment and subagent dispatch in progress
 
@@ -27,6 +27,8 @@ Foundational docs landed and aligned through six commits through `0cbf888` (cros
 | A | Data model + Alembic migrations (`DELEGATION-PLAN` Task A). Codex subagent Noether `019dc91c-4ca3-7a30-b449-1c5df03f23d1`; owns `src/observatory/models/**`, `src/observatory/db.py`, `migrations/**`, `alembic.ini`, `tests/models/**`. | Codex implementation_worker | completed | 2026-04-26 | integrated with pytest/ruff/mypy/Alembic green |
 | B | FastAPI app skeleton + Jinja/HTMX layout (`DELEGATION-PLAN` Task B). Codex subagent Epicurus `019dc91c-4d2c-7a83-9a9b-ad2af323e1e7`; owns `pyproject.toml`, `src/observatory/web/**`, `tests/web/**`, needed package init files. | Codex implementation_worker | completed | 2026-04-26 | integrated with pytest/ruff/mypy green |
 | C-SCOUT | Read-only importer source-shape scout for `../harness-architecture`. Codex subagent Einstein `019dc91c-4d9b-7533-b6a9-70d187e93ef5`; no writes. | Codex repo_explorer | completed | 2026-04-26 | found 13 topic folders, 8 harness rows, 1 agent-tool row; `teaching.md` missing for 2 topics; importer should treat teaching as optional |
+| C | Markdown importer (`DELEGATION-PLAN` Task C). Codex subagent Nash `019dc924-ce93-7ca2-b5e3-280b5977b587`; owns `src/observatory/importers/**`, `tests/importers/**`. | Codex hard_worker | in progress | 2026-04-26 | dispatched after A+B integration and C-SCOUT report |
+| E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (`DELEGATION-PLAN` Task E). Codex subagent Hooke `019dc925-2b72-7390-8393-9bf278efd12c`; owns `src/observatory/runners/**`, `scripts/validate_anchors.py`, `tests/runners/**`, `tests/scripts/**`. | Codex implementation_worker | in progress | 2026-04-26 | dispatched after A integration |
 
 ## 3. Next ordered queue
 
@@ -34,9 +36,7 @@ When Roman gives the implementation start signal, the v0.1 first wave dispatches
 
 | ID | Brief | Runner | Status | Blocked by |
 |---|---|---|---|---|
-| C | Markdown importer (Task C) | harness-local worker | pending | ready: C-SCOUT complete and A model shape available |
 | D | Read-only dossier + matrix routes (Task D) | harness-local worker | pending | A, B, C all green |
-| E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (Task E) | harness-local small worker | pending | A green |
 
 A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches when A returns green. See `DELEGATION-PLAN.md §5` for the sequencing diagram.
 
@@ -51,6 +51,7 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 - **2026-04-26** — Dispatched Codex first wave: Task A to Noether (`019dc91c-4ca3-7a30-b449-1c5df03f23d1`), Task B to Epicurus (`019dc91c-4d2c-7a83-9a9b-ad2af323e1e7`), importer read-only scout to Einstein (`019dc91c-4d9b-7533-b6a9-70d187e93ef5`). Next lead action: wait for the scout or one implementation slice, then dispatch Task C/E as dependencies clear.
 - **2026-04-26** — Importer scout Einstein completed. Key evidence: `../harness-architecture/topics` has 13 folders; 11 include `teaching.md`, while `hooks-and-events` and `runtime-context` do not; `registry/harnesses.md` has 8 harness rows plus separate MiniMax CLI agent-tool row; `comparisons/` has 13 root essays plus 10 investigations. Importer strategy: minimal useful ingest, optional teaching files, raw markdown preservation, `import-ambiguous.log` for unclear rows.
 - **2026-04-26** — Integrated first code wave from Noether/Epicurus. Added SQLModel schema, SQLite/Alembic setup, FastAPI app factory, dashboard route/templates/static, and tests. Lead fixed one mypy test assertion and marked `MOD-MODELS`, `MOD-WEB-APP`, `MOD-WEB-ROUTES-DASHBOARD`, and `FEAT-DASHBOARD` as STARTED in WHY graph. Validation used `UV_PROJECT_ENVIRONMENT=%TEMP%\harness-observatory-v01-venv`: `uv run pytest` 4 passed, `uv run ruff check src/ tests/` passed, `uv run mypy src/observatory tests` passed, `uv run alembic upgrade head` passed.
+- **2026-04-26** — Committed `73cb252`: first v0.1 code slice from Task A/B. Then dispatched Task C importer to Nash (`019dc924-ce93-7ca2-b5e3-280b5977b587`) and Task E runner/validator to Hooke (`019dc925-2b72-7390-8393-9bf278efd12c`). Next lead action: integrate whichever returns first; after C is green, dispatch Task D read-only dossiers/matrix.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.
