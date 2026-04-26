@@ -1177,6 +1177,9 @@ Current phase status (2026-04-26):
 - v0.3b is complete locally: DB-backed refresh schedules exist, APScheduler is wired through an opt-in FastAPI lifespan, and Job Dashboard shows schedule metadata.
 - v0.3c is complete locally: Curation Queue surfaces proposed/disputed/unverified Insights, applies confidence labels, and writes `RevisionNote` audit entries without becoming an approval gate.
 - v0.4a is complete locally: Live Agent Studio creates live discover jobs, streams real runner stdout/stderr through SSE, preserves raw logs, emits semantic runtime events, and stores exact prompt text.
+- v0.4b/v0.5a/v0.6a are complete locally: deterministic abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, and Insight Library exist.
+- v0.7a is complete locally: every persisted Insight card can dispatch a deterministic explain job; explanations are stored as RevisionNotes and rendered on Insight Library, harness dossier, topic dossier, and matrix detail surfaces.
+- v1.0-minimal is complete locally: deterministic lens scoring UI, generated Markdown exports, legacy archive manifest, and onboarding checklist exist. This is a feedback-ready minimum, not a polished final v1.0.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1300,6 +1303,14 @@ v0.6a acceptance:
 - `explain` job type dispatched; output streamed and stored
 - Per-Insight explanation available on demand
 
+v0.7a acceptance:
+
+- Every rendered Insight card includes an "Ask the agent why" action routed through `AgentJob(type="explain")`.
+- The first slice may use deterministic local generation; it must still store `prompt_text`, timestamps, raw log, semantic events, and a `RevisionNote` linked to the Insight.
+- The explanation uses the Insight plus its EvidenceItems and appears below the Insight on subsequent renders without replacing the original Insight body.
+- The Job Dashboard can show the explain job, produced artifact ids, raw log, and semantic trace.
+- Tests cover explain job creation, route action, and rendered explanation without real model calls.
+
 ### v1.0 — Lens scoring, generated docs export, legacy Markdown archived
 
 - Lens-based scoring UI
@@ -1307,6 +1318,16 @@ v0.6a acceptance:
 - `harness-architecture/legacy-data/` archive complete
 - Full feature parity with PRD intent
 - Onboarding polished: new harness from clone to first refresh in under 15 minutes
+
+v1.0-minimal acceptance:
+
+- Default lenses (`Research`, `Lecturer`, `Practical Selection`, `Ecosystem`) can be seeded and rendered in a Lens Scoring UI.
+- A deterministic scoring service can refresh `Score` rows for existing Harness/Topic pairs from current DB signals; the UI shows per-lens scores and no universal winner.
+- A generated-docs service can write at least three Markdown artifacts from DB state: comparison report, harness summary, and lecturer brief / engagement digest.
+- A web export surface can trigger generation, list generated Markdown files, and expose enough metadata for a user to inspect outputs from disk.
+- Legacy Markdown archive support exists as a deterministic export/archive manifest under generated output; it records source path, generated-at time, and copied/covered Markdown counts without treating legacy Markdown as the source of truth.
+- Onboarding is represented by a short generated checklist or docs section that names the actual current commands from clone/import/migrate/server/first refresh.
+- Tests cover scoring seed/refresh, export generation, archive manifest, and the new web routes. Playwright CLI covers the new Lens and Export surfaces.
 
 ---
 

@@ -2,13 +2,14 @@
 FILE: src/observatory/web/templates/_insight_proof.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: Shared Insight-over-EvidenceItem rendering for v0.1 read-only views.
-PRD_REF: docs/PRD.md §4.8, §26.2
+PURPOSE: Shared Insight-over-EvidenceItem rendering for Insight cards.
+PRD_REF: docs/PRD.md §4.8, §24 v0.7, §26.2
 WHY_REF: docs/why-graph.xml#FEAT-EVIDENCE-RICH-VIEW
-SCOPE: insight card; collapsed proof details; optional verification pass breakdown
+SCOPE: insight card; explain action; revision notes; collapsed proof details; optional verification pass breakdown
 INVARIANTS:
 - Insight text appears before the proof control in DOM order.
 - The proof control label matches the project-required copy.
+- Ask-why appears only for persisted real Insights, not synthetic evidence placeholders.
 :END_MODULE_CONTRACT
 -->
 <article class="insight-card">
@@ -25,6 +26,28 @@ INVARIANTS:
   <p class="mt-3 text-xs font-medium uppercase tracking-normal text-slate-500">
     Confidence: {{ insight.confidence_band or "unverified" }}
   </p>
+  {% if insight.id is defined and insight.id %}
+    <form class="mt-3" action="/insights/{{ insight.id }}/explain" method="post">
+      {% for evidence in evidence_items|default([]) %}
+        {% if evidence.id %}
+          <input name="evidence_item_ids" type="hidden" value="{{ evidence.id }}">
+        {% endif %}
+      {% endfor %}
+      <button class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50" type="submit">
+        Ask the agent why
+      </button>
+    </form>
+    {% set note_map = revision_notes_by_insight|default({}) %}
+    {% set revision_notes = note_map.get(insight.id, []) %}
+    {% if revision_notes %}
+      <section class="mt-4 space-y-2 rounded-md bg-emerald-50 px-3 py-3">
+        <h4 class="text-sm font-semibold tracking-normal text-emerald-950">Agent explanations</h4>
+        {% for revision_note in revision_notes %}
+          <p class="text-sm leading-6 text-emerald-900">{{ revision_note.note }}</p>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endif %}
   <details class="proof-details mt-4">
     <summary>Show the proof</summary>
     <div class="mt-3 space-y-3">

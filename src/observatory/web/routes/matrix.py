@@ -22,6 +22,7 @@ from sqlmodel import Session, select
 from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.verification.service import VerificationPass, verification_passes_for_items
+from observatory.web.revision_notes import revision_notes_by_insight_id
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -94,7 +95,10 @@ def matrix_cell_expand(
     return templates.TemplateResponse(
         request,
         "matrix/_cell_detail.html",
-        {"detail": detail},
+        {
+            "detail": detail,
+            "revision_notes_by_insight": revision_notes_by_insight_id(session, detail.insights),
+        },
     )
 
 

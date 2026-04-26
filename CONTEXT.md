@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
 > **Last update:** 2026-04-26
-> **Phase:** v0.6a complete — abstract jobs, verification/confidence, engagement/Insight Library
-> **Next milestone:** v0.7 "Ask the agent why" / explain job slice
+> **Phase:** v1.0-minimal complete — feedback-ready product pass
+> **Next milestone:** feedback-driven hardening after real use
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
 
@@ -16,7 +16,7 @@ Decisions were locked through a structured interview between the project owner (
 
 All decisions are written into `docs/PRD.md` (v2). The pedagogical and collaborative spirit is captured in `SPIRIT.md`. The intent-to-implementation map starts in `docs/why-graph.xml` (stem only — modules will gain anchors as code lands).
 
-Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v0.1 code exists; runtime freshness/process hardening is complete; v0.6a has added refresh jobs, parser persistence, scheduler, curation, Live Studio SSE, abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, and the Insight Library.
+Historical note: at project bootstrap, no code had been written yet and v0.1 was delegated per `DELEGATION-PLAN.md`. As of 2026-04-26, v1.0-minimal exists locally: importer/viewer, refresh jobs, parser persistence, scheduler, curation, Live Studio SSE, abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, Insight Library, explain jobs, lens scoring, generated docs export, legacy archive manifest, and onboarding checklist.
 
 ---
 
@@ -90,9 +90,9 @@ v0.1 is shipped locally. The current v0.2a direction is deliberately narrower th
 3. Choose a runtime runner explicitly (`CodexRunner` by default, `ClaudeRunner` optional); keep `target` and `runner` labels separate in UI/logs.
 4. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
 5. Maintain agent-visible UI checks with Playwright CLI for matrix/dossier/job/live/library changes.
-6. Next product slice: implement PRD v0.7 "Ask the agent why" / `explain` job with exact prompt storage, semantic trace, and appended explanation.
+6. Next product slice: feedback-driven hardening after Roman/student testing of the v1.0-minimal app.
 
-Decision note: the product has advanced beyond the earlier v0.2 raw-log/parser question. The current discipline stays the same: frame the slice in PRD/WHY first, delegate bounded implementation, then prove with tests, visual checks, and durable logs.
+Decision note: the product has advanced beyond the original PRD surface. The current discipline stays the same: frame feedback as PRD/WHY deltas first, delegate bounded implementation, then prove with tests, visual checks, and durable logs.
 
 ---
 
@@ -328,3 +328,25 @@ Evidence:
 What's now possible: v0.7 can add the "Ask the agent why" / `explain` job type using the now-established job, prompt, semantic trace, and Insight Library surfaces.
 
 What's now blocking: no product blocker. The next design question is how much explanation text belongs on the existing Insight row versus a separate explain artifact/revision trail.
+
+## Update 2026-04-26 — v0.7-v1.0 minimal product train
+
+Roman asked Codex to add everything currently in PRD through v1.0, explicitly aiming for a working, feedback-ready product rather than an ideal final version. Codex added concrete acceptance criteria for v0.7a and v1.0-minimal, delegated explain/lens/export slices, then integrated and reviewed the combined product surface.
+
+What changed:
+- Added deterministic `explain` jobs. The shared Insight card now has "Ask the agent why"; the job stores exact prompt text, raw log, semantic event, and a `RevisionNote`. Explanations render on Insight Library, harness dossier, topic dossier, and matrix detail.
+- Added lens scoring: default lenses (`Research`, `Lecturer`, `Practical Selection`, `Ecosystem`), deterministic score refresh, `/lenses`, and a DB uniqueness constraint for `(lens_id, harness_id, topic_id)`.
+- Added generated Markdown exports: comparison report, harness summaries, lecturer brief, onboarding checklist, and a legacy archive manifest under `generated-docs/`.
+- Added `/exports` to trigger and inspect generated files. The legacy archive manifest records coverage metadata and does not mutate the sibling legacy repo by default.
+- Added Playwright visual coverage for Lenses and Exports, plus nav links for both.
+
+Evidence:
+- `uv run pytest` passed with 97 tests.
+- `ruff`, `mypy`, and anchor validator passed; anchor validator checked 60 anchors.
+- `uv run alembic upgrade head` applied migration `20260426_0004`.
+- Playwright CLI passed for matrix, harness, insight, lens, export, jobs, curation, and live.
+- Live smoke passed for `/lenses/refresh`, `/exports/generate`, `/insights/1/explain`, `/harnesses/opencode`, `/matrix/cells/opencode/instruction-files`, and `/jobs`.
+
+What's now possible: Roman and students can start using the app end-to-end and generate real feedback on rough but connected product flows.
+
+What's now blocking: no known product blocker. The next work should come from actual usage feedback rather than adding more speculative surface.

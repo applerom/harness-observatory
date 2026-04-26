@@ -775,6 +775,7 @@ def test_insight_library_filters_and_renders_engagement_fields(client: TestClien
     assert "verified" in response.text
     assert "Wait for this live trace before trusting a summary." in response.text
     assert "Telegram seed: live runner uncertainty is part of the lesson." in response.text
+    assert "Ask the agent why" in response.text
     assert "Generate engagement" in response.text
     assert audience_response.status_code == 200
     assert "Live stream exposes runner uncertainty" in audience_response.text
@@ -807,6 +808,78 @@ def test_insight_engagement_action_creates_job_and_fills_missing_copy(client: Te
     assert job.status == "done"
     assert job.started_at is not None
     assert job.finished_at is not None
+
+
+def test_insight_explain_action_creates_job_and_renders_revision_note(client: TestClient) -> None:
+    response = client.post(
+        "/insights/1/explain",
+        headers={"referer": "/insights?format=text"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/insights?format=text"
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+        revisions = session.exec(select(RevisionNote)).all()
+
+    assert job is not None
+    assert job.type == "explain"
+    assert job.target_kind == "Insight"
+    assert job.target_id == 1
+    assert job.status == "done"
+    assert job.prompt_text is not None
+    assert "Evidence summary: Instruction file loader cites the system path." in job.prompt_text
+    assert job.produced_artifact_ids == [1]
+    assert job.stdout_log_path is not None
+    assert Path(job.stdout_log_path).is_file()
+    assert len(revisions) == 1
+    assert revisions[0].insight_id == 1
+    assert "Instruction files change authority" in (revisions[0].note or "")
+
+    detail_response = client.get("/insights")
+    job_response = client.get("/jobs/1")
+    log_response = client.get("/jobs/1/log")
+
+    assert detail_response.status_code == 200
+    assert "Agent explanations" in detail_response.text
+    assert "The linked proof points to" in detail_response.text
+    assert job_response.status_code == 200
+    assert "Job #1" in job_response.text
+    assert "Produced Artifacts" in job_response.text
+    assert "produced_artifact_ids: 1" in job_response.text
+    assert "explain_job_done" in job_response.text
+    assert "START_EXPLAIN_JOB" in job_response.text
+    assert log_response.status_code == 200
+    assert "# Explain job" in log_response.text
+
+
+def test_explain_action_uses_contextual_proof_and_renders_on_dossiers(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/insights/1/explain",
+        data={"evidence_item_ids": ["1"]},
+        headers={"referer": "/harnesses/opencode"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/harnesses/opencode"
+
+    harness_response = client.get("/harnesses/opencode")
+    topic_response = client.get("/topics/instruction-files")
+    matrix_response = client.get("/matrix/cells/opencode/instruction-files")
+
+    assert harness_response.status_code == 200
+    assert "Agent explanations" in harness_response.text
+    assert "src/session.ts:2" in harness_response.text
+    assert topic_response.status_code == 200
+    assert "Agent explanations" in topic_response.text
+    assert matrix_response.status_code == 200
+    assert "Agent explanations" in matrix_response.text
 
 
 def test_engagement_service_preserves_existing_copy_and_creates_agent_job(client: TestClient) -> None:

@@ -82,6 +82,37 @@ Teaching extraction:
 - This episode is now a reusable lesson:
   `docs/lessons/worker-green-is-not-integration-green.md`.
 
+## 2026-04-26 — Shared UI Is Not Shared Context
+
+Observation:
+- The v0.7 explain slice correctly added "Ask the agent why" to the shared
+  Insight card partial.
+- A reviewer agent then caught the semantic gap: the shared card rendered on
+  harness, topic, matrix, and Insight Library surfaces, but only the Insight
+  Library supplied `RevisionNote` explanations back into the template.
+- The same gap affected evidence: some cards showed contextual EvidenceItems
+  from a harness/topic section even when those EvidenceItems were not directly
+  linked to the Insight. The explain job could therefore say "no linked proof"
+  while the user had just seen proof below the button.
+
+Impact:
+- Reusing a template does not automatically reuse the route data contract.
+- Agentic UI actions need to carry the evidence context the user actually saw,
+  not only the primary entity id.
+
+Action:
+- RevisionNote lookup was factored into a shared helper and passed from Insight
+  Library, harness dossier, topic dossier, and matrix cell routes.
+- The Ask-why form now submits contextual EvidenceItem ids from the rendered
+  proof section.
+- `ExplainJobService` validates contextual EvidenceItems against the target
+  Insight's linked Insight/topic/harness before using them in prompt, log, and
+  explanation text.
+
+Rule added:
+- When a shared partial contains a write action, review every route that renders
+  it. The route's data context is part of the feature contract.
+
 ## 2026-04-26 — Runtime Freshness And Agent Version Inertia
 
 Observation:

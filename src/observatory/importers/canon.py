@@ -331,8 +331,19 @@ def import_harness_map(source: Path, session: Session, ambiguities: list[Ambigui
 
 
 # START_EXPORT_MARKDOWN:
-def export_markdown() -> None:
-    raise NotImplementedError("Markdown export is outside v0.1; import-only canon lands first.")
+def export_markdown(
+    session: Session,
+    *,
+    output_dir: Path = Path("generated-docs"),
+    legacy_source_path: Path | None = None,
+) -> object:
+    from observatory.exports.service import generate_markdown_exports
+
+    return generate_markdown_exports(
+        session,
+        output_dir=output_dir,
+        legacy_source_path=legacy_source_path,
+    )
 
 
 # :END_EXPORT_MARKDOWN

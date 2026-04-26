@@ -24,6 +24,9 @@ live-sessions/*.log
 live-sessions/*.jsonl
 !live-sessions/.gitkeep
 
+# Generated Markdown exports (derived from DB, not source of truth)
+generated-docs/
+
 # Local dev server logs
 .uvicorn*.log
 

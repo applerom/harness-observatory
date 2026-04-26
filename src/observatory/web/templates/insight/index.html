@@ -2,10 +2,10 @@
 FILE: src/observatory/web/templates/insight/index.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: Insight Library page with filters and engagement copy.
-PRD_REF: docs/PRD.md §11.6, §24 v0.6
+PURPOSE: Insight Library page with filters, engagement copy, and explain actions.
+PRD_REF: docs/PRD.md §11.6, §24 v0.6, §24 v0.7
 WHY_REF: docs/why-graph.xml#FEAT-INSIGHT-LIBRARY
-SCOPE: audience/format filters; confidence; attribution; engagement hook; telegram seed
+SCOPE: audience/format filters; confidence; attribution; engagement hook; telegram seed; explanations
 INVARIANTS:
 - The page retrieves Insights across harness/topic boundaries without hiding proposed output.
 :END_MODULE_CONTRACT
@@ -75,12 +75,29 @@ INVARIANTS:
               {% if insight.joke_or_telegram_seed %}
                 <p class="rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">{{ insight.joke_or_telegram_seed }}</p>
               {% endif %}
+              {% set note_map = revision_notes_by_insight|default({}) %}
+              {% set revision_notes = note_map.get(insight.id, []) %}
+              {% if revision_notes %}
+                <section class="space-y-2 rounded-md bg-emerald-50 px-3 py-3">
+                  <h3 class="text-sm font-semibold tracking-normal text-emerald-950">Agent explanations</h3>
+                  {% for revision_note in revision_notes %}
+                    <p class="text-sm leading-6 text-emerald-900">{{ revision_note.note }}</p>
+                  {% endfor %}
+                </section>
+              {% endif %}
             </div>
-            <form action="/insights/{{ insight.id }}/engagement" method="post">
-              <button class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50" type="submit">
-                Generate engagement
-              </button>
-            </form>
+            <div class="flex flex-col gap-2">
+              <form action="/insights/{{ insight.id }}/explain" method="post">
+                <button class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50" type="submit">
+                  Ask the agent why
+                </button>
+              </form>
+              <form action="/insights/{{ insight.id }}/engagement" method="post">
+                <button class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50" type="submit">
+                  Generate engagement
+                </button>
+              </form>
+            </div>
           </div>
         </article>
       {% else %}
@@ -91,4 +108,3 @@ INVARIANTS:
     </section>
   </section>
 {% endblock %}
-

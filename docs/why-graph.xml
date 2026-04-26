@@ -231,11 +231,11 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_MULTI_PASS_VERIFICATION>
 
-  <FEATURE_ASK_AGENT_WHY ID="FEAT-ASK-AGENT-WHY" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_ASK_AGENT_WHY ID="FEAT-ASK-AGENT-WHY" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Per-Insight "Ask the agent why" button that spawns a short explain job; the explanation is appended to the Insight record and rendered below it without replacing the original text.</INTENT>
     <PRD_REF>docs/PRD.md §14.2 Job types (explain)</PRD_REF>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-EXPLAIN-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ASK_AGENT_WHY>
 
@@ -271,17 +271,21 @@
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
   </FEATURE_INSIGHT_LIBRARY>
 
-  <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix.</INTENT>
+  <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix. The first slice is deterministic and exists to make lens disagreement visible rather than to declare one winner.</INTENT>
     <PRD_REF>docs/PRD.md §15 Lenses and Scoring</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-LENS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LENSES"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-COMPARISON-MATRIX-RO"/>
   </FEATURE_LENS_SCORING>
 
-  <FEATURE_DOC_GENERATION ID="FEAT-DOC-GENERATION" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Markdown export from DB: generates harness-map.md-style documents from live DB state, allowing the observatory to feed back into the harness-architecture sibling project or other consumers.</INTENT>
+  <FEATURE_DOC_GENERATION ID="FEAT-DOC-GENERATION" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Markdown export from DB: generates comparison reports, harness summaries, lecturer briefs, onboarding checklist, and a legacy archive manifest from live DB state. Generated docs are derived artifacts, not the source of truth.</INTENT>
     <PRD_REF>docs/PRD.md §13 Document Generation</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-DOC-EXPORT-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-EXPORTS"/>
   </FEATURE_DOC_GENERATION>
 
   <!-- ================================================================
@@ -386,28 +390,66 @@
   <MODULE_WEB_ROUTES_INSIGHTS ID="MOD-WEB-ROUTES-INSIGHTS"
                               FILE="src/observatory/web/routes/insight.py"
                               STATE="STARTED">
-    <INTENT>FastAPI router for the Insight Library: filter Insights by audience/format and show confidence, attribution, and engagement copy.</INTENT>
+    <INTENT>FastAPI router for the Insight Library: filter Insights by audience/format, show confidence/attribution/engagement copy, and dispatch explain jobs for individual Insights.</INTENT>
     <ANCHOR NAME="START_ROUTE_INSIGHT_LIBRARY" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_LIBRARY"/>
     <ANCHOR NAME="START_ROUTE_INSIGHT_ENGAGEMENT" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_ENGAGEMENT"/>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_EXPLAIN" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_EXPLAIN"/>
   </MODULE_WEB_ROUTES_INSIGHTS>
+
+  <MODULE_EXPLAIN_SERVICE ID="MOD-EXPLAIN-SERVICE"
+                          FILE="src/observatory/explain/service.py"
+                          STATE="STARTED">
+    <INTENT>Service boundary for explain jobs that create a deterministic explanation from an Insight and its EvidenceItems, store a RevisionNote, raw log, and semantic events.</INTENT>
+    <ANCHOR NAME="START_EXPLAIN_JOB" COORD="src/observatory/explain/service.py#START_EXPLAIN_JOB"/>
+  </MODULE_EXPLAIN_SERVICE>
+
+  <MODULE_LENS_SERVICE ID="MOD-LENS-SERVICE"
+                       FILE="src/observatory/lenses/service.py"
+                       STATE="STARTED">
+    <INTENT>Service boundary for default lens seeding and deterministic lens score refresh from current Harness/Topic/Insight/Evidence/ComparisonCell signals.</INTENT>
+    <ANCHOR NAME="START_SEED_DEFAULT_LENSES" COORD="src/observatory/lenses/service.py#START_SEED_DEFAULT_LENSES"/>
+    <ANCHOR NAME="START_REFRESH_LENS_SCORES" COORD="src/observatory/lenses/service.py#START_REFRESH_LENS_SCORES"/>
+  </MODULE_LENS_SERVICE>
+
+  <MODULE_WEB_ROUTES_LENSES ID="MOD-WEB-ROUTES-LENSES"
+                            FILE="src/observatory/web/routes/lens.py"
+                            STATE="STARTED">
+    <INTENT>FastAPI router for v1.0 lens scoring: render lenses, per-harness/topic scores, and a deterministic score refresh action without implying a universal winner.</INTENT>
+    <ANCHOR NAME="START_ROUTE_LENS_LIST" COORD="src/observatory/web/routes/lens.py#START_ROUTE_LENS_LIST"/>
+    <ANCHOR NAME="START_ROUTE_LENS_REFRESH" COORD="src/observatory/web/routes/lens.py#START_ROUTE_LENS_REFRESH"/>
+  </MODULE_WEB_ROUTES_LENSES>
+
+  <MODULE_DOC_EXPORT_SERVICE ID="MOD-DOC-EXPORT-SERVICE"
+                             FILE="src/observatory/exports/service.py"
+                             STATE="STARTED">
+    <INTENT>Service boundary for generated Markdown exports and legacy archive manifest creation from DB state.</INTENT>
+    <ANCHOR NAME="START_MARKDOWN_EXPORT" COORD="src/observatory/exports/service.py#START_MARKDOWN_EXPORT"/>
+    <ANCHOR NAME="START_LEGACY_ARCHIVE_MANIFEST" COORD="src/observatory/exports/service.py#START_LEGACY_ARCHIVE_MANIFEST"/>
+  </MODULE_DOC_EXPORT_SERVICE>
+
+  <MODULE_WEB_ROUTES_EXPORTS ID="MOD-WEB-ROUTES-EXPORTS"
+                             FILE="src/observatory/web/routes/export.py"
+                             STATE="STARTED">
+    <INTENT>FastAPI router for generated Markdown exports: trigger generation, list output files, and surface archive/onboarding metadata.</INTENT>
+    <ANCHOR NAME="START_ROUTE_EXPORT_LIST" COORD="src/observatory/web/routes/export.py#START_ROUTE_EXPORT_LIST"/>
+    <ANCHOR NAME="START_ROUTE_EXPORT_GENERATE" COORD="src/observatory/web/routes/export.py#START_ROUTE_EXPORT_GENERATE"/>
+  </MODULE_WEB_ROUTES_EXPORTS>
 
   <MODULE_WEB_ROUTES_HARNESS ID="MOD-WEB-ROUTES-HARNESS"
                               FILE="src/observatory/web/routes/harness.py"
                               STATE="STARTED">
-    <INTENT>FastAPI router for harness profile pages: list all harnesses, show dossier for one harness with all its topics and insights, handle "Ask the agent why" dispatch for harness-scoped insights.</INTENT>
+    <INTENT>FastAPI router for harness profile pages: list all harnesses and show a dossier for one harness with all its topics, insights, evidence, and revision-note explanations rendered through the shared Insight card.</INTENT>
     <ANCHOR NAME="START_ROUTE_HARNESS_LIST"    COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_LIST"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_DOSSIER" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_DOSSIER"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_REFRESH" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_REFRESH"/>
-    <ANCHOR NAME="START_ROUTE_HARNESS_ASK_WHY" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_ASK_WHY"/>
   </MODULE_WEB_ROUTES_HARNESS>
 
   <MODULE_WEB_ROUTES_TOPIC ID="MOD-WEB-ROUTES-TOPIC"
                             FILE="src/observatory/web/routes/topic.py"
                             STATE="STARTED">
-    <INTENT>FastAPI router for topic profile pages: list all topics, show dossier for one topic with all harnesses that have data for it, handle "Ask the agent why" for topic-scoped insights.</INTENT>
+    <INTENT>FastAPI router for topic profile pages: list all topics and show a dossier for one topic with all harnesses that have data for it, including shared Insight-card explanation rendering.</INTENT>
     <ANCHOR NAME="START_ROUTE_TOPIC_LIST"    COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_LIST"/>
     <ANCHOR NAME="START_ROUTE_TOPIC_DOSSIER" COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_DOSSIER"/>
-    <ANCHOR NAME="START_ROUTE_TOPIC_ASK_WHY" COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_ASK_WHY"/>
   </MODULE_WEB_ROUTES_TOPIC>
 
   <MODULE_WEB_ROUTES_MATRIX ID="MOD-WEB-ROUTES-MATRIX"

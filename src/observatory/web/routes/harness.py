@@ -28,6 +28,7 @@ from observatory.runners.base import AgentRunner
 from observatory.runners.claude import ClaudeRunner
 from observatory.runners.codex import CodexRunner
 from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
+from observatory.web.revision_notes import revision_notes_by_insight_id
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -92,6 +93,9 @@ def harness_dossier(
     harness_insights = session.exec(
         select(Insight).where(Insight.harness_id == harness.id).order_by(Insight.short_title)
     ).all()
+    rendered_insights = list(harness_insights)
+    for section in sections:
+        rendered_insights.extend(section.insights)
     return templates.TemplateResponse(
         request,
         "harness/dossier.html",
@@ -101,6 +105,7 @@ def harness_dossier(
             "refresh_enabled": True,
             "sections": sections,
             "harness_insights": harness_insights,
+            "revision_notes_by_insight": revision_notes_by_insight_id(session, rendered_insights),
         },
     )
 
@@ -171,8 +176,3 @@ def refresh_harness(
 
 
 # :END_ROUTE_HARNESS_REFRESH
-
-
-# START_ROUTE_HARNESS_ASK_WHY:
-# Ask-agent-why is intentionally deferred until PRD §24 v0.7.
-# :END_ROUTE_HARNESS_ASK_WHY

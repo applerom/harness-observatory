@@ -22,6 +22,7 @@ from sqlmodel import Session, select
 from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
+from observatory.web.revision_notes import revision_notes_by_insight_id
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -103,6 +104,7 @@ def topic_dossier(
             "topic": topic,
             "insights": insights,
             "sections": sections,
+            "revision_notes_by_insight": revision_notes_by_insight_id(session, list(insights)),
         },
     )
 
@@ -142,8 +144,3 @@ def _topic_harness_sections(session: Session, topic: Topic) -> list[TopicHarness
 
 
 # :END_ROUTE_TOPIC_DOSSIER
-
-
-# START_ROUTE_TOPIC_ASK_WHY:
-# Ask-agent-why is intentionally deferred until PRD §24 v0.7.
-# :END_ROUTE_TOPIC_ASK_WHY

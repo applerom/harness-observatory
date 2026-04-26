@@ -267,6 +267,8 @@ class Lens(SQLModel, table=True):
 class Score(SQLModel, table=True):
     """Future lens-based score; no universal single winner score is implied."""
 
+    __table_args__ = (UniqueConstraint("lens_id", "harness_id", "topic_id"),)
+
     id: int | None = Field(default=None, primary_key=True)
     lens_id: int | None = Field(default=None, foreign_key="lens.id", index=True)
     harness_id: int | None = Field(default=None, foreign_key="harness.id", index=True)
