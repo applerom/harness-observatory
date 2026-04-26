@@ -1,0 +1,70 @@
+<!--
+FILE: src/observatory/web/templates/matrix/index.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Read-only harness x topic matrix grid with HTMX cell expansion controls.
+PRD_REF: docs/PRD.md §26.2
+WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
+SCOPE: matrix table; imported cell states; confidence placeholder
+INVARIANTS:
+- Every cell displays state and "not yet verified" confidence copy for v0.1.
+- Cell expansion uses HTMX and stays read-only.
+:END_MODULE_CONTRACT
+-->
+{% extends "_base.html" %}
+
+{% block title %}Matrix - Harness Observatory{% endblock %}
+
+{% block content %}
+  <section class="space-y-6">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Comparison matrix</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Harness x Topic</h1>
+    </div>
+
+    <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-normal text-slate-500">
+          <tr>
+            <th class="sticky left-0 z-10 bg-slate-50 px-4 py-3">Harness</th>
+            {% for topic in topics %}
+              <th class="min-w-44 px-4 py-3">{{ topic.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in rows %}
+            <tr>
+              <th class="sticky left-0 z-10 bg-white px-4 py-3 text-left font-semibold text-slate-950">
+                <a class="hover:text-emerald-700" href="/harnesses/{{ row.harness.slug }}">{{ row.harness.name }}</a>
+              </th>
+              {% for topic in topics %}
+                {% set cell = row.cells[loop.index0] %}
+                <td class="align-top px-4 py-3">
+                  <button
+                    class="matrix-cell-button"
+                    hx-get="/matrix/cells/{{ row.harness.slug }}/{{ topic.slug }}"
+                    hx-target="#matrix-cell-detail"
+                    hx-swap="innerHTML"
+                    type="button"
+                  >
+                    <span class="font-semibold text-slate-900">{{ cell.state if cell else "unknown" }}</span>
+                    <span class="text-xs text-slate-500">not yet verified</span>
+                  </button>
+                </td>
+              {% endfor %}
+            </tr>
+          {% else %}
+            <tr>
+              <td class="px-4 py-6 text-slate-500" colspan="{{ topics|length + 1 }}">No matrix data imported yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <section id="matrix-cell-detail" class="min-h-20 rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
+      Select a cell to expand its Insight and proof.
+    </section>
+  </section>
+{% endblock %}

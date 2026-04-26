@@ -1,0 +1,49 @@
+<!--
+FILE: src/observatory/web/templates/topic/list.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Topic list table with imported harness coverage counts.
+PRD_REF: docs/PRD.md §26.2
+WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-TOPIC
+SCOPE: topic table; coverage counts; dossier links
+INVARIANTS:
+- Coverage count is derived from comparison cells and evidence, not hardcoded.
+:END_MODULE_CONTRACT
+-->
+{% extends "_base.html" %}
+
+{% block title %}Topics - Harness Observatory{% endblock %}
+
+{% block content %}
+  <section class="space-y-6">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Imported topics</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Topics</h1>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-normal text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Name</th>
+            <th class="px-4 py-3">Harness coverage</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in rows %}
+            <tr>
+              <td class="px-4 py-3 font-medium text-slate-950">
+                <a class="hover:text-emerald-700" href="/topics/{{ row.topic.slug }}">{{ row.topic.name }}</a>
+              </td>
+              <td class="px-4 py-3 text-slate-600">{{ row.coverage_count }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td class="px-4 py-6 text-slate-500" colspan="2">No topics imported yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

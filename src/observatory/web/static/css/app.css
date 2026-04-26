@@ -39,3 +39,61 @@ INVARIANTS:
 .entry-link:hover {
   border-color: rgb(148 163 184);
 }
+
+.status-badge,
+.state-badge {
+  background: rgb(236 253 245);
+  border: 1px solid rgb(167 243 208);
+  border-radius: 9999px;
+  color: rgb(4 120 87);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+}
+
+.insight-card {
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.proof-details summary {
+  background: white;
+  border: 1px solid rgb(203 213 225);
+  border-radius: 0.375rem;
+  color: rgb(15 23 42);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+}
+
+.proof-item {
+  background: white;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.matrix-cell-button {
+  align-items: flex-start;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 4rem;
+  padding: 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.matrix-cell-button:hover {
+  border-color: rgb(16 185 129);
+}

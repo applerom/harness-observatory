@@ -11,9 +11,12 @@
 
 from fastapi import FastAPI
 
-from observatory.web.routes import dashboard
+from observatory.web.routes import dashboard, harness, matrix, topic
 
 
 def register_routes(app: FastAPI) -> None:
     """Attach v0.1 routers to the application."""
     app.include_router(dashboard.router)
+    app.include_router(harness.router)
+    app.include_router(topic.router)
+    app.include_router(matrix.router)

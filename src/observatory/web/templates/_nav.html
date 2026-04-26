@@ -15,9 +15,9 @@ INVARIANTS:
     <a href="/" class="font-semibold tracking-normal text-slate-950">Harness Observatory</a>
     <div class="flex items-center gap-2 text-sm">
       <a class="nav-link {% if active_nav == 'dashboard' %}nav-link-active{% endif %}" href="/">Dashboard</a>
-      <a class="nav-link" href="/harnesses">Harnesses</a>
-      <a class="nav-link" href="/topics">Topics</a>
-      <a class="nav-link" href="/matrix">Matrix</a>
+      <a class="nav-link {% if active_nav == 'harnesses' %}nav-link-active{% endif %}" href="/harnesses">Harnesses</a>
+      <a class="nav-link {% if active_nav == 'topics' %}nav-link-active{% endif %}" href="/topics">Topics</a>
+      <a class="nav-link {% if active_nav == 'matrix' %}nav-link-active{% endif %}" href="/matrix">Matrix</a>
     </div>
   </nav>
 </header>

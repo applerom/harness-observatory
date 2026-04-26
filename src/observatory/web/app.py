@@ -8,7 +8,6 @@
 # INVARIANTS:
 # - create_app is side-effect light and safe for uvicorn --factory and TestClient.
 # - v0.1 registers no AgentJob execution, cron scheduler, Live Studio, or CLI surface.
-# - Dashboard counts remain graceful placeholders until Task D wires the database.
 # :END_MODULE_CONTRACT
 
 from pathlib import Path
@@ -28,11 +27,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Harness Observatory", version="0.1.0")
 
     # START_APP_DB_INIT:
-    app.state.dashboard_counts = {
-        "harnesses": 0,
-        "topics": 0,
-        "insights": 0,
-    }
+    # Persistent schema creation is owned by Alembic/importer commands; the app only
+    # opens read-only sessions against the configured local SQLite database.
     # :END_APP_DB_INIT
 
     static_dir = PACKAGE_ROOT / "static"

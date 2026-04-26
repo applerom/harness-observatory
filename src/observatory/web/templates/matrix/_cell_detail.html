@@ -1,0 +1,46 @@
+<!--
+FILE: src/observatory/web/templates/matrix/_cell_detail.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: HTMX partial for expanded matrix cell details.
+PRD_REF: docs/PRD.md §26.2
+WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
+SCOPE: cell state; topic Insights; collapsed EvidenceItems
+INVARIANTS:
+- Insight text is above the proof control in response order.
+:END_MODULE_CONTRACT
+-->
+<div class="space-y-4">
+  <div>
+    <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Expanded cell</p>
+    <h2 class="mt-1 text-xl font-semibold tracking-normal text-slate-950">
+      {{ detail.harness.name }} / {{ detail.topic.name }}
+    </h2>
+    <p class="mt-2 text-sm text-slate-600">
+      State: <span class="font-medium text-slate-900">{{ detail.cell.state if detail.cell else "unknown" }}</span>
+      · Confidence: not yet verified
+    </p>
+    {% if detail.cell and detail.cell.cell_summary %}
+      <p class="mt-2 text-sm leading-6 text-slate-600">{{ detail.cell.cell_summary }}</p>
+    {% endif %}
+  </div>
+
+  {% for insight in detail.insights %}
+    {% set evidence_items = detail.evidence_items %}
+    {% include "_insight_proof.html" %}
+  {% else %}
+    {% if detail.evidence_items %}
+      {% set insight = {
+        "short_title": detail.topic.name ~ " evidence",
+        "body": detail.cell.cell_summary if detail.cell and detail.cell.cell_summary else "Imported evidence for this matrix cell.",
+        "why_it_matters": none,
+        "status": "proposed",
+        "confidence_band": "unverified"
+      } %}
+      {% set evidence_items = detail.evidence_items %}
+      {% include "_insight_proof.html" %}
+    {% else %}
+      <p class="text-sm text-slate-500">No imported Insight or EvidenceItem for this cell yet.</p>
+    {% endif %}
+  {% endfor %}
+</div>

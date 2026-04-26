@@ -86,21 +86,21 @@
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
   </FEATURE_MARKDOWN_IMPORT>
 
-  <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline.</INTENT>
     <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_COMPARISON_MATRIX_RO>
 
-  <FEATURE_HARNESS_DOSSIER_RO ID="FEAT-HARNESS-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_HARNESS_DOSSIER_RO ID="FEAT-HARNESS-DOSSIER-RO" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Read-only harness profile page listing all topics covered for that harness with their Insights and collapsed EvidenceItems.</INTENT>
     <PRD_REF>docs/PRD.md §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_HARNESS_DOSSIER_RO>
 
-  <FEATURE_TOPIC_DOSSIER_RO ID="FEAT-TOPIC-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_TOPIC_DOSSIER_RO ID="FEAT-TOPIC-DOSSIER-RO" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Read-only topic profile page listing all harnesses that have data for that topic, with their Insights and collapsed EvidenceItems.</INTENT>
     <PRD_REF>docs/PRD.md §11.4 Topic Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
@@ -181,7 +181,7 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>
 
-  <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Cell and dossier view with Insight always at top and EvidenceItem collapsed below it; "Show the proof" button expands the file:line citation from upstream. Button label is fixed — it communicates epistemology, not just UI affordance.</INTENT>
     <PRD_REF>docs/PRD.md §4.8 Three-stage learner journey, §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
@@ -257,7 +257,7 @@
 
   <MODULE_WEB_ROUTES_HARNESS ID="MOD-WEB-ROUTES-HARNESS"
                               FILE="src/observatory/web/routes/harness.py"
-                              STATE="PLANNED">
+                              STATE="STARTED">
     <INTENT>FastAPI router for harness profile pages: list all harnesses, show dossier for one harness with all its topics and insights, handle "Ask the agent why" dispatch for harness-scoped insights.</INTENT>
     <ANCHOR NAME="START_ROUTE_HARNESS_LIST"    COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_LIST"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_DOSSIER" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_DOSSIER"/>
@@ -266,7 +266,7 @@
 
   <MODULE_WEB_ROUTES_TOPIC ID="MOD-WEB-ROUTES-TOPIC"
                             FILE="src/observatory/web/routes/topic.py"
-                            STATE="PLANNED">
+                            STATE="STARTED">
     <INTENT>FastAPI router for topic profile pages: list all topics, show dossier for one topic with all harnesses that have data for it, handle "Ask the agent why" for topic-scoped insights.</INTENT>
     <ANCHOR NAME="START_ROUTE_TOPIC_LIST"    COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_LIST"/>
     <ANCHOR NAME="START_ROUTE_TOPIC_DOSSIER" COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_DOSSIER"/>
@@ -275,7 +275,7 @@
 
   <MODULE_WEB_ROUTES_MATRIX ID="MOD-WEB-ROUTES-MATRIX"
                              FILE="src/observatory/web/routes/matrix.py"
-                             STATE="PLANNED">
+                             STATE="STARTED">
     <INTENT>FastAPI router for the comparison matrix view: renders harness x topic grid, handles cell-expand HTMX partials showing insight + evidence, and confidence band labels.</INTENT>
     <ANCHOR NAME="START_ROUTE_MATRIX_FULL"        COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_FULL"/>
     <ANCHOR NAME="START_ROUTE_MATRIX_CELL_EXPAND" COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_CELL_EXPAND"/>
