@@ -28,6 +28,7 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 
 - `AgentRunner` — the application's runtime abstraction for dispatching research jobs (product concept)
 - `lead agent` / `subagent` — roles in the development process (process concept)
+- `agent harness` — the external environment currently hosting a lead agent or subagent (Claude Code, Codex, Cursor, etc.). Do not confuse it with a product `Harness` studied by this application.
 - `Insight` — an agent-produced abstraction stored in the database (data model concept)
 - `EvidenceItem` — a `file:line` citation backing an Insight (data model concept)
 - Do not use these terms interchangeably.
@@ -43,6 +44,18 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
 - README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.
 
+### Cross-Harness Lead-Agent Model
+
+The project role is **lead agent**, not "Claude-only lead." Claude Code, Codex, Cursor, or another capable agent harness may host the active lead agent. Treat these as peer implementations of the same process role:
+
+- **Claude Code lead agent** — typically Opus-class. May dispatch Claude Code subagents (Opus/Sonnet/Haiku class) through that harness's Task/Agent tooling.
+- **Codex lead agent** — typically GPT-5.x-class. May dispatch Codex subagents (for example explorer/worker roles, and smaller/faster models when the harness exposes that control) through Codex's `spawn_agent` tooling.
+- **Other lead harnesses** — follow the same contract if they can provide bounded delegation, durable file edits, test evidence, and clear reports.
+
+Roman grants standing project-level authorization for lead agents to use subagents when the active harness permits it. Use delegation to protect lead context, parallelize independent work, and route low-risk or highly bounded tasks to cheaper/faster agents. If a harness-level policy still requires a fresh session-level user request before spawning subagents, ask Roman to restate the authorization in that session instead of silently falling back.
+
+Lead agents should run **serially across harnesses**, not concurrently, unless Roman explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates WORKLOG/CONTEXT/git, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low for a personal-subscription educational project.
+
 ### Interrupt-and-Resume Pattern
 
 This project runs on the owner's personal Claude Pro and ChatGPT Plus / Codex Plus subscriptions, both of which use 5-hour rolling rate windows. Agent sessions can also be compacted, terminated, or otherwise lose context without warning. Plan as if any session can stop mid-action — because it can.
@@ -54,15 +67,15 @@ This is the concrete instantiation of Core §11 (Continuity) for *this* project.
 - **`WORKLOG.md`** (project root) — durable state of work currently in flight. Single source of truth for "what is the lead agent doing right now; what comes next; what is blocked." Hand-editable plain Markdown. Survives session loss.
 - **`CONTEXT.md`** — running decision log (what was decided, when, why). Append-only by date.
 - **Git history** — historical truth of what shipped. Commit messages describe what changed substantively (per CONTEXT.md project policy / commit conventions).
-- **TaskCreate / TaskList tools** (Claude Code session tools) — useful in-session for tracking; **do NOT rely on them as primary state storage**. They vanish on compaction or session end. Mirror anything important into `WORKLOG.md` before relying on it surviving.
+- **Harness-local task tools** (Claude Code TaskCreate/TaskList, Codex plan/subagents, etc.) — useful in-session for tracking; **do NOT rely on them as primary state storage**. They vanish on compaction or session end. Mirror anything important into `WORKLOG.md` before relying on it surviving.
 
 #### Hierarchical work model (lead + subagents)
 
 This project uses a strong-and-simple hierarchy. Optimized for: protecting the lead agent's context budget, parallelizing independent work, surviving any single agent's session loss.
 
 - **Owner (human, Roman)** — intent + acceptance criteria + final yes/no. Reviews lead-agent output at checkpoints listed in `DELEGATION-PLAN.md §4`. The owner is the only one who triggers manual resume across rate-window pauses.
-- **Lead agent (Opus 4.7 class)** — keeps full project context, makes architecture and scope decisions, writes specs/contracts, dispatches subagents, reviews + integrates their output, owns commits. Does NOT write production code directly (per `DELEGATION-PLAN.md §1`).
-- **Subagents (Sonnet/Haiku class)** — receive a self-contained brief + acceptance criteria + WHY graph subtree per `DELEGATION-PLAN.md §3`. Return evidence + a short report. Do not modify project structure outside their delegation. One subagent = one bounded task.
+- **Lead agent (Opus/GPT-5.x class)** — keeps full project context, makes architecture and scope decisions, writes specs/contracts, dispatches subagents, reviews + integrates their output, owns commits. Does not write production code directly when the active harness can delegate safely; if direct implementation is unavoidable, log the reason in WORKLOG/CONTEXT.
+- **Subagents (Sonnet/Haiku/GPT-mini or equivalent class)** — receive a self-contained brief + acceptance criteria + WHY graph subtree per `DELEGATION-PLAN.md §3`. Return evidence + a short report. Do not modify project structure outside their delegation. One subagent = one bounded task.
 
 Why this shape: lead-agent context is the scarce resource. Every line a subagent writes is a line the lead doesn't have to read until review. Parallel subagents compress wall-clock time. Failures stay contained to one delegation, not the whole project.
 

@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — alignment pass 3 (Task E literal/grep contradiction, AgentRunner v0.1 wording, engagement INTENT, single hello)
-**Active session lead:** Claude Opus 4.7 (interactive)
-**Current phase:** Pre-v0.1 — foundational docs aligned, awaiting owner go-ahead for v0.1 dispatch
+**Last update:** 2026-04-26 — Codex cross-harness delegation alignment
+**Active session lead:** Codex GPT-5.5-class (interactive)
+**Current phase:** Pre-v0.1 — foundational docs aligned; standing subagent authorization recorded; awaiting implementation start signal
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-Foundational docs landed and aligned through four commits (`94423c3` bootstrap, `bd6ee8e` alignment pass 1 after gpt-5.5 review, `0d90bd1` alignment pass 2 after fresh-eyes review + PRD §27 long-haul concern named, `f93c387` interrupt-and-resume runbook + WORKLOG.md durable state, plus this in-flight alignment pass 3). Manual interrupt-and-resume runbook in place (this file + `AGENTS.md` "Interrupt-and-Resume Pattern" section) — replaces the deferred automated orchestrator. **Awaiting owner go-ahead** to dispatch v0.1 first wave (Tasks A + B + C in parallel) per `DELEGATION-PLAN.md §3`.
+Foundational docs landed and aligned through five commits (`94423c3` bootstrap, `bd6ee8e` alignment pass 1 after gpt-5.5 review, `0d90bd1` alignment pass 2 after fresh-eyes review + PRD §27 long-haul concern named, `f93c387` interrupt-and-resume runbook + WORKLOG.md durable state, `e5065c2` alignment pass 3 after Opus fixes). Manual interrupt-and-resume runbook in place (this file + `AGENTS.md` "Interrupt-and-Resume Pattern" section) — replaces the deferred automated orchestrator. Roman has now granted standing project authorization for lead agents to use harness-local subagents; implementation has not started yet.
 
 ## 2. Active items
 
@@ -28,26 +28,27 @@ Foundational docs landed and aligned through four commits (`94423c3` bootstrap, 
 
 ## 3. Next ordered queue
 
-When owner gives go-ahead, the v0.1 first wave dispatches. Decomposition lives in `DELEGATION-PLAN.md §3`; condensed here:
+When Roman gives the implementation start signal, the v0.1 first wave dispatches. Decomposition lives in `DELEGATION-PLAN.md §3`; condensed here:
 
 | ID | Brief | Runner | Status | Blocked by |
 |---|---|---|---|---|
-| A | Data model + Alembic migrations (`DELEGATION-PLAN` Task A) | Sonnet | pending | owner go-ahead |
-| B | FastAPI app skeleton + Jinja+HTMX layout (Task B) | Sonnet | pending | owner go-ahead |
-| C | Markdown importer (Task C) | Sonnet | pending | owner go-ahead |
-| D | Read-only dossier + matrix routes (Task D) | Sonnet | pending | A, B, C all green |
-| E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (Task E) | Haiku | pending | A green |
+| A | Data model + Alembic migrations (`DELEGATION-PLAN` Task A) | harness-local worker | pending | implementation start signal |
+| B | FastAPI app skeleton + Jinja+HTMX layout (Task B) | harness-local worker | pending | implementation start signal |
+| C | Markdown importer (Task C) | harness-local worker | pending | implementation start signal |
+| D | Read-only dossier + matrix routes (Task D) | harness-local worker | pending | A, B, C all green |
+| E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (Task E) | harness-local small worker | pending | A green |
 
 A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches when A returns green. See `DELEGATION-PLAN.md §5` for the sequencing diagram.
 
 ## 4. Blocked / waiting
 
-- **All v0.1 work** — blocked on owner go-ahead per `AGENTS.md` Core §1 (owner reviews lead-agent output and gives go/no-go before each major dispatch).
+- **All v0.1 implementation work** — waiting for Roman's implementation start signal after the Codex cross-harness delegation alignment is reviewed.
 - **Future orchestrator (PRD §27)** — deferred to far horizon per owner direction 2026-04-25. Manual interrupt-and-resume runbook is the v0 substitute. Reopen only if/when manual handoff proves too painful in practice.
 
 ## 5. Recent history (append-only, dated)
 
-- **2026-04-26** — Alignment pass 3 in flight (this commit): caught by reviewer agent against post-runbook state. Five fixes: (1) DELEGATION Task E `NotImplementedError` message no longer contains the literal `claude -p` (was contradicting the v0.1 grep acceptance check); (2) PRD §23.8 risk mitigation now says AgentRunner Protocol exists from v0.1, concrete subprocess body from v0.2 (was saying "interface from v0.2", contradicting §26.3 acceptance); (3) WHY graph `FEAT-ENGAGEMENT-HOOKS` INTENT clarified — engagement Insights publish to DB immediately per L1 auto-merge, "human review" applies only to external publication (was reading as a DB approval gate, contradicting PRD §7.3/§11.7 + SPIRIT anti-pattern); (4) WORKLOG §1 + §5 history reflect the four prior commits explicitly; (5) SPIRIT.md "Observatory Spirit ON" hello dropped — single ritual sentinel "Observatory Agent1st ON" lives only in AGENTS.md (last reading-order file).
+- **2026-04-26** — Codex GPT-5.5-class alignment pass: verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.
+- **2026-04-26** — Committed `e5065c2`: alignment pass 3 caught by reviewer agent against post-runbook state. Five fixes: (1) DELEGATION Task E `NotImplementedError` message no longer contains the literal `claude -p` (was contradicting the v0.1 grep acceptance check); (2) PRD §23.8 risk mitigation now says AgentRunner Protocol exists from v0.1, concrete subprocess body from v0.2 (was saying "interface from v0.2", contradicting §26.3 acceptance); (3) WHY graph `FEAT-ENGAGEMENT-HOOKS` INTENT clarified — engagement Insights publish to DB immediately per L1 auto-merge, "human review" applies only to external publication (was reading as a DB approval gate, contradicting PRD §7.3/§11.7 + SPIRIT anti-pattern); (4) WORKLOG §1 + §5 history reflect the four prior commits explicitly; (5) SPIRIT.md "Observatory Spirit ON" hello dropped — single ritual sentinel "Observatory Agent1st ON" lives only in AGENTS.md (last reading-order file).
 - **2026-04-25** — Committed `f93c387`: manual interrupt-and-resume runbook landed (`AGENTS.md` "Interrupt-and-Resume Pattern" section + `WORKLOG.md` durable state file + CONTEXT.md update closing the sequencing question). Owner direction: automated orchestrator deferred to far horizon; manual runbook is the v0 substitute. CONTEXT.md §6 sequencing question closed (neither (A) nor (B) — runbook instead).
 - **2026-04-25** — Committed `0d90bd1`: alignment pass 2 (startup commands unified to `uv run uvicorn observatory.web.app:create_app --factory --reload` and `uv run python -m observatory.importers.canon`; ClaudeRunner stub-class wording reconciled in `DELEGATION-PLAN` Task E vs PRD §26.3; PRD §27 "Long-Haul Orchestration on Personal Subscriptions" added with 8 design constraints but no scaffolding).
 - **2026-04-25** — Committed `bd6ee8e`: alignment pass 1 (8 drifts caught by gpt-5.5 review — PRD §1 framing, importer path/CLI form, validator filename, 18 stale PRD_REFs in WHY graph, AgentRun-history/QueueItem removed from DELEGATION Task A, validator skip-PLANNED policy, Documentation conventions formalized in AGENTS.md, README/SPIRIT/CONTEXT reading-order deferral to AGENTS.md).

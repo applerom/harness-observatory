@@ -1,7 +1,7 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-25
-> **Phase:** Pre-v0.1 — foundational docs landed, no code yet
+> **Last update:** 2026-04-26
+> **Phase:** Pre-v0.1 — foundational docs landed, cross-harness lead-agent delegation aligned, no code yet
 > **Next milestone:** v0.1 First Working Slice (read-only viewer + markdown import)
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
@@ -182,3 +182,16 @@ What's now blocking: ...
 ```
 
 Old sections stay; this file is a running log, not a snapshot. When it grows past ~500 lines, archive earlier sections to `CONTEXT-history.md`.
+
+## Update 2026-04-26 — cross-harness lead-agent delegation aligned
+
+Roman clarified the intended collaboration model: Claude Code/Opus and Codex/GPT-5.x are peer **lead-agent harnesses** for this project, working serially rather than concurrently. Either lead agent may disagree with the other on project-quality grounds, but durable project state (WORKLOG, CONTEXT, git) is the handoff boundary. Roman's role stays intent/feedback/domain taste; lead agents are expected to act proactively for project benefit.
+
+What changed:
+- `AGENTS.md` now distinguishes `agent harness` from product `Harness`, records standing project-level authorization for lead agents to use harness-local subagents, and describes Claude Code and Codex as peer lead-agent environments.
+- `DELEGATION-PLAN.md` is no longer Claude Code-specific: it maps v0.1 tasks to "suggested subagent class" and adds harness adapters for Claude Code, Codex, and future harnesses.
+- `WORKLOG.md` now records Codex as the current active session lead for this alignment pass and updates the v0.1 queue from fixed Sonnet/Haiku labels to harness-local worker classes.
+
+What's now possible: Codex can run as a full lead-agent/orchestrator for this repo when the active session permits subagent spawning; Claude Code can do the same through its own Task/Agent tooling. Future agents should preserve the same delegation contract: bounded task, clear ownership, evidence report, lead-owned review/integration/commit.
+
+What's now blocking: no code has started yet. v0.1 implementation still waits for Roman's explicit implementation start signal after this process alignment is reviewed.

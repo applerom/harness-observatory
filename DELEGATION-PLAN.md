@@ -11,13 +11,13 @@
 | Role | Who | Responsibility |
 |---|---|---|
 | **Owner** | Roman | intent, acceptance criteria, "is this in spirit", final yes/no on slices |
-| **Lead agent** | Claude Opus 4.7 (current session or future Opus session, contextful via SPIRIT/PRD/WHY/CONTEXT) | architecture, delegation contracts, subagent review, validator runs, integration, communication with owner |
-| **Subagents (impl)** | Sonnet/Haiku per task — see §3 | bounded code-writing per delegation contract, return evidence per acceptance criteria |
+| **Lead agent** | Active high-capability agent in the current harness: Claude Code/Opus-class, Codex/GPT-5.x-class, or equivalent | architecture, delegation contracts, subagent review, validator runs, integration, communication with owner |
+| **Subagents (impl)** | Harness-local bounded agents selected per task — see §3 and §4.1 | bounded code-writing or exploration per delegation contract, return evidence per acceptance criteria |
 | **AgentRunner (runtime)** | not in v0.1 | future runtime agents executed BY the app (`claude -p`); separate category from delegation subagents |
 
 Owner does **not** dispatch subagents directly. Lead agent does. Owner reviews lead-agent output and gives go/no-go per slice.
 
-Lead agent does **not** write production code. Lead agent writes specs, contracts, reviews diffs, runs validators, integrates. Code-writing belongs to subagents.
+Lead agent normally does **not** write production code. Lead agent writes specs, contracts, reviews diffs, runs validators, integrates. Code-writing belongs to subagents when the active harness can delegate safely. If the active harness cannot delegate a particular task, the lead may implement the smallest safe slice directly and must record the reason in WORKLOG/CONTEXT.
 
 ---
 
@@ -44,7 +44,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ### Task A — Data model + migrations (sequential prerequisite for D and E)
 
-**Owner subagent type:** Sonnet
+**Suggested subagent class:** Sonnet-class worker, or Codex worker on the inherited/strong model
 **WHY graph subtree:** `MOD-MODELS` and the FEATUREs that depend on it
 **Deliverable:**
 - `src/observatory/models/__init__.py` — SQLModel entity definitions for all PRD §7 first-class entities. v0.1 needs at minimum: `Harness`, `Topic`, `Feature`, `EvidenceItem`, `Insight`, `ComparisonCell`, `Source`, `MediaAttachment`. Non-v0.1 entities (`AgentJob`, `PromptTemplate`, `RevisionNote`, `ObservationReview`, `Lens`, `Score`, `EcosystemObject`) — define stub tables (empty for v0.1, ready for later phases). Note: do NOT invent entities not listed in PRD §7 (no `QueueItem`, no `AgentRun-history` — `AgentJob` already covers run history).
@@ -65,7 +65,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ### Task B — FastAPI app skeleton + Jinja+HTMX layout (parallel with A)
 
-**Owner subagent type:** Sonnet
+**Suggested subagent class:** Sonnet-class worker, or Codex worker on a lower/medium reasoning setting if the harness supports it
 **WHY graph subtree:** `MOD-WEB-APP`, `MOD-WEB-ROUTES-DASHBOARD`, base layout
 **Deliverable:**
 - `src/observatory/web/app.py` — FastAPI app factory, mounts routers, serves static.
@@ -88,7 +88,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ### Task C — Markdown importer (parallel with A and B)
 
-**Owner subagent type:** Sonnet
+**Suggested subagent class:** Sonnet-class worker, or Codex worker/explorer pair if importer uncertainty needs a read-only scout first
 **WHY graph subtree:** `MOD-IMPORTER` and `FEAT-MARKDOWN-IMPORT`
 **Deliverable:**
 - `src/observatory/importers/canon.py` — entry point that reads `D:/ai/harnesses/harness-architecture/registry/harnesses.md` (table → `Harness` rows), `topics/*/topic.md` and `topics/*/evidence.md` (→ `Topic` and `EvidenceItem` rows), `comparisons/harness-map.md` (→ `ComparisonCell` rows). Handles both ASCII tables and pipe-tables.
@@ -108,7 +108,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ### Task D — Read-only dossier + matrix routes (depends on A, B, C)
 
-**Owner subagent type:** Sonnet
+**Suggested subagent class:** Sonnet-class worker, or Codex worker on the inherited/strong model
 **WHY graph subtree:** `MOD-WEB-ROUTES-HARNESS`, `MOD-WEB-ROUTES-TOPIC`, `MOD-WEB-ROUTES-MATRIX`, the FEATUREs for read-only views
 **Deliverable:**
 - `src/observatory/web/routes/harness.py` — `/harnesses` list view, `/harnesses/<slug>` dossier view.
@@ -130,7 +130,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ### Task E — AgentRunner interface stub + anchor validator (depends on A)
 
-**Owner subagent type:** Haiku (small task)
+**Suggested subagent class:** Haiku-class worker, or Codex worker on a smaller/faster model if the harness supports it
 **WHY graph subtree:** `MOD-RUNNER-BASE`, `FEAT-AGENT-RUNNER` (interface only)
 **Deliverable:**
 - `src/observatory/runners/base.py` — `AgentRunner` Protocol class with method signatures only. Type stubs for `AgentEvent`, `AgentContext`.
@@ -152,14 +152,25 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 
 ## 4. Coordination protocol
 
+### 4.1 Harness adapters for delegation
+
+This plan is harness-independent. A lead agent maps each task to the delegation primitive available in its current environment:
+
+- **Claude Code:** create one TaskCreate item per subagent, then dispatch through Claude Code's Agent/Task tool. Use Opus/Sonnet/Haiku according to task risk and owner subscription availability.
+- **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
+- **Other harnesses:** use their equivalent bounded-agent mechanism only if it can preserve the same contract: self-contained brief, disjoint write ownership, evidence report, no commits by subagents, and lead-owned integration.
+
+Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary.
+
 ### How subagents are dispatched
 
-Lead agent creates a TaskCreate item per subagent, then dispatches via Agent tool with a self-contained prompt that:
+Lead agent creates the harness-local tracking item for each subagent, then dispatches with a self-contained prompt that:
 
 - States the project context in 1 paragraph
 - Points the subagent at SPIRIT.md, PRD.md (specific sections), why-graph.xml (specific subtree), and AGENTS.md
 - States the deliverable list verbatim from §3 above
 - States the acceptance criteria verbatim
+- Defines ownership: exact files/modules the subagent may write; subagents must not revert or overwrite work by other agents
 - Tells the subagent to return a brief (≤200 word) report including: files written, test results, anchor validator output, and any blockers/judgment calls
 
 ### How subagents report back
@@ -179,7 +190,7 @@ After each subagent completes, lead agent:
 2. Reads a sample of files the subagent claims to have written (trust but verify)
 3. Runs the anchor validator + pytest + mypy
 4. If anything fails, dispatches a focused fix-up subagent (don't fix in lead context — lead context is for orchestration, not code)
-5. Stages and commits with conventional message (`feat(v0.1): <slice>`) and `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` (matching the runtime model used)
+5. Stages and commits with conventional message (`feat(v0.1): <slice>`) and agent attribution matching the actual lead/subagent harness used. For Codex-led commits, use a Codex-authored commit message/trailer rather than Claude attribution.
 6. Updates CONTEXT.md with progress note
 7. Updates `why-graph.xml` if any anchor names were renamed during implementation (graph and code must agree)
 
@@ -188,6 +199,7 @@ After each subagent completes, lead agent:
 Owner is consulted (not just informed):
 
 - Before any subagent is dispatched the FIRST time (this is the current pause point)
+- If a harness-level policy requires fresh session authorization for subagents despite the standing project authorization in `AGENTS.md`
 - When a subagent reports a deliverable that requires a scope decision (e.g., "PRD says X but the data shape suggests Y — choose")
 - When a slice is complete and ready for hands-on owner testing
 - When a deferred decision (see CONTEXT.md §6) needs resolution
@@ -269,4 +281,4 @@ These are violations to catch in subagent output and refuse to merge:
 
 - **Lead agent identity continuity.** Is it OK to spawn a fresh Opus session for v0.2 (loading SPIRIT/PRD/WHY/CONTEXT) instead of continuing this session? Per AGENTS.md §11, durable artifacts > session continuity, so yes — but owner may have preferences.
 - **Subagent model choice per task.** Currently Sonnet for most, Haiku for E. Owner may want to try Haiku for B (web skeleton — more boilerplate, less judgment) to compare quality.
-- **Where do code commits attribute?** Suggested: `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` for code-writing subagents, `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>` for lead-agent integration commits. Confirm or adjust.
+- **Where do code commits attribute?** Attribute to the actual agent/harness that authored or integrated the change. Claude Code-led work may use Claude Opus/Sonnet trailers. Codex-led work should identify Codex/GPT-5.x in the commit body/trailer. Do not attribute routine agent-authored commits to Roman unless Roman explicitly co-authored the content.
