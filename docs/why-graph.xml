@@ -152,6 +152,7 @@
     <PRD_REF>docs/PRD.md §7 Core Information Model (AgentJob entity), §18.7 Agent job management</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOB-LOG-PARSER"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_AGENT_JOB>
@@ -327,6 +328,13 @@
     <INTENT>Minimal v0.2a job service: creates OpenCode refresh AgentJobs, renders a prompt template, executes via AgentRunner, and writes raw logs.</INTENT>
     <ANCHOR NAME="START_JOB_REFRESH" COORD="src/observatory/jobs/service.py#START_JOB_REFRESH"/>
   </MODULE_JOBS_SERVICE>
+
+  <MODULE_JOB_LOG_PARSER ID="MOD-JOB-LOG-PARSER"
+                         FILE="src/observatory/jobs/log_parser.py"
+                         STATE="PLANNED">
+    <INTENT>v0.2b parser that turns one real refresh raw log into proposed Insight and EvidenceItem rows while preserving the raw log.</INTENT>
+    <ANCHOR NAME="START_JOB_LOG_PARSE" COORD="src/observatory/jobs/log_parser.py#START_JOB_LOG_PARSE"/>
+  </MODULE_JOB_LOG_PARSER>
 
   <MODULE_WEB_ROUTES_JOBS ID="MOD-WEB-ROUTES-JOBS"
                           FILE="src/observatory/web/routes/jobs.py"
