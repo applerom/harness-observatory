@@ -3,6 +3,7 @@ import sys
 from collections.abc import Callable
 from io import StringIO
 from pathlib import Path
+from typing import cast
 
 
 def _load_validator_run() -> Callable[..., int]:
@@ -13,7 +14,7 @@ def _load_validator_run() -> Callable[..., int]:
     assert spec.loader is not None
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
-    return module.run
+    return cast(Callable[..., int], module.run)
 
 
 run = _load_validator_run()

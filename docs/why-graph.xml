@@ -79,7 +79,7 @@
        FEATURES — v0.1 slice (PRIORITY="HIGH")
   ================================================================ -->
 
-  <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Importer reads harness-architecture registry, topic files, and harness-map comparison and populates the SQLite database with normalized Harness, Topic, Insight, and EvidenceItem records.</INTENT>
     <PRD_REF>docs/PRD.md §26.1 Importer (v0.1 slice)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
@@ -219,7 +219,7 @@
 
   <MODULE_IMPORTER ID="MOD-IMPORTER"
                    FILE="src/observatory/importers/canon.py"
-                   STATE="PLANNED">
+                   STATE="STARTED">
     <INTENT>Markdown importer: reads harness-architecture corpus (registry/harnesses.md, topics/*/topic.md, topics/*/evidence.md, comparisons/harness-map.md) and populates the SQLite database via SQLModel. Also the entry point for markdown export (doc generation).</INTENT>
     <ANCHOR NAME="START_IMPORT_HARNESSES"  COORD="src/observatory/importers/canon.py#START_IMPORT_HARNESSES"/>
     <ANCHOR NAME="START_IMPORT_TOPICS"     COORD="src/observatory/importers/canon.py#START_IMPORT_TOPICS"/>
