@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-26 — v0.1 implementation start signal received
+**Last update:** 2026-04-26 — v0.1 first subagent wave dispatched
 **Active session lead:** Codex GPT-5.5-class (interactive)
 **Current phase:** v0.1 implementation — first-wave docs alignment and subagent dispatch in progress
 
@@ -24,7 +24,9 @@ Foundational docs landed and aligned through six commits through `0cbf888` (cros
 
 | ID | Brief | Runner | Status | Started | Last update |
 |---|---|---|---|---|---|
-| DOCS-ALIGN | Small pre-start drift cleanup in PRD/DELEGATION/README/AGENTS/WORKLOG/CONTEXT before first code wave | Codex lead | in progress | 2026-04-26 | removing drift noted during project read-through |
+| A | Data model + Alembic migrations (`DELEGATION-PLAN` Task A). Codex subagent Noether `019dc91c-4ca3-7a30-b449-1c5df03f23d1`; owns `src/observatory/models/**`, `src/observatory/db.py`, `migrations/**`, `alembic.ini`, `tests/models/**`. | Codex implementation_worker | in progress | 2026-04-26 | first wave dispatched |
+| B | FastAPI app skeleton + Jinja/HTMX layout (`DELEGATION-PLAN` Task B). Codex subagent Epicurus `019dc91c-4d2c-7a83-9a9b-ad2af323e1e7`; owns `pyproject.toml`, `src/observatory/web/**`, `tests/web/**`, needed package init files. | Codex implementation_worker | in progress | 2026-04-26 | first wave dispatched |
+| C-SCOUT | Read-only importer source-shape scout for `../harness-architecture`. Codex subagent Einstein `019dc91c-4d9b-7533-b6a9-70d187e93ef5`; no writes. | Codex repo_explorer | in progress | 2026-04-26 | first wave dispatched |
 
 ## 3. Next ordered queue
 
@@ -32,9 +34,7 @@ When Roman gives the implementation start signal, the v0.1 first wave dispatches
 
 | ID | Brief | Runner | Status | Blocked by |
 |---|---|---|---|---|
-| A | Data model + Alembic migrations (`DELEGATION-PLAN` Task A) | harness-local worker | pending | implementation start signal |
-| B | FastAPI app skeleton + Jinja+HTMX layout (Task B) | harness-local worker | pending | implementation start signal |
-| C | Markdown importer (Task C) | harness-local worker | pending | implementation start signal |
+| C | Markdown importer (Task C) | harness-local worker | pending | C-SCOUT report and enough model shape from A |
 | D | Read-only dossier + matrix routes (Task D) | harness-local worker | pending | A, B, C all green |
 | E | AgentRunner Protocol + stub `ClaudeRunner` + anchor validator (Task E) | harness-local small worker | pending | A green |
 
@@ -47,6 +47,8 @@ A, B, C dispatch in parallel. D dispatches when A+B+C return green. E dispatches
 ## 5. Recent history (append-only, dated)
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
+- **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.
+- **2026-04-26** — Dispatched Codex first wave: Task A to Noether (`019dc91c-4ca3-7a30-b449-1c5df03f23d1`), Task B to Epicurus (`019dc91c-4d2c-7a83-9a9b-ad2af323e1e7`), importer read-only scout to Einstein (`019dc91c-4d9b-7533-b6a9-70d187e93ef5`). Next lead action: wait for the scout or one implementation slice, then dispatch Task C/E as dependencies clear.
 - **2026-04-26** — Codex subagent operating profile added: reviewed `docs/codex-subagents-recommendations.md` against official OpenAI docs; added `docs/codex-subagent-profile.md`, `.codex/config.toml`, and custom Codex agent profiles for `repo_explorer`, `implementation_worker`, `hard_worker`, `reviewer`, and `validator`; linked the profile from `AGENTS.md` and `DELEGATION-PLAN.md`. The scheme is an operating aid, not a source of truth above AGENTS/PRD/WHY/WORKLOG.
 - **2026-04-26** — Published repository to GitHub: `main` is a single squash public snapshot (`31d627c`), `development` preserves full pre-v0.1 history through `0cbf888`, and local work continues on `development`.
 - **2026-04-26** — Committed `0cbf888`: Codex GPT-5.5-class alignment pass. Verified Opus alignment pass 3 resolved the previously reported contradictions; recorded Roman's standing authorization for lead agents to use harness-local subagents; generalized `AGENTS.md` and `DELEGATION-PLAN.md` from Claude Code-specific orchestration to a cross-harness lead-agent model covering Claude Code and Codex; clarified that lead-agent sessions are serial across harnesses by default.
