@@ -1,22 +1,24 @@
 import { expect, test } from "@playwright/test";
 
-test("matrix has top scroll affordance and reveals clicked cell detail", async ({ page }) => {
+test("matrix is dense and reveals clicked cell detail beside the grid", async ({ page }) => {
   await page.goto("/matrix");
 
-  const topScroll = page.getByTestId("matrix-scroll-top");
   const mainScroll = page.getByTestId("matrix-scroll-main");
-  await expect(topScroll).toBeVisible();
   await expect(mainScroll).toBeVisible();
-
-  await topScroll.evaluate((element) => {
-    element.scrollLeft = 320;
-    element.dispatchEvent(new Event("scroll"));
-  });
-  await expect.poll(async () => mainScroll.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  await expect(page.locator(".matrix-legend").getByText("present")).toBeVisible();
 
   const detail = page.locator("#matrix-cell-detail");
   const cell = page.getByTestId("matrix-cell-opencode-instruction-files");
   await expect(cell).toBeVisible();
+  await expect
+    .poll(async () =>
+      cell.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return Math.round(rect.width);
+      }),
+    )
+    .toBeLessThan(48);
+
   await cell.click();
 
   await expect(detail).toContainText("Expanded cell");

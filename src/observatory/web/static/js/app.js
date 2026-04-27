@@ -25,6 +25,9 @@ window.observatoryScrollToMatrixDetail = function observatoryScrollToMatrixDetai
   if (!detail) {
     return;
   }
+  if (window.matchMedia("(min-width: 1101px)").matches) {
+    return;
+  }
   detail.scrollIntoView({ block: "start", behavior: "smooth" });
 };
 

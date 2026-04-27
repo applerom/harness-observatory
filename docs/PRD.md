@@ -676,8 +676,10 @@ Capabilities:
 - show absent-by-design vs not-investigated
 - **show aggregated confidence band per cell** — derived from the Insights in that cell
 - click a cell to expand per-pass breakdown showing how many passes agree, how many disagree, and which agents ran
-- wide matrix tables show horizontal scroll affordances both above and below the table
-- after a cell click updates the expanded detail region, the page scrolls to that region so the user sees the result immediately
+- **feedback-hardening update (2026-04-27):** the primary matrix must be a dense scan surface, not a grid of large cards. Cells use compact state symbols (`✓`, `×`, `?`, `◐`) with accessible labels/tooltips; confidence is shown visually in the cell styling and explained in a compact legend.
+- Topic headers may use vertical/rotated labels when that lets the full harness x topic field fit on a normal laptop viewport.
+- Expanded cell detail appears beside the matrix on desktop and below it on narrow screens, so selecting a cell does not force an unpleasant scroll away from the overview.
+- Horizontal scrolling remains only as a fallback for future topic growth, not the default first impression.
 
 ### 11.3 Harness Dossier
 

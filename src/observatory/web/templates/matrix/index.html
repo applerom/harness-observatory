@@ -5,11 +5,11 @@ START_MODULE_CONTRACT:
 PURPOSE: Read-only harness x topic matrix grid with HTMX cell expansion controls.
 PRD_REF: docs/PRD.md §11.2, §26.2
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
-SCOPE: matrix table; imported cell states; current confidence labels
+SCOPE: dense matrix table; imported cell states; current confidence labels; side detail panel
 INVARIANTS:
-- Every cell displays state and current confidence copy.
-- Cell expansion uses HTMX, stays read-only, and scrolls the detail region into view.
-- Wide matrix horizontal scrolling is available above and below the table.
+- Every cell exposes state and confidence accessibly without making the grid visually word-heavy.
+- Cell expansion uses HTMX, stays read-only, and updates the side detail region.
+- Wide matrix horizontal scrolling remains available as a fallback when topic count grows.
 :END_MODULE_CONTRACT
 -->
 {% extends "_base.html" %}
@@ -23,65 +23,85 @@ INVARIANTS:
       <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Harness x Topic</h1>
     </div>
 
-    {% set matrix_width_rem = 10 + (topics|length * 12) %}
-    <div
-      id="matrix-scroll-top"
-      class="matrix-scrollbar-top"
-      data-testid="matrix-scroll-top"
-      onscroll="window.observatorySyncScroll('matrix-scroll-top', 'matrix-scroll-main')"
-    >
-      <div style="width: {{ matrix_width_rem }}rem; height: 1px;"></div>
-    </div>
-    <div
-      id="matrix-scroll-main"
-      class="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm"
-      data-testid="matrix-scroll-main"
-      onscroll="window.observatorySyncScroll('matrix-scroll-main', 'matrix-scroll-top')"
-    >
-      <table class="divide-y divide-slate-200 text-sm" style="min-width: {{ matrix_width_rem }}rem;">
-        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-normal text-slate-500">
-          <tr>
-            <th class="sticky left-0 z-10 bg-slate-50 px-4 py-3">Harness</th>
-            {% for topic in topics %}
-              <th class="min-w-44 px-4 py-3">{{ topic.name }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          {% for row in rows %}
-            <tr>
-              <th class="sticky left-0 z-10 bg-white px-4 py-3 text-left font-semibold text-slate-950">
-                <a class="hover:text-emerald-700" href="/harnesses/{{ row.harness.slug }}">{{ row.harness.name }}</a>
-              </th>
-              {% for topic in topics %}
-                {% set cell = row.cells[loop.index0] %}
-                <td class="align-top px-4 py-3">
-                  <button
-                    class="matrix-cell-button"
-                    data-testid="matrix-cell-{{ row.harness.slug }}-{{ topic.slug }}"
-                    hx-get="/matrix/cells/{{ row.harness.slug }}/{{ topic.slug }}"
-                    hx-target="#matrix-cell-detail"
-                    hx-swap="innerHTML"
-                    hx-on::after-swap="window.observatoryScrollToMatrixDetail()"
-                    type="button"
-                  >
-                    <span class="font-semibold text-slate-900">{{ cell.state if cell else "unknown" }}</span>
-                    <span class="text-xs text-slate-500">{{ cell.confidence_band if cell else "unverified" }}</span>
-                  </button>
-                </td>
+    {% set matrix_width_rem = 8.75 + (topics|length * 2.55) %}
+    <!-- START_MATRIX_DENSE_GRID -->
+    <div class="matrix-workbench">
+      <div class="space-y-3">
+        <div class="matrix-legend" aria-label="Matrix legend">
+          <span><span class="matrix-legend-symbol matrix-cell-state-present">✓</span> present</span>
+          <span><span class="matrix-legend-symbol matrix-cell-state-absent">×</span> absent</span>
+          <span><span class="matrix-legend-symbol matrix-cell-state-unknown">?</span> unknown</span>
+          <span><span class="matrix-legend-symbol matrix-cell-confidence-unverified">✓</span> unverified</span>
+        </div>
+        <div
+          id="matrix-scroll-main"
+          class="matrix-shell"
+          data-testid="matrix-scroll-main"
+        >
+          <table class="matrix-table text-sm" style="min-width: {{ matrix_width_rem }}rem;">
+            <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-normal text-slate-500">
+              <tr>
+                <th class="matrix-harness-header sticky left-0 z-20 bg-slate-50">Harness</th>
+                {% for topic in topics %}
+                  <th class="matrix-topic-header">
+                    <a class="matrix-topic-label" href="/topics/{{ topic.slug }}" title="{{ topic.name }}">{{ topic.name }}</a>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <th class="matrix-harness-cell sticky left-0 z-10 bg-white text-left font-semibold text-slate-950">
+                    <a class="hover:text-emerald-700" href="/harnesses/{{ row.harness.slug }}">{{ row.harness.name }}</a>
+                  </th>
+                  {% for topic in topics %}
+                    {% set cell = row.cells[loop.index0] %}
+                    {% set state = cell.state if cell else "unknown" %}
+                    {% set confidence = cell.confidence_band if cell else "unverified" %}
+                    {% set state_class = state|lower|replace(' ', '-')|replace('_', '-') %}
+                    {% set confidence_class = confidence|lower|replace(' ', '-')|replace('_', '-') %}
+                    {% if state in ["present", "corroborated"] %}
+                      {% set state_symbol = "✓" %}
+                    {% elif state in ["absent", "missing"] %}
+                      {% set state_symbol = "×" %}
+                    {% elif state in ["partial", "mixed"] %}
+                      {% set state_symbol = "◐" %}
+                    {% else %}
+                      {% set state_symbol = "?" %}
+                    {% endif %}
+                    <td class="matrix-cell">
+                      <button
+                        class="matrix-cell-button matrix-cell-state-{{ state_class }} matrix-cell-confidence-{{ confidence_class }}"
+                        data-testid="matrix-cell-{{ row.harness.slug }}-{{ topic.slug }}"
+                        hx-get="/matrix/cells/{{ row.harness.slug }}/{{ topic.slug }}"
+                        hx-target="#matrix-cell-detail"
+                        hx-swap="innerHTML"
+                        hx-on::after-swap="window.observatoryScrollToMatrixDetail()"
+                        type="button"
+                        title="{{ row.harness.name }} / {{ topic.name }}: {{ state }}, {{ confidence }}"
+                        aria-label="{{ row.harness.name }} / {{ topic.name }}: {{ state }}, {{ confidence }}"
+                      >
+                        <span aria-hidden="true" class="matrix-cell-symbol">{{ state_symbol }}</span>
+                        <span class="sr-only">{{ state }} {{ confidence }}</span>
+                      </button>
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% else %}
+                <tr>
+                  <td class="px-4 py-6 text-slate-500" colspan="{{ topics|length + 1 }}">No matrix data imported yet.</td>
+                </tr>
               {% endfor %}
-            </tr>
-          {% else %}
-            <tr>
-              <td class="px-4 py-6 text-slate-500" colspan="{{ topics|length + 1 }}">No matrix data imported yet.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-    <section id="matrix-cell-detail" class="min-h-20 rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
-      Select a cell to expand its Insight and proof.
-    </section>
+      <section id="matrix-cell-detail" class="matrix-detail-panel min-h-20 rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
+        Select a cell to expand its Insight and proof.
+      </section>
+    </div>
+    <!-- :END_MATRIX_DENSE_GRID -->
   </section>
 {% endblock %}

@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — v1.1 honesty + runner/parser hardening implemented and validated
+**Last update:** 2026-04-27 — feedback-hardening Matrix density pass validated; ready to commit
 **Active session lead:** Codex GPT-5.5 (execution lead)
-**Current phase:** v1.0-minimal working product published to local `main`; v1.1 implementation ready to commit on `development`
+**Current phase:** v1.1 published to `main`; Matrix density feedback slice ready to commit on `development`
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.0-minimal are implemented and validated locally, and the v1.0-minimal tree has been squash-merged into local `main` as `8dc0cdc`. The product now has importer/viewer, refresh jobs, parser persistence, scheduler, curation, live studio, abstract artifacts, verification/confidence, engagement/Insight Library, explain jobs, lens scoring, generated Markdown exports, legacy archive manifest, and onboarding checklist. Codex execution lead is implementing feedback-orthogonal v1.1 honesty and proof-quality fixes while Roman collects lecturer/student feedback.
+v0.1 through v1.1 are implemented and published to `main`; `development` is now processing feedback-hardening slices from Roman/student/lecturer use. The first feedback item, Matrix density, is implemented and validated: the old card-like cells are replaced by a dense symbolic overview with side detail while preserving click-through proof.
 
 ## 2. Active items
 
@@ -60,6 +60,7 @@ Current ordered queue after v0.2a+:
 | V11-PARSER-EMPTY-GUARD | Add `done_no_findings` AgentJob status + `parser_returned_no_findings` semantic event + Job Dashboard amber marker + tests. | Codex execution lead | completed | Added canonical AgentJob status constants, empty parser guard, amber dashboard badge, route/unit tests; no Alembic migration needed because current SQLite schema stores status as indexed string |
 | V11-CLAUDE-RUNNER-EMPIRICAL | Run at least one real refresh through `ClaudeRunner` against a real harness target; record evidence in `live-sessions/`, EVOLUTION, and `docs/runtime-dependencies.md`. | Codex execution lead | completed | Real Job #9 done against `claude-code`; raw log `live-sessions/agent-job-00009.log`; Claude CLI `2.1.119`; parser plain-path hardening added after evidence-shape gap |
 | V11-COAUTHOR-DISCIPLINE | Apply `Co-Authored-By: <reviewer>` trailer to v1.1 integration commits that include reviewer-subagent findings; baseline rule, applies forward. | Codex execution lead | completed | No reviewer/subagent participated in this v1.1 slice, so the implementation commit needs explicit Codex author identity but no `Co-Authored-By` trailer |
+| FB-MATRIX-DENSITY | Roman feedback: Matrix cells are too large and word-heavy for mostly `present/unknown/unverified` data; make Matrix fit and scan on one laptop page, with detail beside/below. | Codex execution lead | completed | Dense symbolic matrix + side detail implemented; pytest/ruff/mypy/anchors and Playwright `visual:matrix` green; screenshots captured |
 
 ## 4. Blocked / waiting
 
@@ -80,6 +81,8 @@ Current ordered queue after v0.2a+:
 - **2026-04-27** — Codex committed `371ce21` (`docs(v1): fix snapshot state and agent attribution`) on `development` with author/committer `Codex GPT-5.5 <noreply@openai.com>`, then squash-merged `development` into local `main` as `8dc0cdc` (`feat(v1): publish v1.0-minimal observatory snapshot`). The squash merge used the `development` tree exactly after resolving add/add conflicts from the orphan public-history shape; `git diff --name-status development` was empty before the `main` snapshot commit.
 
 - **2026-04-27** — Implemented and validated PRD §24 v1.1 first pass on `development`: engagement copy is visibly labelled `template-generated`; successful refresh logs with zero parsed artifacts now become `done_no_findings` with semantic warning `parser_returned_no_findings`; `ClaudeRunner` has preflight and Windows executable resolution; real ClaudeRunner Job #9 against `claude-code` completed with raw log `live-sessions/agent-job-00009.log`. Job #9 revealed that Claude emits plain evidence path bullets, so the parser now accepts `path:line — note` evidence and local Job #9 was repaired to attach EvidenceItems #80-#82 to Insight #37. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 64/skipped 0; Playwright CLI `visual:insight`, `visual:jobs`, and `visual:live` passed. Next action: commit with explicit Codex author identity.
+
+- **2026-04-27** — Roman opened FEEDBACK-HARDENING with a Matrix screenshot: current `Harness x Topic` cells are too large for repeated `present/unknown/unverified` data, forcing unpleasant horizontal/vertical scanning. Codex execution-lead decision: implement a dense symbolic Matrix first (without transposing yet), because the main failure is card-like cell density and below-table detail, not necessarily row/column orientation. PRD §11.2 and WHY graph updated; code now uses compact state symbols, vertical topic labels, a legend, and side detail on desktop. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 65/skipped 0; `npm run visual:matrix` passed; screenshots captured at `test-results/matrix-dense-feedback.png` and `test-results/matrix-dense-feedback-clicked.png`. Next action: commit with explicit Codex author identity.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.

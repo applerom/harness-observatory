@@ -40,6 +40,36 @@ Rule added:
   Co-author trailers credit subagents/reviewers; they do not repair an incorrect
   primary author.
 
+## 2026-04-27 — Matrix Feedback: Overview Surfaces Must Scan First
+
+Observation:
+- Roman's first usage-feedback screenshot showed the Comparison Matrix using
+  large card-like cells for values that were mostly `present`, `unknown`, and
+  `unverified`.
+- The old layout technically exposed the state, but it made the user scroll
+  horizontally and vertically to learn almost nothing. The surface looked like a
+  table but behaved like a set of repeated cards.
+
+Impact:
+- Students and lecturers cannot see the field at once, so the Matrix fails as a
+  pattern-recognition surface.
+- `unverified` repeated in every cell reads like noise rather than useful trust
+  calibration.
+- Expanded cell detail below the table makes each click feel like losing the
+  overview.
+
+Action:
+- The Matrix is now treated as a dense scan surface: symbolic cells for state,
+  visual confidence styling, compact legend, vertical topic labels, and a
+  desktop side detail panel.
+- The original proof path is preserved: clicking a cell still opens the Insight
+  and EvidenceItem detail.
+
+Rule added:
+- Overview surfaces should optimize for shape recognition first and move prose
+  into detail panels. If every repeated cell says the same words, the UI should
+  probably encode that state visually instead.
+
 ## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
 
 Observation:

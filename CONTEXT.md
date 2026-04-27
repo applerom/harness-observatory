@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — v1.1 honesty + runner/parser hardening implemented and validated
-> **Phase:** v1.0-minimal published to local `main`; v1.1 honesty + hardening ready to commit on `development`
-> **Next milestone:** commit v1.1 with Codex author identity, then continue feedback-driven PRD queue while owner collects lecturer/student feedback
+> **Last update:** 2026-04-27 — first feedback-hardening UI pass validated on Matrix density
+> **Phase:** v1.1 published to `main`; Matrix density feedback slice ready to commit on `development`
+> **Next milestone:** commit feedback slice with Codex author identity, then continue processing incoming usage feedback
 
 ## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
 
@@ -44,6 +44,14 @@ What changed / was observed:
 - Job #9 exposed a parser shape gap: Claude wrote plain evidence path bullets, not Markdown links. Parser was hardened to parse those; local Job #9 now has Insight #37 and EvidenceItems #80-#82.
 
 Validation evidence: `uv run pytest` passed 101 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 64 anchors / skipped 0; Playwright CLI `visual:insight`, `visual:jobs`, and `visual:live` passed. What's now possible: commit v1.1 with explicit Codex author identity.
+
+## Update 2026-04-27 — feedback-hardening: Matrix must scan, not read like cards
+
+Roman's first usage-feedback item targeted the Comparison Matrix: the old cell design used large card-like boxes containing only `present/unknown` and `unverified`, causing horizontal scrolling while communicating little. This is not only a visual complaint; it means the Matrix failed its core purpose as an overview surface.
+
+Execution-lead decision: keep harnesses as rows and topics as columns for now, but convert the table into a dense symbolic scan surface before trying a stronger transpose. Cells use compact symbols for state, confidence is visual styling with accessible labels/tooltips, topic headers can be vertical, and expanded cell detail moves beside the matrix on desktop. This preserves the original intent (click cell -> Insight + proof) while making the default view useful at classroom/laptop scale.
+
+Validation evidence: `uv run pytest` passed 101 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 65 anchors / skipped 0; `npm run visual:matrix` passed. Additional Playwright screenshots were captured at `test-results/matrix-dense-feedback.png` and `test-results/matrix-dense-feedback-clicked.png`.
 
 ---
 

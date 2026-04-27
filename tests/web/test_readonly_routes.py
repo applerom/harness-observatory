@@ -235,7 +235,9 @@ def test_matrix_and_htmx_cell_render_imported_data(client: TestClient) -> None:
 
     assert matrix_response.status_code == 200
     assert "Harness x Topic" in matrix_response.text
+    assert "matrix-workbench" in matrix_response.text
     assert 'hx-get="/matrix/cells/opencode/instruction-files"' in matrix_response.text
+    assert 'aria-label="OpenCode / Instruction Files: present, unverified"' in matrix_response.text
     assert "unverified" in matrix_response.text
     assert "not yet verified" not in matrix_response.text
     assert cell_response.status_code == 200

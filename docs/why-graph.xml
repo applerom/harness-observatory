@@ -103,9 +103,10 @@
   </FEATURE_MARKDOWN_IMPORT>
 
   <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="STARTED">
-    <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline. Wide matrix scrolling is usable from both top and bottom, and selecting a cell moves the user to the expanded detail region.</INTENT>
+    <INTENT>Read-only matrix view of harness x topic with dense symbolic cells for scanning and expandable detail for the selected cell; the overview stays compact while the side/below detail preserves Insight and EvidenceItem proof.</INTENT>
     <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-MATRIX"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_COMPARISON_MATRIX_RO>
 
@@ -489,6 +490,13 @@
     <ANCHOR NAME="START_ROUTE_MATRIX_FULL"        COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_FULL"/>
     <ANCHOR NAME="START_ROUTE_MATRIX_CELL_EXPAND" COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_CELL_EXPAND"/>
   </MODULE_WEB_ROUTES_MATRIX>
+
+  <MODULE_WEB_TEMPLATE_MATRIX ID="MOD-WEB-TEMPLATE-MATRIX"
+                              FILE="src/observatory/web/templates/matrix/index.html"
+                              STATE="STARTED">
+    <INTENT>Matrix page template that renders the dense symbolic scan grid and side detail panel requested during feedback hardening.</INTENT>
+    <ANCHOR NAME="START_MATRIX_DENSE_GRID" COORD="src/observatory/web/templates/matrix/index.html#START_MATRIX_DENSE_GRID"/>
+  </MODULE_WEB_TEMPLATE_MATRIX>
 
   <MODULE_RUNNER_BASE ID="MOD-RUNNER-BASE"
                       FILE="src/observatory/runners/base.py"
