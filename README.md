@@ -5,7 +5,12 @@ developers how to work with agents by letting them watch (and question) the proc
 by agents, about agents, for developers who are skeptical of agents but ready to look at the
 evidence themselves.
 
-**Status: Pre-v0.1 — foundational docs only, code not yet started.**
+**Status: v1.0-minimal — working local product, feedback-ready.**
+
+The current app has importer/viewer surfaces, manual and scheduled refresh jobs, semantic runtime
+traces, curation, Live Agent Studio, deterministic abstract/verification/engagement/explain
+services, Insight Library, lens scoring, and generated Markdown exports. It is intentionally a
+minimum working version for lecturer/student feedback, not a polished production product.
 
 ---
 
@@ -45,8 +50,8 @@ evidence themselves.
 | Web framework | FastAPI | Async, typed, popular |
 | Database | SQLite (via SQLModel) | Zero-config, single-file, local-first |
 | Frontend | HTMX + Tailwind | Server-driven HTML, no SPA complexity |
-| Agent dispatch | `claude -p` subprocess (v1) | Works with Claude Pro; runner-agnostic interface |
-| Task queue | APScheduler (v1) | Lightweight cron for refresh jobs |
+| Agent dispatch | `CodexRunner` + `ClaudeRunner` local CLI subprocesses | Runner-agnostic `AgentRunner` boundary |
+| Task queue | APScheduler | Lightweight guarded scheduler for refresh jobs |
 
 Core decisions are recorded in `docs/PRD.md`; `docs/why-graph.xml` maps that intent toward
 implementation. If you see something and wonder "why not X instead?" — start with the PRD, then
@@ -65,11 +70,13 @@ and follow its required-reading list from there.
 
 ## For humans contributing
 
-Contribution guide is TBD — will be written after v0.1 ships with working code. Until then:
+Contribution guide is still intentionally light while the app is in feedback-hardening. For now:
 
-- The project is in the foundational-docs phase; the right entry point is `docs/PRD.md` and
-  `SPIRIT.md`
+- The product is v1.0-minimal and feedback-ready; the right entry point is `SPIRIT.md`,
+  `docs/PRD.md`, `CONTEXT.md`, and `WORKLOG.md`
 - All architectural decisions go through the WHY graph before code is written
+- Agent-authored commits must use the agent's own author identity, not Roman's human identity;
+  see `AGENTS.md` for the exact rule
 - If you want to understand the agent1st protocol that governs how this is built:
   [https://github.com/applerom/agent1st](https://github.com/applerom/agent1st)
 
@@ -78,8 +85,8 @@ Contribution guide is TBD — will be written after v0.1 ships with working code
 ## Related projects
 
 - [`../harness-architecture/`](../harness-architecture/) — the markdown meta-repo: cross-harness
-  analysis, `file:line` citations, teaching lessons. Currently the canonical research artifact;
-  will become legacy/migration-input as harness-observatory matures.
+  analysis, `file:line` citations, teaching lessons. It is now the legacy/migration input and
+  still a useful evidence corpus while harness-observatory becomes the working DB-first surface.
 - [agent1st protocol](https://github.com/applerom/agent1st) — the operating protocol used to
   build this project and embedded in `AGENTS.md`
 

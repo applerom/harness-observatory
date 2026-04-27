@@ -1340,6 +1340,12 @@ Items deliberately deferred to v1.2 or beyond, so the parallel implementation tr
 
 v1.1 acceptance:
 
+- **v1.0 snapshot hygiene (documentation bugfix).** Before treating v1.0-minimal as the `main` snapshot, human-facing and agent-facing docs must not describe the repo as pre-v0.1 or code-not-started. Concretely:
+  - `README.md` states that v1.0-minimal is a working local product and names the implemented surfaces at a high level.
+  - `CONTEXT.md` "What's next" points at the v1.1 queue rather than the old v0.2a direction.
+  - Source module contracts touched during the pass no longer describe active runtime entities (`AgentJob`, `Lens`, `Score`, `RevisionNote`, `ObservationReview`) as future-only storage when they are now implemented product surfaces.
+  - Acceptance: tests/linters/anchor validator still pass after the doc-only pass.
+
 - **Engagement honesty (labelling pass, not implementation).** The current `engagement` job type is deterministic template generation, not an agent invocation — `AgentJob.runner_name="deterministic"`, `status="done"` mid-creation, no model call, hardcoded copy templates in `src/observatory/engagement/service.py`. This is fine as v0.6a compromise but must not be hidden behind the word "engagement agent." Concretely:
   - Insight Library and any other UI surface rendering `Insight.engagement_hook` / `Insight.joke_or_telegram_seed` displays a small `template-generated` badge near that copy, visually distinct from confidence badges.
   - The Insight detail surface displays a one-line note: "Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2."
@@ -1360,7 +1366,10 @@ v1.1 acceptance:
   - If `claude -p` invocation fails for environmental reasons (missing CLI, version mismatch, OAuth flow surprises), record that failure mode in `docs/runtime-dependencies.md` and adjust runner preflight accordingly. Failure is acceptable evidence; absence of any attempt is not.
   - WORKLOG and CONTEXT show the live job id and outcome.
 
-- **Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation: integration commits that include reviewer-subagent findings credit the reviewer in the commit trailer, not only in `EVOLUTION.md`. Acceptance: at least the v1.1 implementation commits show `Co-Authored-By: <reviewer-subagent-name>` in `git log` for any commit that integrates a reviewer pass; v1.1 is the baseline, the rule applies forward thereafter.
+- **Commit identity and Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation. Recent agent-authored commits were authored under Roman's human identity, which hides whether a change came from the owner, spirit lead, execution lead, or a subagent-reviewed integration. Concretely:
+  - Agent-authored commits use an agent author identity, not `Roman Siewko <applerom@gmail.com>`, unless Roman personally authored the commit content.
+  - Integration commits that include reviewer-subagent findings credit the reviewer in a `Co-Authored-By: <reviewer-subagent-name>` trailer, not only in `EVOLUTION.md`.
+  - Acceptance: v1.1 implementation commits show a non-human agent author identity in `git log`, and commits integrating reviewer/subagent findings include appropriate `Co-Authored-By` trailers. v1.1 is the baseline; the rule applies forward thereafter.
 
 - **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No `claude -p` literal leaks below the runner abstraction (DELEGATION-PLAN Task E acceptance still holds, extended to ClaudeRunner now that it executes for real).
 

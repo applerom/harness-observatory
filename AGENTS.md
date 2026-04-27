@@ -77,7 +77,11 @@ This project runs with a two-lead model — **spirit lead** (constitutional, per
 - **Spirit-lead sessions are owner-initiated** as deep-review passes (e.g. "посмотри, как агент GPT-5.5 реализовал твой план"). They read `EVOLUTION.md` first thing, produce SPIRIT/PRD/AGENTS deltas, and write a v-bump in PRD §24 with explicit acceptance criteria for the next phase.
 - Execution-lead sessions read those deltas as authoritative and queue them in WORKLOG.
 - Execution lead pushes back to spirit lead by writing the friction into `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax). The next spirit-lead pass will see it.
-- Both leads commit with their own `Co-Authored-By` tag (`Claude Opus <noreply@anthropic.com>` or the active execution-lead model's tag) so git history shows which lead made which change.
+- Both leads commit with their own agent identity so git history shows which lead made which change. Agent-authored commits must **not** use Roman's human author identity (`Roman Siewko <applerom@gmail.com>`) unless Roman personally authored that commit content. This is load-bearing, not cosmetic: multiple agents and Roman all work in this repo, and future agents need authorship to distinguish human edits from Opus/Codex edits.
+- Before creating a commit, the lead agent checks `git config user.name` / `git config user.email` or uses per-command environment variables (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL`) so the commit author matches the active agent/harness. Suggested identities:
+  - Claude spirit lead: `Claude Opus <noreply@anthropic.com>`
+  - Codex execution lead: `Codex GPT-5.5 <noreply@openai.com>` (or the active Codex model if different)
+- Use `Co-Authored-By: <subagent/reviewer>` trailers when a commit integrates a reviewer or implementation subagent's substantive findings. Do not use a co-author trailer as a substitute for correct primary author identity.
 
 ### Interrupt-and-Resume Pattern
 

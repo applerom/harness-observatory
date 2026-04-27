@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — spirit-lead deep review after v1.0-minimal; v1.1 honesty + hardening phase queued
-**Active session lead:** Claude Opus (spirit lead, deep-review pass) — execution lead returns to Codex GPT-5.5 for v1.1 implementation
-**Current phase:** v1.0-minimal shipped; v1.1 spec'd in PRD §24; FEEDBACK-HARDENING wave starting in parallel
+**Last update:** 2026-04-27 — v1.0 snapshot hygiene validated; ready to commit and squash to main
+**Active session lead:** Codex GPT-5.5 (execution lead)
+**Current phase:** v1.0-minimal working product; preparing squash merge to `main`; v1.1 implementation next
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.0-minimal are implemented and validated locally. The product now has importer/viewer, refresh jobs, parser persistence, scheduler, curation, live studio, abstract artifacts, verification/confidence, engagement/Insight Library, explain jobs, lens scoring, generated Markdown exports, legacy archive manifest, and onboarding checklist. After spirit-lead deep review on 2026-04-27, two parallel tracks are now active: (1) FEEDBACK-HARDENING — owner collects real lecturer/student feedback against the running app; (2) v1.1 — execution lead implements the feedback-orthogonal honesty + hardening items spec'd in PRD §24 v1.1.
+v0.1 through v1.0-minimal are implemented and validated locally. The product now has importer/viewer, refresh jobs, parser persistence, scheduler, curation, live studio, abstract artifacts, verification/confidence, engagement/Insight Library, explain jobs, lens scoring, generated Markdown exports, legacy archive manifest, and onboarding checklist. Codex execution lead is first fixing stale docs/process attribution so v1.0-minimal can be squash-merged into `main`, then will implement the feedback-orthogonal v1.1 items while Roman collects lecturer/student feedback.
 
 ## 2. Active items
 
@@ -55,6 +55,7 @@ Current ordered queue after v0.2a+:
 | V07-EXPLAIN-JOB | Add "Ask the agent why" explain job slice with exact prompt, trace, and appended explanation | Codex lead + delegated implementation | completed | Covered by V07-V10-MINIMAL-PRODUCT |
 | V10-LENSES-EXPORTS | Add v1.0-minimal lens scoring UI and generated docs/export/archive surfaces | Codex lead + delegated implementation | completed | Covered by V07-V10-MINIMAL-PRODUCT |
 | FEEDBACK-HARDENING | Use Roman/student feedback to improve the rough v1.0-minimal product without pretending it is final. | Owner-driven (collects feedback); Codex execution lead processes resulting tickets | active | Owner is testing the running app + giving access to lecturers/students; findings → WORKLOG → EVOLUTION → next PRD slice |
+| V10-SNAPSHOT-HYGIENE | Fix stale v1.0-minimal docs/contracts and record agent commit attribution discipline before squash-merging `development` into `main`. | Codex execution lead | completed | README/CONTEXT/PRD/AGENTS/EVOLUTION/contracts updated; pytest/ruff/mypy/anchors green |
 | V11-ENGAGEMENT-HONESTY | Labelling pass: surface that engagement copy is template-generated, not agent-authored. UI badge + Insight detail note + PRD §14.2 amendment. No engagement service code change. | Codex execution lead + delegated UI subagent | pending | PRD §24 v1.1 acceptance ready; safe to start in parallel with FEEDBACK-HARDENING; ~1 hour bounded slice |
 | V11-PARSER-EMPTY-GUARD | Add `done_no_findings` AgentJob status + `parser_returned_no_findings` semantic event + Job Dashboard amber marker + tests. | Codex execution lead + delegated implementation subagent | pending | PRD §24 v1.1 acceptance ready; needs new schema enum value (Alembic migration); ~2-3 hour bounded slice |
 | V11-CLAUDE-RUNNER-EMPIRICAL | Run at least one real refresh through `ClaudeRunner` against a real harness target; record evidence in `live-sessions/`, EVOLUTION, and `docs/runtime-dependencies.md`. | Codex execution lead (live operation; not subagent-suitable since it's interactive runtime probing) | pending | PRD §24 v1.1 acceptance ready; depends on `claude -p` CLI being available in this environment; failure mode is acceptable evidence |
@@ -73,6 +74,8 @@ Current ordered queue after v0.2a+:
   - Owner direction in response: (1) confirm two-lead model (Opus = spirit; GPT-5.5 = execution); leave specific formulation to spirit lead. (2) For engagement honesty: spec only, don't implement; put in PRD v1.1 with acceptance criteria. (3) Engineering items not v1.0 goals; queue into upcoming PRD slices. (4) Run FEEDBACK-HARDENING in parallel with v1.1 implementation track.
   - Spirit-lead deltas this pass: SPIRIT.md "Collaboration Model" rewritten to formalize spirit-lead vs execution-lead split; AGENTS.md "Cross-Harness Lead-Agent Model" gained operational rules subsection; PRD §24 gained v1.1 phase block with explicit acceptance criteria for engagement honesty / parser silent-zero guard / ClaudeRunner empirical / Co-Authored-By discipline; PRD §14.2 amended to mark `engagement` v1.1 status; WORKLOG queue gained V11-* items.
   - Next action: owner runs FEEDBACK-HARDENING; Codex GPT-5.5 (execution lead) picks up V11-ENGAGEMENT-HONESTY first as smallest bounded slice, then V11-PARSER-EMPTY-GUARD, then V11-CLAUDE-RUNNER-EMPIRICAL.
+
+- **2026-04-27** — Codex execution lead resumed after Roman's request to fix stale docs/process drift, squash v1.0-minimal into `main`, then continue PRD v1.1 execution. Direct evidence from `git log`: recent agent-led commits were authored as `Roman Siewko <applerom@gmail.com>`, which hides agent-vs-human authorship. Doc-only pass updated README/CONTEXT/source contracts, recorded attribution discipline in AGENTS/PRD/EVOLUTION, and validated with `uv run pytest` (97 passed), `uv run ruff check src/ tests/ scripts/validate_anchors.py`, `uv run mypy src/observatory tests`, and `uv run python scripts/validate_anchors.py` (60 anchors OK). Commit will use explicit Codex author identity.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.

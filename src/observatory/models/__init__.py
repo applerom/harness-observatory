@@ -2,13 +2,13 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: SQLModel entity definitions for the observatory database.
-# PRD_REF: docs/PRD.md §7, §24, §26.1, §26.3
+# PRD_REF: docs/PRD.md §7, §24 v1.0-minimal, §24 v1.1, §26.1
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
-# SCOPE: core entity tables; lightweight future tables; relationship names for importer and read-only views
+# SCOPE: core entity tables; runtime job/schedule tables; curation/explanation/scoring/export support tables
 # INVARIANTS:
 # - Insight is the agent-produced abstraction; EvidenceItem is the proof layer under it.
-# - v0.1 schema is migratable and intentionally nullable where importer certainty is not guaranteed.
-# - AgentJob exists as storage only; v0.1 code does not dispatch jobs.
+# - Schema stays intentionally nullable where importer or agent-output certainty is not guaranteed.
+# - AgentJob is the audit trail for runtime and deterministic jobs; status labels must not overstate job findings.
 # START_MODULE_MAP:
 # - Harness: primary coding harness under study.
 # - Topic: stable axis of comparison.
@@ -19,13 +19,13 @@
 # - Source: upstream source snapshot or document.
 # - MediaAttachment: optional media linked to an Insight or EvidenceItem.
 # - EcosystemObject: non-harness object in the agent tooling ecosystem.
-# - AgentJob: future audit trail for runtime agent invocations.
+# - AgentJob: audit trail for runtime and deterministic agent-job-shaped invocations.
 # - RefreshSchedule: per-harness refresh cadence consumed by the scheduler slice.
-# - PromptTemplate: future versioned prompt template table.
-# - RevisionNote: future historical note table.
-# - ObservationReview: future concrete review event table.
-# - Lens: future interpretation or scoring frame.
-# - Score: future lens-based score table.
+# - PromptTemplate: versioned prompt template table.
+# - RevisionNote: explanation/correction/historical note table.
+# - ObservationReview: concrete review event table.
+# - Lens: interpretation or scoring frame.
+# - Score: lens-based score table.
 # :END_MODULE_MAP
 # :END_MODULE_CONTRACT
 
@@ -244,7 +244,7 @@ class ComparisonCell(SQLModel, table=True):
 
 
 class ObservationReview(SQLModel, table=True):
-    """Future concrete review event for source snapshots and changed findings."""
+    """Concrete review event for source snapshots and changed findings."""
 
     id: int | None = Field(default=None, primary_key=True)
     reviewed_at: datetime = Field(default_factory=utc_now)
@@ -255,7 +255,7 @@ class ObservationReview(SQLModel, table=True):
 
 
 class Lens(SQLModel, table=True):
-    """Future scoring or interpretation frame."""
+    """Scoring or interpretation frame."""
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True)
@@ -280,7 +280,7 @@ class Score(SQLModel, table=True):
 
 # START_MODELS_AGENT_JOB:
 class PromptTemplate(SQLModel, table=True):
-    """Future versioned prompt template for AgentJob types."""
+    """Versioned prompt template for AgentJob types."""
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True)
@@ -293,7 +293,7 @@ class PromptTemplate(SQLModel, table=True):
 
 
 class AgentJob(SQLModel, table=True):
-    """Future audit trail row for runtime agent invocations."""
+    """Audit trail row for runtime and deterministic agent-job-shaped invocations."""
 
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=utc_now)

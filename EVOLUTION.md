@@ -8,6 +8,38 @@
 > process friction, tool/version drift, and rule changes that future agents and
 > students should understand.
 
+## 2026-04-27 — Commit Attribution Is Operational Context
+
+Observation:
+- Roman pointed out that the previous execution flow forgot, after a few commits,
+  that agents must commit under their own identities.
+- Recent development commits were authored as `Roman Siewko <applerom@gmail.com>`
+  even when WORKLOG and commit messages show agent-led implementation.
+- In a two-lead project (spirit lead + execution lead) with occasional human
+  edits, this is not a cosmetic problem. Authorship is one of the cheapest
+  durable signals future agents have for deciding whether a change came from
+  Roman, Claude/Opus, Codex, or a subagent-reviewed integration.
+
+Impact:
+- Human and agent edits blur together in `git log`.
+- Future agents lose a fast way to reason about role, responsibility, and
+  likely intent behind a change.
+- The two-lead model becomes harder to teach because the repository history
+  hides the collaboration it is supposed to demonstrate.
+
+Action:
+- `AGENTS.md` now states that agent-authored commits must not use Roman's human
+  author identity unless Roman actually authored the commit content.
+- `PRD.md` §24 v1.1 now includes commit author identity discipline alongside
+  `Co-Authored-By` reviewer/subagent trailers.
+- This current pass uses an explicit Codex author/committer identity as the new
+  baseline.
+
+Rule added:
+- Before committing, an agent checks or overrides Git author/committer identity.
+  Co-author trailers credit subagents/reviewers; they do not repair an incorrect
+  primary author.
+
 ## 2026-04-27 — Spirit Lead Returns: Two-Lead Model Made Explicit
 
 Observation:

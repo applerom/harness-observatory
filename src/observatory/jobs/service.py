@@ -1,9 +1,9 @@
 # FILE: src/observatory/jobs/service.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Minimal AgentJob creation and execution service.
-# PRD_REF: docs/PRD.md §24, §26.3
-# WHY_REF: docs/why-graph.xml MOD-RUNNER-BASE
+# PURPOSE: Manual refresh AgentJob creation and execution service.
+# PRD_REF: docs/PRD.md §24 v0.2-v1.1, §4.10, §4.11
+# WHY_REF: docs/why-graph.xml#MOD-JOBS-SERVICE
 # SCOPE: manual refresh job spine; prompt template seed; target cwd preflight; raw log persistence; semantic event logging; successful log parsing
 # INVARIANTS:
 # - Manual refresh is target-generic; unsupported local paths fail during preflight.

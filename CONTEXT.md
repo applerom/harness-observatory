@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — spirit-lead deep review; v1.1 honesty + hardening phase added to PRD §24
-> **Phase:** v1.0-minimal shipped; v1.1 spec'd; FEEDBACK-HARDENING wave starting in parallel
-> **Next milestone:** owner collects real lecturer/student feedback; Codex execution lead implements V11-* items from WORKLOG queue
+> **Last update:** 2026-04-27 — v1.0-minimal snapshot hygiene and attribution discipline queued for main squash
+> **Phase:** v1.0-minimal working product; v1.1 honesty + hardening implementation starting
+> **Next milestone:** squash v1.0-minimal into `main`, then Codex execution lead implements V11-* items from WORKLOG queue while owner collects lecturer/student feedback
 
 ## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
 
@@ -14,9 +14,23 @@ Two real drifts found and addressed in this pass:
 
 2. **`engagement` job is deterministic templating, not agent-authored** — currently labelled as if it were an agent job. Owner direction: don't reimplement, just spec honestly. v1.1 = labelling pass (UI badge + Insight detail note + PRD §14.2 amendment); real agent-authored engagement deferred to v1.2 or later (only if FEEDBACK-HARDENING shows engagement copy is actually noticed/used).
 
-PRD §24 gained a v1.1 phase block with four acceptance items (engagement honesty / parser silent-zero-Insights guard / ClaudeRunner empirical validation / Co-Authored-By discipline) chosen to be **feedback-orthogonal** so the parallel implementation track does not collide with the UI/product moves the FEEDBACK-HARDENING wave may demand. Items deliberately deferred to v1.2+: Feature Radar (PRD §11.5), real engagement agent, operational hardening (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests).
+PRD §24 gained an initial v1.1 phase block with four acceptance items (engagement honesty / parser silent-zero-Insights guard / ClaudeRunner empirical validation / Co-Authored-By discipline) chosen to be **feedback-orthogonal** so the parallel implementation track does not collide with the UI/product moves the FEEDBACK-HARDENING wave may demand. Items deliberately deferred to v1.2+: Feature Radar (PRD §11.5), real engagement agent, operational hardening (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests).
 
 Owner-stated philosophy locked in this pass: production-ready was never the v1.0 aim; minimum-working-version-for-feedback was. Engineering hardening enters PRD only when feedback creates demand. Both leads run in parallel (FEEDBACK-HARDENING owner-driven; v1.1 execution-lead-driven), both feed into the next spirit-lead pass.
+
+## Update 2026-04-27 — v1.0-minimal snapshot hygiene before main squash
+
+Roman asked Codex to fix stale documentation and process drift before treating v1.0-minimal as the working `main` snapshot. The review found one human-facing doc bug and one process bug:
+
+- `README.md` still described the repo as "Pre-v0.1 — foundational docs only", even though v1.0-minimal is implemented and validated locally.
+- Recent agent-authored commits were authored as `Roman Siewko <applerom@gmail.com>`, which hides whether work came from Roman, the spirit lead, or the execution lead.
+
+What changed in this pass:
+- README/CONTEXT/module contracts were brought back to the v1.0-minimal reality.
+- PRD §24 v1.1 now names v1.0 snapshot hygiene and commit author identity as explicit acceptance items.
+- AGENTS/EVOLUTION now treat agent commit attribution as a continuity rule, not a courtesy.
+
+What's now possible: `main` can receive a squash snapshot that honestly represents a working v1.0-minimal product and preserves a forward rule that future agent work must not be authored under Roman's human identity.
 
 ---
 
@@ -99,16 +113,17 @@ Historical note: this was true at bootstrap. `src/` now exists after v0.1 implem
 
 ## 5. What's next
 
-v0.1 is shipped locally. The current v0.2a direction is deliberately narrower than full PRD v0.2:
+v1.0-minimal is working locally and ready to be fixed as the current `main` snapshot. The immediate ordered work is:
 
-1. Keep OpenCode as the first refresh target.
-2. Use the Harness Dossier Refresh button to create and run a durable `AgentJob`.
-3. Choose a runtime runner explicitly (`CodexRunner` by default, `ClaudeRunner` optional); keep `target` and `runner` labels separate in UI/logs.
-4. Preserve raw runner output in `live-sessions/` and expose it through the Job Dashboard.
-5. Maintain agent-visible UI checks with Playwright CLI for matrix/dossier/job/live/library changes.
-6. Next product slice: feedback-driven hardening after Roman/student testing of the v1.0-minimal app.
+1. Squash-merge the v1.0-minimal `development` history into `main` with an honest summary of the product state.
+2. Implement PRD §24 v1.1 feedback-orthogonal items from WORKLOG:
+   - `V11-ENGAGEMENT-HONESTY`
+   - `V11-PARSER-EMPTY-GUARD`
+   - `V11-CLAUDE-RUNNER-EMPIRICAL`
+   - `V11-COAUTHOR-DISCIPLINE`
+3. Keep FEEDBACK-HARDENING running in parallel: Roman/lecturers/students use the app and turn real findings into PRD/WHY/WORKLOG deltas.
 
-Decision note: the product has advanced beyond the original PRD surface. The current discipline stays the same: frame feedback as PRD/WHY deltas first, delegate bounded implementation, then prove with tests, visual checks, and durable logs.
+Decision note: the product has advanced beyond the original v0.1/v0.2 narrative. The current discipline stays the same: frame feedback as PRD/WHY deltas first, delegate bounded implementation when appropriate, then prove with tests, visual checks, and durable logs.
 
 ---
 
