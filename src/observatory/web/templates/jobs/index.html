@@ -1,0 +1,102 @@
+<!--
+FILE: src/observatory/web/templates/jobs/index.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Job Dashboard list for manual refresh and future scheduled AgentJobs.
+PRD_REF: docs/PRD.md §11.9
+WHY_REF: docs/why-graph.xml#UC-JOB-DASHBOARD
+SCOPE: refresh schedule metadata, recent AgentJob rows, and raw-log links
+INVARIANTS:
+- Freeform runner output is linked as raw log, not rendered as verified Insight.
+:END_MODULE_CONTRACT
+-->
+{% extends "_base.html" %}
+
+{% block title %}Jobs - Harness Observatory{% endblock %}
+
+{% block content %}
+  <section class="space-y-6">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Manual orchestration spine</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Job Dashboard</h1>
+      <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+        Manual refresh jobs are preserved as durable AgentJob rows with raw logs. Target is what we study; runner is the agent doing the work.
+      </p>
+    </div>
+
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-base font-semibold text-slate-950">Refresh schedules</h2>
+      </div>
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-100 text-left text-slate-600">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Harness</th>
+            <th class="px-4 py-3 font-semibold">Runner</th>
+            <th class="px-4 py-3 font-semibold">Interval</th>
+            <th class="px-4 py-3 font-semibold">Next run</th>
+            <th class="px-4 py-3 font-semibold">Last run</th>
+            <th class="px-4 py-3 font-semibold">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          {% for item in schedule_views %}
+            {% set schedule = item.schedule %}
+            <tr>
+              <td class="px-4 py-3 font-medium text-slate-950">{{ item.harness_label }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ schedule.runner_name }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ schedule.interval_minutes }} min</td>
+              <td class="px-4 py-3 text-slate-700">{{ schedule.next_run_at or "not scheduled" }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ schedule.last_run_at or "never" }}</td>
+              <td class="px-4 py-3">
+                <span class="status-badge">{{ schedule.status }}</span>
+                {% if not schedule.enabled %}
+                  <span class="ml-2 text-xs text-slate-500">disabled</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td class="px-4 py-6 text-slate-500" colspan="6">No refresh schedules configured yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-4 py-3">
+        <h2 class="text-base font-semibold text-slate-950">Recent jobs</h2>
+      </div>
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-100 text-left text-slate-600">
+          <tr>
+            <th class="px-4 py-3 font-semibold">ID</th>
+            <th class="px-4 py-3 font-semibold">Type</th>
+            <th class="px-4 py-3 font-semibold">Target</th>
+            <th class="px-4 py-3 font-semibold">Runner</th>
+            <th class="px-4 py-3 font-semibold">Status</th>
+            <th class="px-4 py-3 font-semibold">Created</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+          {% for item in job_views %}
+            {% set job = item.job %}
+            <tr>
+              <td class="px-4 py-3 font-medium text-slate-950"><a class="hover:text-emerald-700" href="/jobs/{{ job.id }}">#{{ job.id }}</a></td>
+              <td class="px-4 py-3 text-slate-700">{{ job.type }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ item.target_label }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ item.runner_label }}</td>
+              <td class="px-4 py-3"><span class="status-badge">{{ job.status }}</span></td>
+              <td class="px-4 py-3 text-slate-500">{{ job.created_at }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td class="px-4 py-6 text-slate-500" colspan="6">No AgentJobs yet. Use Refresh on a harness dossier to create the first one.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+{% endblock %}

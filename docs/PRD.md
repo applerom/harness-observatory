@@ -155,7 +155,9 @@ The design principle: engineer for **honest** agent output and the human's abili
 
 All agent invocations go through an `AgentRunner` interface. The system orchestrates agents, not a specific CLI.
 
-v1 has one implementation: `ClaudeRunner`, which calls `claude -p` as a subprocess (the owner uses Claude Pro subscription — no Anthropic SDK, no API key management). But `AgentJob.runner_name` is a first-class config field from day one.
+Early implementations include `ClaudeRunner` and `CodexRunner`, both using local CLI subprocesses rather than direct API SDKs. `AgentJob.runner_name` is a first-class config field from day one.
+
+Semantic rule: **target** and **runner** are different concepts. A target is what the job studies (`target_kind="Harness"`, `target_id=OpenCode`). A runner is the agent implementation doing the work (`CodexRunner`, `ClaudeRunner`, later `OpenCodeRunner`). "Refresh OpenCode with CodexRunner" means Codex studies OpenCode; it does not mean OpenCode launches Codex.
 
 This enables:
 
@@ -163,7 +165,21 @@ This enables:
 - meta-dogfooding at level 3: the application that studies agents can call any agent, making it a tool for studying how different agents solve the same task
 - students writing their own `AgentRunner` for their harness or bot and plugging it in — a concrete teaching exercise
 
-`claude -p` must never be hardcoded below the `AgentRunner` abstraction boundary.
+Concrete CLI commands must never be hardcoded below the `AgentRunner` abstraction boundary. Each runner owns its own subprocess command.
+
+### 4.11 Semantic runtime tracing for agents
+
+The observatory treats runtime logs as future agent context, not only as human debug output. A job should leave enough structured trace for a later agent to answer:
+
+- what semantic step was happening;
+- which WHY/module anchor the step belongs to;
+- what was expected;
+- what actually happened;
+- whether the issue was target data, runner dependency, parser logic, UI, or orchestration.
+
+This is deliberately different from ordinary "print a line" logging. The trace is an agent-readable learning surface. It should reduce future debugging tokens by making failure shape visible near the failure, instead of forcing the next agent to reconstruct intent from code and raw stdout.
+
+The first v0.2c slice is small: write append-only semantic events for refresh jobs into `live-sessions/semantic-events.jsonl`, mirror critical failures into the per-job raw log, and show a compact per-job trace on the Job Dashboard detail page. Later versions may promote these events into a DB table if the JSONL trace proves useful.
 
 ---
 
@@ -466,7 +482,7 @@ Fields:
 - `discover` — find new Insights in a harness or topic not currently in the DB
 - `verify` — re-run a previous claim against current upstream; updates `verification_passes`, may change status to `corroborated` or `disputed`
 - `abstract` — produce a higher-level diagram, ascii art, or mermaid summary from a set of EvidenceItems
-- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights
+- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights. **v1.1 status:** deterministic template generation (no model call). The `AgentJob` row is created with `runner_name="deterministic"` and immediately marked `done`. Real agent-authored engagement is planned for v1.2 (or later — may be deprioritized if v1.1 feedback shows engagement copy is unused). UI must surface this distinction per v1.1 acceptance — see §24 v1.1.
 - `refresh` — full re-sweep of a harness or topic (may chain discover + verify)
 - `explain` — triggered by "Ask the agent why" button; agent explains its own reasoning for a specific Insight
 
@@ -660,6 +676,8 @@ Capabilities:
 - show absent-by-design vs not-investigated
 - **show aggregated confidence band per cell** — derived from the Insights in that cell
 - click a cell to expand per-pass breakdown showing how many passes agree, how many disagree, and which agents ran
+- wide matrix tables show horizontal scroll affordances both above and below the table
+- after a cell click updates the expanded detail region, the page scrolls to that region so the user sees the result immediately
 
 ### 11.3 Harness Dossier
 
@@ -740,6 +758,7 @@ Operational surface for job management:
 - manual trigger forms for all six job types
 - chained-job DAG view for parent/child job chains
 - link to raw stdout log for any job
+- compact semantic trace for any job that has structured runtime events
 - cost estimate display where available
 
 ---
@@ -1024,7 +1043,7 @@ These choices are locked. They are chosen with bias toward popular, well-underst
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Language | Python 3.12+ | |
+| Language | Python 3.14 | Latest stable CPython line at v0.1 implementation time; agents must verify this against upstream before changing it. |
 | Package manager | `uv` | not pip, not poetry |
 | Web framework | FastAPI | async, OpenAPI built-in |
 | Templates | Jinja2 + HTMX | server-render, no SPA in v1 |
@@ -1034,14 +1053,16 @@ These choices are locked. They are chosen with bias toward popular, well-underst
 | DB | SQLite | single file, portable; Postgres upgrade path via ORM |
 | Migrations | Alembic | standard SQLAlchemy migration tool |
 | Scheduler | APScheduler | in-process with FastAPI; no separate worker process |
-| Agent runner | `asyncio.subprocess` calling `claude -p` | NOT Anthropic SDK; owner uses Claude Pro subscription |
+| Agent runner | `asyncio.subprocess` calling local runner CLIs | NOT direct LLM SDKs in v1; `ClaudeRunner` owns Claude CLI, `CodexRunner` owns Codex CLI |
+| Visual QA | Playwright CLI (`@playwright/test`) | agent-visible screenshots/DOM checks; avoid MCP for routine local UI checks |
 | XML (WHY graph) | lxml | parsing and validation |
 | Tests | pytest | |
 | Lint and format | ruff | not flake8, not black, not isort |
 
 **Explicitly NOT in stack:**
 
-- ❌ Anthropic SDK / OpenAI SDK / any direct LLM API SDK — no API key management
+- ❌ Anthropic SDK / OpenAI SDK / any direct LLM API SDK for v1 runner dispatch — no API key management
+- ❌ MCP as the default local QA mechanism — prefer CLI tools and progressively loaded skills unless a connector is explicitly needed
 - ❌ React / Vue / Svelte in v1 — HTMX server-render is sufficient
 - ❌ Postgres in v1 — SQLite for single-user local-first
 - ❌ Docker in v1 — local-first, no containerization required
@@ -1138,13 +1159,27 @@ Mitigation: Job Dashboard shows status before session starts. Manual dispatch al
 
 ### 23.8 AgentRunner abstraction eroding
 
-Risk: Developers hardcode `claude -p` below the `AgentRunner` interface, defeating §4.10 and Level 3 dogfooding.
+Risk: Developers hardcode runner-specific CLI commands below the `AgentRunner` interface, defeating §4.10 and Level 3 dogfooding.
 
-Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `ClaudeRunner` is a stub raising `NotImplementedError` per §26.3). The concrete subprocess body lands in v0.2 — and lives only inside `ClaudeRunner`. Code review, the anchor validator script, and a `grep "claude -p" src/ scripts/` acceptance check (DELEGATION-PLAN Task E) enforce that the literal subprocess invocation cannot leak below the abstraction.
+Mitigation: `AgentRunner` is a defined Protocol from v0.1. Concrete subprocess bodies landed in v0.2a and live only inside runner modules (`ClaudeRunner`, `CodexRunner`, later peers). Code review, the anchor validator script, and grep checks for runner CLI literals enforce that runner-specific invocation does not leak into web, job-service, importer, or script layers.
 
 ---
 
 ## 24. Implementation Phases
+
+Current phase status (2026-04-26):
+
+- v0.1 is complete locally: importer, schema, read-only dashboard/dossiers/matrix.
+- v0.2a is complete locally: OpenCode refresh job spine, selectable Codex/Claude runners, raw logs, Job Dashboard, and Playwright CLI visual QA.
+- v0.2b is complete locally: one real OpenCode Codex refresh raw log has been parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
+- Full v0.2 is functionally complete for the one-harness vertical.
+- v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed `Insight` / `EvidenceItem` rows.
+- v0.3b is complete locally: DB-backed refresh schedules exist, APScheduler is wired through an opt-in FastAPI lifespan, and Job Dashboard shows schedule metadata.
+- v0.3c is complete locally: Curation Queue surfaces proposed/disputed/unverified Insights, applies confidence labels, and writes `RevisionNote` audit entries without becoming an approval gate.
+- v0.4a is complete locally: Live Agent Studio creates live discover jobs, streams real runner stdout/stderr through SSE, preserves raw logs, emits semantic runtime events, and stores exact prompt text.
+- v0.4b/v0.5a/v0.6a are complete locally: deterministic abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, and Insight Library exist.
+- v0.7a is complete locally: every persisted Insight card can dispatch a deterministic explain job; explanations are stored as RevisionNotes and rendered on Insight Library, harness dossier, topic dossier, and matrix detail surfaces.
+- v1.0-minimal is complete locally: deterministic lens scoring UI, generated Markdown exports, legacy archive manifest, and onboarding checklist exist. This is a feedback-ready minimum, not a polished final v1.0.
 
 ### v0.1 — Read-only viewer slice
 
@@ -1164,9 +1199,12 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Pick OpenCode (most-covered in canon)
 - Add `refresh` AgentJob type
 - Implement `AgentRunner` interface and `ClaudeRunner` (calls `claude -p` subprocess)
+- Implement `CodexRunner` using `codex exec` so Codex can be used as a runtime runner, not only as the development harness hosting the lead agent
 - Manual trigger button on Harness Dossier dispatches a `refresh` job
 - Watch one full end-to-end cycle work: trigger → subprocess → parse output → Insights stored → visible in dossier
 - Job Dashboard (basic: list of jobs, status, stdout log link)
+
+Implementation sequencing note (2026-04-26): v0.2 was split into smaller feedback slices. v0.2a shipped the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → selected `AgentRunner` execution → raw log visible in Job Dashboard. v0.2b then parsed the first real raw runner log into proposed `Insight` / `EvidenceItem` rows, intentionally using observed output rather than an invented format.
 
 ### v0.3 — All harnesses and cron
 
@@ -1175,12 +1213,58 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Job Dashboard shows cron next-run times
 - Curation Queue surfaces `proposed` Insights
 
+Implementation sequencing note (2026-04-26): v0.3 starts with **v0.3a manual refresh generalization** before cron. The slice enables the existing manual refresh path for additional harness targets through the same `AgentJob` / `AgentRunner` / raw-log / parser / semantic-trace spine proven in v0.2. Cron is intentionally deferred until the target-selection, path-preflight, and parser assumptions work for more than OpenCode.
+
+v0.3a acceptance:
+
+- Refresh controls are available on harness dossiers beyond OpenCode.
+- Refresh no longer rejects non-OpenCode harnesses at the service boundary.
+- Target cwd preflight resolves current local sibling architecture directories when imported paths are stale, and records the resolved cwd in semantic events.
+- The refresh prompt template is target-generic rather than named for OpenCode.
+- Successful refresh logs parse into harness-scoped proposed `Insight` / `EvidenceItem` rows for the actual target harness.
+- Tests cover at least one non-OpenCode harness refresh path and one stale imported path repaired to a local sibling directory.
+
+v0.3b acceptance:
+
+- A DB-backed per-harness refresh schedule model exists with enabled flag, runner name, interval, next-run time, last-run time, and last job link.
+- FastAPI can start and stop an in-process APScheduler instance through app lifespan, but automatic scheduled dispatch is guarded by configuration and is off by default in local/test runs.
+- The scheduler registration layer is testable without waiting for real time and without invoking Codex/Claude.
+- Job Dashboard shows a compact schedule section with next-run metadata.
+- The first scheduler slice reuses the existing `AgentJob` / `RefreshJobService` path instead of inventing a separate cron execution path.
+
+v0.3c acceptance:
+
+- A Curation Queue route surfaces `proposed` and `disputed` Insights without hiding them from dossiers or the matrix.
+- Queue rows show status, confidence band, harness/topic labels when known, and evidence count.
+- Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
+- The navigation exposes Curation as an owner/workbench surface.
+
+Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.
+
 ### v0.4 — Live Agent Studio and abstract job type
 
 - SSE streaming UI for live agent stdout
 - Live Agent Studio surface (§11.8) — projector-optimized
 - `abstract` job type for diagram and ascii art generation from EvidenceItems
 - First live discovery demo possible: lecturer dispatches, students watch, finding claimed
+
+v0.4a acceptance:
+
+- `/live` renders a projector-friendly Live Agent Studio with harness, runner, and task prompt controls.
+- Posting the form creates an `AgentJob(type="discover", trigger="live")` through the `AgentRunner` abstraction and redirects to a live job page.
+- `/live/{job_id}` shows target, runner, status, raw-log link when available, and a stream panel.
+- `/live/{job_id}/stream` is an SSE endpoint that starts execution only for a queued live job, streams runner events, writes the raw log, emits semantic runtime events, and updates the `AgentJob` terminal status.
+- `AgentJob.prompt_text` stores the exact prompt used for live/runtime replay; `PromptTemplate` remains the reusable prompt library, not a per-run prompt dump.
+- Tests use fake runners and never call real Codex/Claude.
+- A first `abstract` job type placeholder is visible in code/docs as a next v0.4 slice, but diagram generation itself is deferred until the live stream surface works.
+
+v0.4b acceptance:
+
+- A service can create an `AgentJob(type="abstract")` for an existing Insight/Evidence set without invoking a real model in tests.
+- The job produces at least one higher-level teaching artifact as an `Insight(format="mermaid_diagram" | "ascii_art")` linked to the same harness/topic context when available.
+- The produced artifact has a `RevisionNote` that cites the source EvidenceItem ids and the parent abstract job id.
+- Job Dashboard shows the abstract job with `produced_artifact_ids`, raw log, and semantic events.
+- The first artifact generator may be deterministic/template-based; model-backed abstract generation is allowed later after the artifact shape proves useful.
 
 ### v0.5 — Multi-pass verification and confidence labels in UI
 
@@ -1189,6 +1273,15 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Per-pass UI breakdown on cell click
 - `disputed` status visible with inter-pass disagreement indicator
 
+v0.5a acceptance:
+
+- A verification service can record support/dispute passes for an Insight through `AgentJob(type="verify")`.
+- Verification updates `EvidenceItem.verification_passes`, `verifier_agents`, and `confidence`, and writes an `ObservationReview`.
+- Confidence labels update deterministically: disputed evidence marks the Insight/cell disputed; two supporting passes can mark an Insight/cell corroborated.
+- Harness dossier, topic dossier, matrix cells, and expanded cell detail show current confidence/status rather than the old "not yet verified" placeholder.
+- Expanded matrix cell detail shows a compact per-pass verification breakdown.
+- Tests use fake/manual verification outcomes and do not call real Codex/Claude.
+
 ### v0.6 — Engagement layer
 
 - `engagement` job type: generates `engagement_hook`, `joke_or_telegram_seed`
@@ -1196,11 +1289,27 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - Telegram seed displayed on attribution
 - Insight Library filterable by `audience` and `format`
 
+v0.6a acceptance:
+
+- An engagement service can create an `AgentJob(type="engagement")` for an Insight and fill missing `engagement_hook` / `joke_or_telegram_seed` with a deterministic teaching seed in tests.
+- Live Agent Studio exposes a first-observer claim path for Insights produced by that live job; it stores `Insight.first_observed_by` and shows the generated telegram seed when present.
+- An Insight Library route lists Insights with filters for `audience` and `format`, and renders confidence, attribution, engagement hook, and telegram seed when available.
+- Navigation exposes the Insight Library.
+- Tests cover engagement generation, first-observer claim, and library filters without real model calls.
+
 ### v0.7 — "Ask the agent why" and explain job type
 
 - "Ask the agent why" button on every Insight
 - `explain` job type dispatched; output streamed and stored
 - Per-Insight explanation available on demand
+
+v0.7a acceptance:
+
+- Every rendered Insight card includes an "Ask the agent why" action routed through `AgentJob(type="explain")`.
+- The first slice may use deterministic local generation; it must still store `prompt_text`, timestamps, raw log, semantic events, and a `RevisionNote` linked to the Insight.
+- The explanation uses the Insight plus its EvidenceItems and appears below the Insight on subsequent renders without replacing the original Insight body.
+- The Job Dashboard can show the explain job, produced artifact ids, raw log, and semantic trace.
+- Tests cover explain job creation, route action, and rendered explanation without real model calls.
 
 ### v1.0 — Lens scoring, generated docs export, legacy Markdown archived
 
@@ -1209,6 +1318,68 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1 (interface only; `Clau
 - `harness-architecture/legacy-data/` archive complete
 - Full feature parity with PRD intent
 - Onboarding polished: new harness from clone to first refresh in under 15 minutes
+
+v1.0-minimal acceptance:
+
+- Default lenses (`Research`, `Lecturer`, `Practical Selection`, `Ecosystem`) can be seeded and rendered in a Lens Scoring UI.
+- A deterministic scoring service can refresh `Score` rows for existing Harness/Topic pairs from current DB signals; the UI shows per-lens scores and no universal winner.
+- A generated-docs service can write at least three Markdown artifacts from DB state: comparison report, harness summary, and lecturer brief / engagement digest.
+- A web export surface can trigger generation, list generated Markdown files, and expose enough metadata for a user to inspect outputs from disk.
+- Legacy Markdown archive support exists as a deterministic export/archive manifest under generated output; it records source path, generated-at time, and copied/covered Markdown counts without treating legacy Markdown as the source of truth.
+- Onboarding is represented by a short generated checklist or docs section that names the actual current commands from clone/import/migrate/server/first refresh.
+- Tests cover scoring seed/refresh, export generation, archive manifest, and the new web routes. Playwright CLI covers the new Lens and Export surfaces.
+
+### v1.1 — Honesty pass + foundational hardening
+
+This phase is added after the spirit-lead deep review of v1.0-minimal (2026-04-27). It runs **in parallel with the first FEEDBACK-HARDENING wave** (per WORKLOG): owner is collecting real lecturer/student feedback, while execution lead implements items chosen to be **feedback-orthogonal** — they fix observed spirit-vs-implementation drift and improve proof-quality of the existing surface, without committing to UI shapes or product moves that real student/lecturer use will redesign.
+
+Items deliberately deferred to v1.2 or beyond, so the parallel implementation track does not conflict with feedback findings:
+- **Feature Radar UI** (PRD §11.5) — will be informed by whether real students/lecturers actually experience the Topic-vs-Feature distinction as missing. Today it is a structural PRD miss; tomorrow it might be obvious that nobody noticed.
+- **Real `engagement` agent job** — depends on whether feedback shows engagement copy is even noticed/used. Investing in agent-authored engagement before knowing this would be over-investment.
+- **Operational hardening** (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests, performance work on 1000+ Insights) — defer until real usage exposes which one breaks first. v1.0-minimal was never aimed at production-ready by owner intent; production hardening enters PRD only when feedback creates the demand.
+
+v1.1 acceptance:
+
+- **v1.0 snapshot hygiene (documentation bugfix).** Before treating v1.0-minimal as the `main` snapshot, human-facing and agent-facing docs must not describe the repo as pre-v0.1 or code-not-started. Concretely:
+  - `README.md` states that v1.0-minimal is a working local product and names the implemented surfaces at a high level.
+  - `CONTEXT.md` "What's next" points at the v1.1 queue rather than the old v0.2a direction.
+  - Source module contracts touched during the pass no longer describe active runtime entities (`AgentJob`, `Lens`, `Score`, `RevisionNote`, `ObservationReview`) as future-only storage when they are now implemented product surfaces.
+  - Acceptance: tests/linters/anchor validator still pass after the doc-only pass.
+
+- **Engagement honesty (labelling pass, not implementation).** The current `engagement` job type is deterministic template generation, not an agent invocation — `AgentJob.runner_name="deterministic"`, `status="done"` mid-creation, no model call, hardcoded copy templates in `src/observatory/engagement/service.py`. This is fine as v0.6a compromise but must not be hidden behind the word "engagement agent." Concretely:
+  - Insight Library and any other UI surface rendering `Insight.engagement_hook` / `Insight.joke_or_telegram_seed` displays a small `template-generated` badge near that copy, visually distinct from confidence badges.
+  - The Insight detail surface displays a one-line note: "Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2."
+  - PRD §14.2 entry for the `engagement` job type is amended to say: "v1.1 = deterministic template generation; planned upgrade to a real agent-authored job in v1.2 (or later, if feedback shows the feature is unused)."
+  - No code changes to engagement service logic; this is a labelling + doc pass only.
+  - Acceptance test: a Playwright smoke run on the Insight Library surface confirms the `template-generated` badge is visible on at least one Insight whose `engagement_hook` was set by the deterministic service.
+
+- **Parser silent-zero-Insights guard.** Today, when `parse_refresh_report()` returns no parsed Insights/EvidenceItems for a successful refresh job, the job is marked `done` with zero artifacts and the operator sees a green status with empty findings — a misleading signal. Concretely:
+  - `RefreshJobService` emits a semantic event with code `parser_returned_no_findings` (level: `warning`) into the job's JSONL trace whenever a successful runner result produces zero Insights and zero EvidenceItems.
+  - `AgentJob.status` is set to a new value distinct from `done` — name chosen by execution lead during implementation; suggested `done_no_findings`. The new status MUST be added to the schema as a discrete enum/literal value, not a free-text marker.
+  - Job Dashboard renders `done_no_findings` jobs with a distinct visual marker (amber badge, not green).
+  - Tests: at least one unit test exercises this path with a deliberately empty/malformed runner output; at least one route test confirms the Job Dashboard renders the new status correctly.
+  - WHY graph adds a new `MOD-PARSER-EMPTY-GUARD` PLANNED node at slice start; flips to STARTED when the slice merges.
+
+- **ClaudeRunner empirical validation.** The dual-runner architecture is currently theatrical — `ClaudeRunner` is wired in `src/observatory/web/routes/harness.py:53-54` but no live refresh job through `claude -p` exists in `live-sessions/`. Concretely:
+  - At least one real refresh job is executed end-to-end through `ClaudeRunner` against a real harness target (suggested: claude-code-architecture or any harness whose local upstream path resolves successfully). Raw log preserved in `live-sessions/agent-job-NNNNN.log`; semantic events captured in `live-sessions/semantic-events.jsonl`.
+  - `EVOLUTION.md` records the episode: what worked, what failed, any version/CLI surprises (mirror the `CodexRunner` empirical episode pattern from 2026-04-26 "Runtime Runner CLI Truth Beats Remembered CLI Shape").
+  - If `claude -p` invocation fails for environmental reasons (missing CLI, version mismatch, OAuth flow surprises), record that failure mode in `docs/runtime-dependencies.md` and adjust runner preflight accordingly. Failure is acceptable evidence; absence of any attempt is not.
+  - WORKLOG and CONTEXT show the live job id and outcome.
+
+- **Commit identity and Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation. Recent agent-authored commits were authored under Roman's human identity, which hides whether a change came from the owner, spirit lead, execution lead, or a subagent-reviewed integration. Concretely:
+  - Agent-authored commits use an agent author identity, not `Roman Siewko <applerom@gmail.com>`, unless Roman personally authored the commit content.
+  - Integration commits that include reviewer-subagent findings credit the reviewer in a `Co-Authored-By: <reviewer-subagent-name>` trailer, not only in `EVOLUTION.md`.
+  - Acceptance: v1.1 implementation commits show a non-human agent author identity in `git log`, and commits integrating reviewer/subagent findings include appropriate `Co-Authored-By` trailers. v1.1 is the baseline; the rule applies forward thereafter.
+
+- **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No `claude -p` literal leaks below the runner abstraction (DELEGATION-PLAN Task E acceptance still holds, extended to ClaudeRunner now that it executes for real).
+
+**Out of scope for v1.1, by design:**
+- No new Insight/Evidence storage shape changes.
+- No new product surfaces (no Feature Radar, no media rendering, no lesson-package CMS).
+- No engagement agent rewrite (only labelling).
+- No SSE / scheduler / DB-lock hardening unless feedback wave forces it.
+
+This phase is feedback-orthogonal by construction: nothing here forecloses on UI or product shape that real lecturer/student use will reshape.
 
 ---
 
@@ -1307,7 +1478,7 @@ A future Typer CLI (`uv run observatory <subcmd>`) would unify these behind one 
 
 ## 27. Long-Haul Orchestration on Personal Subscriptions
 
-> **Status:** named concern + locked design constraints. Design and scaffolding deferred to a separate checkpoint — see CONTEXT.md "open sequencing question". This section commits the project to *handling* the problem; it does not yet specify directory layout, file formats, or scripts.
+> **Status:** named concern + locked design constraints. Design and scaffolding deferred to a far-future checkpoint per CONTEXT.md "Update 2026-04-25 — interrupt-and-resume runbook + sequencing question closed". This section commits the project to *handling* the problem; it does not yet specify directory layout, file formats, or scripts.
 
 ### 27.1 The concern
 
@@ -1344,7 +1515,7 @@ This section commits to constraints, not implementation. The following are delib
 - Directory layout (`orchestration/` at repo root vs inside `src/observatory/orchestrator/` module vs separate `harness-orchestrator/` repo)
 - Exact plan format (YAML schema, top-level fields, item shape)
 - Whether to build the orchestrator *before* v0.1 dispatch (delaying dispatch ~1-2 days but running v0.1 under the orchestrator) or *alongside* v0.1 (using v0.1's 5 hand-dispatches as empirical input for orchestrator design — Task F in DELEGATION-PLAN)
-- Exactly which runners ship in the first version (likely ClaudeRunner only at first, since v0.1 has no working ClaudeRunner anyway)
+- Exactly which runners ship in the first automated orchestrator version. Product-level `ClaudeRunner` and `CodexRunner` already exist in v0.2a, but the future long-haul orchestrator may choose a narrower initial runner set based on empirical rate-window behavior.
 - Windows scheduled-task setup script (PowerShell `Register-ScheduledTask` per global CLAUDE.md preference) vs cron on Linux/Mac
 
 ### 27.4 What this section *does* commit
@@ -1354,4 +1525,4 @@ Future work on orchestration must:
 - treat the constraints as load-bearing decisions worth defending against future "let's just hardcode it" refactors — same posture as §4.10 (AgentRunner agnosticism) and §4.7 (popular over optimal)
 - update this section if a constraint is *replaced* by empirical evidence (e.g., when actual `claude -p` rate-limit output is captured, constraint (b) gets a Class A entry; output-pattern detection becomes a usable layer on top of timing)
 
-The mechanism's actual design lives in a future PRD section (likely §28 or a separate `docs/orchestrator.md`) and is dispatched as its own work item once the sequencing question in CONTEXT.md is resolved.
+The mechanism's actual design lives in a future PRD section (likely §28 or a separate `docs/orchestrator.md`) and is dispatched as its own work item only after manual interrupt-and-resume proves insufficient in practice.

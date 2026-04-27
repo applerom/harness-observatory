@@ -1,0 +1,111 @@
+<!--
+FILE: src/observatory/web/templates/live/detail.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Live AgentJob detail and EventSource stream surface.
+PRD_REF: docs/PRD.md §11.8
+WHY_REF: docs/why-graph.xml#FEAT-LIVE-AGENT-STUDIO
+SCOPE: target/runner/status; prompt context; streaming transcript; first-observer claims
+INVARIANTS:
+- The GET page renders state only; execution happens through the EventSource stream endpoint.
+:END_MODULE_CONTRACT
+-->
+{% extends "_base.html" %}
+
+{% set job = job_view.job %}
+
+{% block title %}Live Job #{{ job.id }} - Harness Observatory{% endblock %}
+
+{% block content %}
+  <section class="space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Live Agent Studio</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Live Job #{{ job.id }}</h1>
+      </div>
+      <a class="entry-link min-h-0 px-4 py-2" href="/live">New live job</a>
+    </div>
+
+    <dl class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 text-sm shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div><dt class="font-medium text-slate-900">Target</dt><dd class="mt-1 text-slate-700">{{ job_view.target_label }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Runner</dt><dd class="mt-1 text-slate-700">{{ job_view.runner_label }}</dd></div>
+      <div><dt class="font-medium text-slate-900">Status</dt><dd class="mt-1"><span id="live-status" class="status-badge">{{ job.status }}</span></dd></div>
+      <div><dt class="font-medium text-slate-900">Type</dt><dd class="mt-1 text-slate-700">{{ job.type }}</dd></div>
+    </dl>
+
+    {% if job.prompt_text %}
+      <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-lg font-semibold tracking-normal text-slate-950">Task prompt</h2>
+        <p class="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{{ job.prompt_text }}</p>
+      </section>
+    {% endif %}
+
+    <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="text-lg font-semibold tracking-normal text-slate-950">First-observer claims</h2>
+      <div class="mt-4 space-y-4">
+        {% for insight in claimable_insights %}
+          <article class="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div class="space-y-2">
+                <div class="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-normal">
+                  <span class="status-badge">{{ insight.status }}</span>
+                  <span class="state-badge">{{ insight.confidence_band }}</span>
+                </div>
+                <h3 class="text-base font-semibold tracking-normal text-slate-950">{{ insight.short_title }}</h3>
+                <p class="text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+                {% if insight.first_observed_by %}
+                  <p class="text-sm font-medium text-emerald-700">First observed by {{ insight.first_observed_by }}</p>
+                {% endif %}
+                {% if insight.joke_or_telegram_seed %}
+                  <p class="rounded-md bg-white px-3 py-2 text-sm leading-6 text-slate-700">{{ insight.joke_or_telegram_seed }}</p>
+                {% endif %}
+              </div>
+              <form class="flex flex-col gap-2 sm:min-w-64" action="/live/{{ job.id }}/insights/{{ insight.id }}/claim" method="post">
+                <label class="text-sm font-medium text-slate-900">
+                  Observer name
+                  <input class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900" name="observer_name" type="text" value="{{ insight.first_observed_by or '' }}" {% if insight.first_observed_by %}disabled{% endif %} required>
+                </label>
+                <button class="rounded-md bg-slate-950 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400" type="submit" {% if insight.first_observed_by %}disabled{% endif %}>
+                  Claim first observer
+                </button>
+              </form>
+            </div>
+          </article>
+        {% else %}
+          <p class="text-sm text-slate-500">No claimable Insights are linked to this live target yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="rounded-lg border border-slate-900 bg-slate-950 p-5 shadow-sm">
+      <div class="flex items-center justify-between gap-4">
+        <h2 class="text-lg font-semibold tracking-normal text-white">Stream</h2>
+        <a class="text-sm font-medium text-emerald-300 hover:text-emerald-200" href="/jobs/{{ job.id }}/log">Open raw log</a>
+      </div>
+      <pre id="live-stream" class="mt-4 min-h-96 max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-md bg-black p-4 font-mono text-sm leading-6 text-emerald-100"></pre>
+    </section>
+  </section>
+
+  <script>
+    (() => {
+      const stream = document.getElementById("live-stream");
+      const status = document.getElementById("live-status");
+      const source = new EventSource("/live/{{ job.id }}/stream");
+      const append = (text) => {
+        if (!stream || !text) return;
+        stream.textContent += text.endsWith("\n") ? text : `${text}\n`;
+        stream.scrollTop = stream.scrollHeight;
+      };
+      ["stdout", "stderr", "status", "error"].forEach((eventName) => {
+        source.addEventListener(eventName, (event) => {
+          const payload = JSON.parse(event.data);
+          if (payload.job_status && status) status.textContent = payload.job_status;
+          append(payload.message || "");
+          if (["done", "failed", "timeout"].includes(payload.job_status || payload.message)) {
+            source.close();
+          }
+        });
+      });
+    })();
+  </script>
+{% endblock %}

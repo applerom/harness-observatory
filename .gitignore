@@ -24,6 +24,12 @@ live-sessions/*.log
 live-sessions/*.jsonl
 !live-sessions/.gitkeep
 
+# Generated Markdown exports (derived from DB, not source of truth)
+generated-docs/
+
+# Local dev server logs
+.uvicorn*.log
+
 # Media uploads (binary, not tracked by default; lecturers add per machine)
 media/**
 !media/.gitkeep
@@ -42,3 +48,8 @@ Thumbs.db
 dist/
 build/
 *.egg
+
+# Node / visual QA
+node_modules/
+test-results/
+playwright-report/

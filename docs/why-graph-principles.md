@@ -11,9 +11,11 @@ This is a **reference, not a law.** It describes one proven shape of the Why Gra
 
 1. Ensure `docs/PRD.md`, `docs/why-graph.xml`, this file, and `docs/why-contracts-v1.md` are in context before substantial work (use your harness's pinning mechanism — e.g. `@path` in Claude Code — or include them in the initial prompt).
 2. For intent-changing or cross-cutting work: update the graph **first**, then contracts/anchors, then code. For local edits inside an already well-mapped feature: update graph and contracts in the same change set, not necessarily before the first keystroke.
-3. Every feature node should reach code through a surface, module, or artifact — no orphans.
-4. Use anchors (`path#ANCHOR_NAME`), never line numbers.
-5. Run your validators. If they don't exist yet, that's the next thing to build.
+3. State is a trust contract. `STARTED` means real partial behavior, not placeholder anchors.
+4. Every feature node should reach code through a surface, module, or artifact — no orphans.
+5. Map ownership and meaning, not every call path.
+6. Use anchors (`path#ANCHOR_NAME`), never line numbers.
+7. Run your validators. If they don't exist yet, that's the next thing to build.
 
 ---
 
@@ -74,6 +76,16 @@ Common optional attributes: `state`, `status`, `priority`, `freshness`, `tags`, 
 
 **Naming:** UPPER_SNAKE_CASE, short, descriptive. For modules, prefix with path flavor when it helps (`BACKEND_APP_*`, `FRONTEND_WEB_*`).
 
+**State semantics:** define states once and keep them trustworthy. A useful default ladder:
+
+- `PLANNED` — accepted or proposed intent. It may have no anchors yet, or may point at future work.
+- `STARTED` — live partial implementation. Every referenced anchor must contain real behavior, not only a deferred stub, placeholder, or TODO.
+- `DONE` — acceptance criteria met and validated with the best evidence the harness allows.
+- `BLOCKED` — known intent, but progress is waiting on a concrete blocker.
+- `DEPRECATED` — kept only long enough to retire references safely.
+
+Projects may rename states (`IN_PROGRESS` instead of `STARTED`, for example), but the graph must say what each state means. Agents use state to decide what is safe to trust.
+
 ---
 
 ## 4) Relations — a small, stable vocabulary
@@ -99,6 +111,15 @@ Common:
 
 If you find yourself inventing a synonym for one of these, use the existing one. Semantic drift in relations is the fastest way to kill the graph.
 
+Relations should answer ownership questions:
+
+- `IMPLEMENTED_BY` points to the module or anchor that owns behavior or state change.
+- `SURFACED_BY` / `EXPOSED_AS` point to where users, operators, or APIs can reach the behavior.
+- `READS` / `WRITES` / `QUERIES` describe data provenance when state matters.
+- `DEPENDS_ON` is for co-change or required capability, not ownership.
+
+When the graph feels too small, first ask whether the relation vocabulary is underspecified. Add a node family only when the concept exists in the repo and cannot be represented by a clearer relation.
+
 ---
 
 ## 5) Anchors — pointing the graph at code
@@ -109,6 +130,7 @@ Anchors are the bridge between the graph and source files.
 - Never use line numbers — they drift the moment someone edits the file.
 - Anchor names must match a real `START_*` marker in the target file (see `why-contracts-v1.md`).
 - One anchor per meaningful code region. Not per function. Not per line.
+- `STARTED` and `DONE` nodes must not point only at empty, deferred, or placeholder anchors.
 
 Example:
 
@@ -131,6 +153,8 @@ In order. Skipping a step is how the graph becomes decoration.
 5. **Then implement.** Write code inside the anchored blocks.
 6. **Validate.** Run the graph↔anchor validator before claiming done.
 7. **Commit graph + code + contracts together.** Split commits break the invariant the graph exists to protect.
+
+Keep the graph close to the decision point. For intent-changing work, update it before delegation or implementation. For small local work, update it in the same patch. A graph written at the end is often archaeology; a graph written near the decision becomes active guidance.
 
 ---
 
@@ -170,8 +194,10 @@ Add as your graph grows:
 
 - every `FEAT-*` has at least one outgoing `REL` edge toward an implementation node
 - every module/UI/API node with `STATE="IMPLEMENTED"` has at least one anchor
+- every `STARTED` or `DONE` node anchor resolves to real behavior, not only `placeholder`, `deferred`, `not implemented`, or TODO-only content
 - ID prefixes match node families consistently
 - no duplicate IDs
+- no feature is implemented only by callers that merely render, forward, or wrap behavior owned elsewhere
 
 These are lint rules, not correctness proofs. They catch mechanical drift — graph edited, code not; code edited, anchor name stale — which is what kills graphs first. Validators are a tool, not a law. Project-specific checks sit on top.
 
@@ -182,8 +208,10 @@ These are lint rules, not correctness proofs. They catch mechanical drift — gr
 - Prefer **few clear** `FEAT-*` nodes over many vague ones.
 - An orphan feature (no implementation edge) is a drift signal, not a valid state.
 - If an entrypoint or module has lost its value, **delete** it and remove its graph node. Stale nodes are worse than missing ones.
-- Use `state` / `status` / `freshness` to mark what is implemented, partial, or planned. Agents read these to decide where to work.
+- Use `state` / `status` / `freshness` to mark what is implemented, partial, or planned. Agents read these to decide where to work, so inaccurate state is worse than absent state.
 - When a PRD change lands, the graph should move in the same commit, or the next one.
+- The graph should show meaning ownership, not a complete call graph. Shared utilities and partials belong in the graph when they own behavior, state, or a surprising contract.
+- If a relation is only useful once, prefer a sentence in `INTENT` over a new relation or node family.
 - **Retiring a node:** set `STATE="DEPRECATED"` and keep it for one release cycle so existing references don't break silently, then delete it in the commit that removes the last code edge pointing at it. Do not soft-delete forever — an `IMPLEMENTED` repo shouldn't carry a museum.
 - **Inherited code without anchors:** don't retrofit. Leave untouched legacy as an untracked region. The first time an agent touches it, add a module contract and whatever block anchors help navigation — and add the graph node at the same commit. The graph should only reference what you actively govern.
 
@@ -204,6 +232,12 @@ The graph is narrow on purpose. It is the map between intent and code. Nothing m
 
 Stretch before inventing. If the existing vocabulary covers your case even loosely, use it.
 
+Before adding a node family, check three cheaper options:
+
+1. A clearer existing relation type.
+2. A short `INTENT`, `WHAT`, or `ACCEPT` sentence on an existing node.
+3. A contract field in code, if the issue is caller context or data shape rather than product intent.
+
 If you must add a new element:
 
 1. Give it a clear `WHAT` child describing its purpose in one sentence.
@@ -211,6 +245,4 @@ If you must add a new element:
 3. If the addition becomes a pattern across features, keep it. If it stayed a one-off for one release cycle, delete it.
 4. Resist adding nodes for concepts that don't yet exist in the repo. A graph that describes wishful thinking is a graph agents learn to ignore.
 
-The graph format is a tool. If the tool fights the project, bend the tool.
-
----
+The graph format is a tool. If the tool fights the project, bend the tool. Keep the result small enough that agents actually read it.

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   WHY GRAPH — harness-observatory
-  Schema: 0.8  |  State: STEM (PRD-layer only, no code exists yet)
+  Schema: 0.8  |  State: LIVE (implemented anchors enforced for STARTED/DONE nodes)
 
-  This is the initial intent-navigation stem for harness-observatory.
-  It covers use cases and features derived from docs/PRD.md and SPIRIT.md.
-  MODULE nodes are PLANNED stubs — anchors will be confirmed when code lands.
-  All edges declared here represent intended structure, not implemented reality.
+  This is the live intent-navigation map for harness-observatory.
+  It covers use cases, features, and modules derived from docs/PRD.md and SPIRIT.md.
+  Some MODULE nodes are PLANNED stubs; STARTED/DONE nodes must have real anchors.
+  Edges may represent intended or implemented structure; node STATE carries that distinction.
   Update this graph alongside every code commit that changes feature scope.
 
   Validator policy: anchors inside MODULE_* nodes with STATE="PLANNED" are
@@ -44,9 +44,19 @@
     <INTENT>Owner presses a button or relies on a cron schedule to launch an agent job (refresh, discover, verify, explain). The system dispatches the job to the AgentRunner, tracks its status, and surfaces results in the UI when complete. The goal is keeping the observatory's data fresh without manual effort.</INTENT>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CLAUDE-RUNNER"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CODEX-RUNNER"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-JOB-PREFLIGHT"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-SEMANTIC-RUNTIME-TRACE"/>
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CRON-SCHEDULER"/>
   </USECASE_DISPATCH>
+
+  <USECASE_JOB_DASHBOARD ID="UC-JOB-DASHBOARD" NAME="Inspect agent job history">
+    <INTENT>Owner or lead agent opens the Job Dashboard to inspect recent AgentJobs, their status, runner identity, errors, raw logs, and semantic runtime events. The goal is operational transparency from high-level job status down to the project concepts involved in a failure.</INTENT>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-SEMANTIC-RUNTIME-TRACE"/>
+    <REL TYPE="DEPENDS_ON" TARGET="USECASE:UC-DISPATCH"/>
+  </USECASE_JOB_DASHBOARD>
 
   <USECASE_LIVE_DISCOVERY ID="UC-LIVE-DISCOVERY" NAME="Live discovery during a lecture">
     <INTENT>During a lecture, the lecturer opens Live Agent Studio on a projector screen and assigns a fresh discovery task (e.g. "find an undocumented feature added in the last 7 days"). Students watch the agent work in real time via SSE stream. When a genuine new finding lands, a student-observer can claim first-observer credit; the system generates a ready-to-publish telegram seed. The goal is turning a lecture into a live research session with attributable student contributions.</INTENT>
@@ -55,6 +65,12 @@
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
     <REL TYPE="DEPENDS_ON" TARGET="USECASE:UC-DISPATCH"/>
   </USECASE_LIVE_DISCOVERY>
+
+  <USECASE_CURATION ID="UC-CURATION" NAME="Curate agent-produced insights">
+    <INTENT>Owner opens a workbench queue of proposed or disputed Insights produced by agent jobs, scans their status and evidence count, and applies confidence labels such as human-verified, disputed, or historical. The goal is post-publication curation, not approval gating.</INTENT>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CURATION-QUEUE"/>
+    <REL TYPE="COVERS" TARGET="FEATURE:FEAT-CONFIDENCE-BANDS"/>
+  </USECASE_CURATION>
 
   <USECASE_LECTURER_DEMO ID="UC-LECTURER-DEMO" NAME="Lecturer walks through insight and proof">
     <INTENT>Lecturer opens a dossier or matrix cell and uses it as a teaching surface. They show an Insight at the top, then click "Show the proof" to reveal the EvidenceItem (file:line citation from upstream). For surprising or contested insights, they press "Ask the agent why" to spawn an explanation job live. The goal is demonstrating agent-first epistemology: assertion on top, evidence below, always reachable.</INTENT>
@@ -79,35 +95,35 @@
        FEATURES — v0.1 slice (PRIORITY="HIGH")
   ================================================================ -->
 
-  <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Importer reads harness-architecture registry, topic files, and harness-map comparison and populates the SQLite database with normalized Harness, Topic, Insight, and EvidenceItem records.</INTENT>
     <PRD_REF>docs/PRD.md §26.1 Importer (v0.1 slice)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
   </FEATURE_MARKDOWN_IMPORT>
 
-  <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="PLANNED">
-    <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline.</INTENT>
+  <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="STARTED">
+    <INTENT>Read-only matrix view of harness x topic with expandable cells; each cell shows an Insight summary and a "Show the proof" affordance that reveals EvidenceItems inline. Wide matrix scrolling is usable from both top and bottom, and selecting a cell moves the user to the expanded detail region.</INTENT>
     <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_COMPARISON_MATRIX_RO>
 
-  <FEATURE_HARNESS_DOSSIER_RO ID="FEAT-HARNESS-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_HARNESS_DOSSIER_RO ID="FEAT-HARNESS-DOSSIER-RO" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Read-only harness profile page listing all topics covered for that harness with their Insights and collapsed EvidenceItems.</INTENT>
     <PRD_REF>docs/PRD.md §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_HARNESS_DOSSIER_RO>
 
-  <FEATURE_TOPIC_DOSSIER_RO ID="FEAT-TOPIC-DOSSIER-RO" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_TOPIC_DOSSIER_RO ID="FEAT-TOPIC-DOSSIER-RO" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Read-only topic profile page listing all harnesses that have data for that topic, with their Insights and collapsed EvidenceItems.</INTENT>
     <PRD_REF>docs/PRD.md §11.4 Topic Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MARKDOWN-IMPORT"/>
   </FEATURE_TOPIC_DOSSIER_RO>
 
-  <FEATURE_DASHBOARD ID="FEAT-DASHBOARD" PRIORITY="HIGH" STATE="PLANNED">
+  <FEATURE_DASHBOARD ID="FEAT-DASHBOARD" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Home page showing harness count, topic count, total insight count, and entry links to matrix, harness list, and topic list.</INTENT>
     <PRD_REF>docs/PRD.md §11.1 Overview Dashboard</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
@@ -118,70 +134,121 @@
        FEATURES — later phases (PRIORITY="MEDIUM")
   ================================================================ -->
 
-  <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs — scaffolded in v0.1 but not wired to any concrete runner yet.</INTENT>
+  <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs; v0.2a wires the first manual refresh path through this boundary.</INTENT>
     <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
   </FEATURE_AGENT_RUNNER>
 
-  <FEATURE_CLAUDE_RUNNER ID="FEAT-CLAUDE-RUNNER" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_CLAUDE_RUNNER ID="FEAT-CLAUDE-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>ClaudeRunner concrete implementation of AgentRunner that invokes `claude -p` as a subprocess and streams stdout back to the job record.</INTENT>
     <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §20 Technical Stack</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CLAUDE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_CLAUDE_RUNNER>
 
-  <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>AgentJob entity and dispatch mechanism: job type, status tracking (queued/running/done/failed), result storage, and linking job output to Insight records.</INTENT>
+  <FEATURE_CODEX_RUNNER ID="FEAT-CODEX-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>CodexRunner concrete implementation of AgentRunner that invokes `codex exec` as a read-only subprocess and stores stdout/stderr in the job log.</INTENT>
+    <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §20 Technical Stack</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CODEX"/>
+    <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
+  </FEATURE_CODEX_RUNNER>
+
+  <FEATURE_AGENT_JOB ID="FEAT-AGENT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>AgentJob entity and dispatch mechanism: v0.2 stores the first manual OpenCode refresh lifecycle; v0.3a generalizes the same manual refresh spine to additional harness targets with raw logs, parsed Insight/Evidence artifacts, and semantic events around runtime boundaries.</INTENT>
     <PRD_REF>docs/PRD.md §7 Core Information Model (AgentJob entity), §18.7 Agent job management</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOB-LOG-PARSER"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-RUNNER"/>
   </FEATURE_AGENT_JOB>
 
-  <FEATURE_CRON_SCHEDULER ID="FEAT-CRON-SCHEDULER" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>APScheduler integration that fires configured job types on a schedule (e.g. nightly refresh, weekly discovery), with schedule configuration in a settings file.</INTENT>
+  <FEATURE_JOB_PREFLIGHT ID="FEAT-JOB-PREFLIGHT" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Refresh jobs verify target path and runner readiness before invoking an expensive model call, failing with durable AgentJob evidence when the local environment is stale or misconfigured.</INTENT>
+    <PRD_REF>docs/PRD.md §4.10 Agent-runner agnosticism, §4.11 Semantic runtime tracing for agents</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-BASE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNNER-CODEX"/>
+    <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_JOB_PREFLIGHT>
+
+  <FEATURE_SEMANTIC_RUNTIME_TRACE ID="FEAT-SEMANTIC-RUNTIME-TRACE" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Refresh jobs emit append-only semantic JSONL events that name the step, WHY anchor, expected state, actual state, component, and job id; Job Dashboard detail renders those events so future agents and humans can debug from project concepts instead of raw stdout alone.</INTENT>
+    <PRD_REF>docs/PRD.md §4.11 Semantic runtime tracing for agents</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-RUNTIME-SEMANTIC-LOG"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-JOBS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
+    <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_SEMANTIC_RUNTIME_TRACE>
+
+  <FEATURE_CRON_SCHEDULER ID="FEAT-CRON-SCHEDULER" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>APScheduler integration that registers DB-backed per-harness refresh schedules, exposes next-run metadata, and can be enabled for in-process scheduled dispatch while staying off by default for safe local/test startup.</INTENT>
     <PRD_REF>docs/PRD.md §14 Automation Strategy</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-APP"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-SCHEDULER"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_CRON_SCHEDULER>
 
-  <FEATURE_LIVE_AGENT_STUDIO ID="FEAT-LIVE-AGENT-STUDIO" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Projector-optimized SSE streaming UI for live agent runs — shows the agent's output token by token in real time, designed for large screens and live lecture use.</INTENT>
+  <FEATURE_LIVE_AGENT_STUDIO ID="FEAT-LIVE-AGENT-STUDIO" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Projector-optimized SSE streaming UI for live agent runs: select a target and runner, create a live AgentJob, stream AgentRunner events, preserve raw logs, and show the run state to a classroom.</INTENT>
     <PRD_REF>docs/PRD.md §11.8 Live Agent Studio</PRD_REF>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LIVE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-LIVE-SERVICE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_LIVE_AGENT_STUDIO>
 
-  <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_CURATION_QUEUE ID="FEAT-CURATION-QUEUE" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Workbench queue that surfaces proposed and disputed Insights with target labels, evidence counts, and small curation actions. It is not an approval gate; Insights remain visible elsewhere while labels improve trust calibration.</INTENT>
+    <PRD_REF>docs/PRD.md §11.7 Curation Queue</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-CURATION"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_CURATION_QUEUE>
+
+  <FEATURE_ABSTRACT_JOB ID="FEAT-ABSTRACT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Abstract job type that turns EvidenceItems into diagrams, ascii art, or other higher-level teaching artifacts. The first v0.4b slice can use deterministic artifacts to prove storage, visibility, and traceability before model-backed generation.</INTENT>
+    <PRD_REF>docs/PRD.md §14.2 Job types, §24 v0.4</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-ABSTRACT-SERVICE"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_ABSTRACT_JOB>
+
+  <FEATURE_FIRST_PUBLISH_CREDIT ID="FEAT-FIRST-PUBLISH-CREDIT" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Student attribution on fresh-finding Insights: Insight.first_observed_by field stores the student's name when they claim a discovery during a live session; UI surfaces the attribution visibly.</INTENT>
     <PRD_REF>docs/PRD.md §11.8 Live Agent Studio (Insight.first_observed_by)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LIVE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-LIVE-AGENT-STUDIO"/>
   </FEATURE_FIRST_PUBLISH_CREDIT>
 
-  <FEATURE_MULTI_PASS_VERIFICATION ID="FEAT-MULTI-PASS-VERIFICATION" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_MULTI_PASS_VERIFICATION ID="FEAT-MULTI-PASS-VERIFICATION" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Verify job type that runs multiple agent passes on the same question and labels the resulting Insight with a confidence status (proposed / corroborated / disputed) visible in all UI surfaces.</INTENT>
     <PRD_REF>docs/PRD.md §7.3 Autonomy model, §14.2 Job types (verify)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-VERIFY-SERVICE"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_MULTI_PASS_VERIFICATION>
 
-  <FEATURE_ASK_AGENT_WHY ID="FEAT-ASK-AGENT-WHY" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_ASK_AGENT_WHY ID="FEAT-ASK-AGENT-WHY" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Per-Insight "Ask the agent why" button that spawns a short explain job; the explanation is appended to the Insight record and rendered below it without replacing the original text.</INTENT>
     <PRD_REF>docs/PRD.md §14.2 Job types (explain)</PRD_REF>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-HARNESS"/>
-    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-EXPLAIN-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ASK_AGENT_WHY>
 
-  <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_ENGAGEMENT_HOOKS ID="FEAT-ENGAGEMENT-HOOKS" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Engagement job type that produces telegram-seed formulations, surprising-fact hooks, and optionally humorous framings for Insights. Published to the DB immediately per L1 auto-merge (PRD §7.3, §11.7) — there is no DB-publication review gate. External publication (e.g. an actual Telegram post) is a separate human action performed by the owner or a student via "claim a finding" in Live Studio; that human step is not the same as a DB approval queue.</INTENT>
     <PRD_REF>docs/PRD.md §7 Core Information Model (Insight.engagement_hook, joke_or_telegram_seed), §7.3 Autonomy model (L1 auto-merge), §11.7 Curation Queue (not an approval gate), §14.2 Job types (engagement)</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-ENGAGEMENT-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>
 
-  <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Cell and dossier view with Insight always at top and EvidenceItem collapsed below it; "Show the proof" button expands the file:line citation from upstream. Button label is fixed — it communicates epistemology, not just UI affordance.</INTENT>
     <PRD_REF>docs/PRD.md §4.8 Three-stage learner journey, §11.3 Harness Dossier</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
@@ -189,7 +256,7 @@
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-TOPIC"/>
   </FEATURE_EVIDENCE_RICH_VIEW>
 
-  <FEATURE_CONFIDENCE_BANDS ID="FEAT-CONFIDENCE-BANDS" PRIORITY="MEDIUM" STATE="PLANNED">
+  <FEATURE_CONFIDENCE_BANDS ID="FEAT-CONFIDENCE-BANDS" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Confidence status label (proposed / corroborated / disputed / human-verified / corrected) visible on every Insight card in matrix, harness dossier, and topic dossier views.</INTENT>
     <PRD_REF>docs/PRD.md §4.9 Agent fallibility as pedagogy, §7.3 Autonomy model</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
@@ -197,29 +264,39 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-MULTI-PASS-VERIFICATION"/>
   </FEATURE_CONFIDENCE_BANDS>
 
-  <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix.</INTENT>
+  <FEATURE_INSIGHT_LIBRARY ID="FEAT-INSIGHT-LIBRARY" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Insight Library surface for retrieving Insights across harness/topic boundaries with filters for audience and format, including confidence, attribution, and engagement copy.</INTENT>
+    <PRD_REF>docs/PRD.md §11.6 Insight Library, §24 v0.6</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
+  </FEATURE_INSIGHT_LIBRARY>
+
+  <FEATURE_LENS_SCORING ID="FEAT-LENS-SCORING" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Per-lens scoring v1.0: each harness receives a computed score per topic lens (e.g. agent loop complexity, permission model, prompt engineering surface), stored in the DB and shown in the matrix. The first slice is deterministic and exists to make lens disagreement visible rather than to declare one winner.</INTENT>
     <PRD_REF>docs/PRD.md §15 Lenses and Scoring</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-LENS-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-LENSES"/>
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-COMPARISON-MATRIX-RO"/>
   </FEATURE_LENS_SCORING>
 
-  <FEATURE_DOC_GENERATION ID="FEAT-DOC-GENERATION" PRIORITY="MEDIUM" STATE="PLANNED">
-    <INTENT>Markdown export from DB: generates harness-map.md-style documents from live DB state, allowing the observatory to feed back into the harness-architecture sibling project or other consumers.</INTENT>
+  <FEATURE_DOC_GENERATION ID="FEAT-DOC-GENERATION" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>Markdown export from DB: generates comparison reports, harness summaries, lecturer briefs, onboarding checklist, and a legacy archive manifest from live DB state. Generated docs are derived artifacts, not the source of truth.</INTENT>
     <PRD_REF>docs/PRD.md §13 Document Generation</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-DOC-EXPORT-SERVICE"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-EXPORTS"/>
   </FEATURE_DOC_GENERATION>
 
   <!-- ================================================================
-       MODULE STUBS — v0.1 slice, STATE="PLANNED"
-       Anchors listed here assert what WILL exist when code lands.
-       Validator skips PLANNED nodes (see header comment) — these are
-       checked only when STATE flips to STARTED or DONE.
+       MODULES
+       Validator skips PLANNED nodes (see header comment). STARTED/DONE modules
+       are live contracts and their anchors must exist in source.
   ================================================================ -->
 
   <MODULE_IMPORTER ID="MOD-IMPORTER"
                    FILE="src/observatory/importers/canon.py"
-                   STATE="PLANNED">
+                   STATE="STARTED">
     <INTENT>Markdown importer: reads harness-architecture corpus (registry/harnesses.md, topics/*/topic.md, topics/*/evidence.md, comparisons/harness-map.md) and populates the SQLite database via SQLModel. Also the entry point for markdown export (doc generation).</INTENT>
     <ANCHOR NAME="START_IMPORT_HARNESSES"  COORD="src/observatory/importers/canon.py#START_IMPORT_HARNESSES"/>
     <ANCHOR NAME="START_IMPORT_TOPICS"     COORD="src/observatory/importers/canon.py#START_IMPORT_TOPICS"/>
@@ -229,7 +306,7 @@
 
   <MODULE_MODELS ID="MOD-MODELS"
                  FILE="src/observatory/models/__init__.py"
-                 STATE="PLANNED">
+                 STATE="STARTED">
     <INTENT>SQLModel entity definitions: Harness, Topic, Insight, EvidenceItem, AgentJob. Central schema for all DB reads and writes in the observatory.</INTENT>
     <ANCHOR NAME="START_MODELS_HARNESS"    COORD="src/observatory/models/__init__.py#START_MODELS_HARNESS"/>
     <ANCHOR NAME="START_MODELS_TOPIC"      COORD="src/observatory/models/__init__.py#START_MODELS_TOPIC"/>
@@ -240,42 +317,144 @@
 
   <MODULE_WEB_APP ID="MOD-WEB-APP"
                   FILE="src/observatory/web/app.py"
-                  STATE="PLANNED">
-    <INTENT>FastAPI application factory: registers all routers, configures DB engine, sets up lifespan (including APScheduler for cron jobs in later phases), and serves static assets.</INTENT>
+                  STATE="STARTED">
+    <INTENT>FastAPI application factory: registers all routers, configures DB engine, sets up optional guarded scheduler lifespan, and serves static assets.</INTENT>
     <ANCHOR NAME="START_APP_FACTORY"       COORD="src/observatory/web/app.py#START_APP_FACTORY"/>
     <ANCHOR NAME="START_APP_ROUTERS"       COORD="src/observatory/web/app.py#START_APP_ROUTERS"/>
     <ANCHOR NAME="START_APP_DB_INIT"       COORD="src/observatory/web/app.py#START_APP_DB_INIT"/>
+    <ANCHOR NAME="START_APP_SCHEDULER"     COORD="src/observatory/web/app.py#START_APP_SCHEDULER"/>
   </MODULE_WEB_APP>
+
+  <MODULE_SCHEDULER ID="MOD-SCHEDULER"
+                    FILE="src/observatory/scheduler/service.py"
+                    STATE="STARTED">
+    <INTENT>v0.3b scheduler service: reads DB-backed refresh schedules, computes next-run times, registers APScheduler interval jobs, and dispatches through the existing RefreshJobService boundary only when explicitly enabled.</INTENT>
+    <ANCHOR NAME="START_SCHEDULER_SERVICE" COORD="src/observatory/scheduler/service.py#START_SCHEDULER_SERVICE"/>
+  </MODULE_SCHEDULER>
 
   <MODULE_WEB_ROUTES_DASHBOARD ID="MOD-WEB-ROUTES-DASHBOARD"
                                 FILE="src/observatory/web/routes/dashboard.py"
-                                STATE="PLANNED">
-    <INTENT>FastAPI router for the home/dashboard page: shows harness count, topic count, insight count, entry links to matrix and dossiers. Also hosts the Live Agent Studio SSE endpoint in later phases.</INTENT>
+                                STATE="STARTED">
+    <INTENT>FastAPI router for the home/dashboard page: shows harness count, topic count, insight count, and entry links to the major workbench/reference surfaces.</INTENT>
     <ANCHOR NAME="START_ROUTE_DASHBOARD"   COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_DASHBOARD"/>
-    <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/dashboard.py#START_ROUTE_LIVE_STUDIO"/>
   </MODULE_WEB_ROUTES_DASHBOARD>
+
+  <MODULE_WEB_ROUTES_CURATION ID="MOD-WEB-ROUTES-CURATION"
+                               FILE="src/observatory/web/routes/curation.py"
+                               STATE="STARTED">
+    <INTENT>FastAPI router for the Curation Queue: lists proposed/disputed Insights and applies confidence labels without hiding the underlying agent-produced content.</INTENT>
+    <ANCHOR NAME="START_ROUTE_CURATION_LIST" COORD="src/observatory/web/routes/curation.py#START_ROUTE_CURATION_LIST"/>
+    <ANCHOR NAME="START_ROUTE_CURATION_ACTION" COORD="src/observatory/web/routes/curation.py#START_ROUTE_CURATION_ACTION"/>
+  </MODULE_WEB_ROUTES_CURATION>
+
+  <MODULE_WEB_ROUTES_LIVE ID="MOD-WEB-ROUTES-LIVE"
+                          FILE="src/observatory/web/routes/live.py"
+                          STATE="STARTED">
+    <INTENT>FastAPI router for Live Agent Studio: creates live AgentJobs, renders the projector surface, streams runner events through SSE while preserving raw logs, and handles first-observer claims.</INTENT>
+    <ANCHOR NAME="START_ROUTE_LIVE_STUDIO" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STUDIO"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_START" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_START"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_CLAIM" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_CLAIM"/>
+    <ANCHOR NAME="START_ROUTE_LIVE_STREAM" COORD="src/observatory/web/routes/live.py#START_ROUTE_LIVE_STREAM"/>
+  </MODULE_WEB_ROUTES_LIVE>
+
+  <MODULE_LIVE_SERVICE ID="MOD-LIVE-SERVICE"
+                       FILE="src/observatory/live/service.py"
+                       STATE="STARTED">
+    <INTENT>Service boundary for Live Agent Studio: persists queued live discovery AgentJobs, starts runner.stream only when the SSE endpoint is consumed, writes raw logs, and emits semantic runtime events.</INTENT>
+    <ANCHOR NAME="START_LIVE_JOB_CREATE" COORD="src/observatory/live/service.py#START_LIVE_JOB_CREATE"/>
+    <ANCHOR NAME="START_LIVE_JOB_STREAM" COORD="src/observatory/live/service.py#START_LIVE_JOB_STREAM"/>
+  </MODULE_LIVE_SERVICE>
+
+  <MODULE_ABSTRACT_SERVICE ID="MOD-ABSTRACT-SERVICE"
+                           FILE="src/observatory/abstracts/service.py"
+                           STATE="STARTED">
+    <INTENT>Service boundary for abstract jobs that turn EvidenceItems into higher-level teaching artifacts while preserving source evidence ids.</INTENT>
+    <ANCHOR NAME="START_ABSTRACT_JOB" COORD="src/observatory/abstracts/service.py#START_ABSTRACT_JOB"/>
+  </MODULE_ABSTRACT_SERVICE>
+
+  <MODULE_VERIFY_SERVICE ID="MOD-VERIFY-SERVICE"
+                         FILE="src/observatory/verification/service.py"
+                         STATE="STARTED">
+    <INTENT>Service boundary for verify jobs that record support/dispute passes, update EvidenceItem verification metadata, and derive Insight/ComparisonCell confidence labels.</INTENT>
+    <ANCHOR NAME="START_VERIFY_JOB" COORD="src/observatory/verification/service.py#START_VERIFY_JOB"/>
+  </MODULE_VERIFY_SERVICE>
+
+  <MODULE_ENGAGEMENT_SERVICE ID="MOD-ENGAGEMENT-SERVICE"
+                             FILE="src/observatory/engagement/service.py"
+                             STATE="STARTED">
+    <INTENT>Service boundary for engagement jobs and first-observer attribution helpers.</INTENT>
+    <ANCHOR NAME="START_ENGAGEMENT_JOB" COORD="src/observatory/engagement/service.py#START_ENGAGEMENT_JOB"/>
+    <ANCHOR NAME="START_FIRST_OBSERVER_CLAIM" COORD="src/observatory/engagement/service.py#START_FIRST_OBSERVER_CLAIM"/>
+  </MODULE_ENGAGEMENT_SERVICE>
+
+  <MODULE_WEB_ROUTES_INSIGHTS ID="MOD-WEB-ROUTES-INSIGHTS"
+                              FILE="src/observatory/web/routes/insight.py"
+                              STATE="STARTED">
+    <INTENT>FastAPI router for the Insight Library: filter Insights by audience/format, show confidence/attribution/engagement copy, and dispatch explain jobs for individual Insights.</INTENT>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_LIBRARY" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_LIBRARY"/>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_ENGAGEMENT" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_ENGAGEMENT"/>
+    <ANCHOR NAME="START_ROUTE_INSIGHT_EXPLAIN" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_EXPLAIN"/>
+  </MODULE_WEB_ROUTES_INSIGHTS>
+
+  <MODULE_EXPLAIN_SERVICE ID="MOD-EXPLAIN-SERVICE"
+                          FILE="src/observatory/explain/service.py"
+                          STATE="STARTED">
+    <INTENT>Service boundary for explain jobs that create a deterministic explanation from an Insight and its EvidenceItems, store a RevisionNote, raw log, and semantic events.</INTENT>
+    <ANCHOR NAME="START_EXPLAIN_JOB" COORD="src/observatory/explain/service.py#START_EXPLAIN_JOB"/>
+  </MODULE_EXPLAIN_SERVICE>
+
+  <MODULE_LENS_SERVICE ID="MOD-LENS-SERVICE"
+                       FILE="src/observatory/lenses/service.py"
+                       STATE="STARTED">
+    <INTENT>Service boundary for default lens seeding and deterministic lens score refresh from current Harness/Topic/Insight/Evidence/ComparisonCell signals.</INTENT>
+    <ANCHOR NAME="START_SEED_DEFAULT_LENSES" COORD="src/observatory/lenses/service.py#START_SEED_DEFAULT_LENSES"/>
+    <ANCHOR NAME="START_REFRESH_LENS_SCORES" COORD="src/observatory/lenses/service.py#START_REFRESH_LENS_SCORES"/>
+  </MODULE_LENS_SERVICE>
+
+  <MODULE_WEB_ROUTES_LENSES ID="MOD-WEB-ROUTES-LENSES"
+                            FILE="src/observatory/web/routes/lens.py"
+                            STATE="STARTED">
+    <INTENT>FastAPI router for v1.0 lens scoring: render lenses, per-harness/topic scores, and a deterministic score refresh action without implying a universal winner.</INTENT>
+    <ANCHOR NAME="START_ROUTE_LENS_LIST" COORD="src/observatory/web/routes/lens.py#START_ROUTE_LENS_LIST"/>
+    <ANCHOR NAME="START_ROUTE_LENS_REFRESH" COORD="src/observatory/web/routes/lens.py#START_ROUTE_LENS_REFRESH"/>
+  </MODULE_WEB_ROUTES_LENSES>
+
+  <MODULE_DOC_EXPORT_SERVICE ID="MOD-DOC-EXPORT-SERVICE"
+                             FILE="src/observatory/exports/service.py"
+                             STATE="STARTED">
+    <INTENT>Service boundary for generated Markdown exports and legacy archive manifest creation from DB state.</INTENT>
+    <ANCHOR NAME="START_MARKDOWN_EXPORT" COORD="src/observatory/exports/service.py#START_MARKDOWN_EXPORT"/>
+    <ANCHOR NAME="START_LEGACY_ARCHIVE_MANIFEST" COORD="src/observatory/exports/service.py#START_LEGACY_ARCHIVE_MANIFEST"/>
+  </MODULE_DOC_EXPORT_SERVICE>
+
+  <MODULE_WEB_ROUTES_EXPORTS ID="MOD-WEB-ROUTES-EXPORTS"
+                             FILE="src/observatory/web/routes/export.py"
+                             STATE="STARTED">
+    <INTENT>FastAPI router for generated Markdown exports: trigger generation, list output files, and surface archive/onboarding metadata.</INTENT>
+    <ANCHOR NAME="START_ROUTE_EXPORT_LIST" COORD="src/observatory/web/routes/export.py#START_ROUTE_EXPORT_LIST"/>
+    <ANCHOR NAME="START_ROUTE_EXPORT_GENERATE" COORD="src/observatory/web/routes/export.py#START_ROUTE_EXPORT_GENERATE"/>
+  </MODULE_WEB_ROUTES_EXPORTS>
 
   <MODULE_WEB_ROUTES_HARNESS ID="MOD-WEB-ROUTES-HARNESS"
                               FILE="src/observatory/web/routes/harness.py"
-                              STATE="PLANNED">
-    <INTENT>FastAPI router for harness profile pages: list all harnesses, show dossier for one harness with all its topics and insights, handle "Ask the agent why" dispatch for harness-scoped insights.</INTENT>
+                              STATE="STARTED">
+    <INTENT>FastAPI router for harness profile pages: list all harnesses and show a dossier for one harness with all its topics, insights, evidence, and revision-note explanations rendered through the shared Insight card.</INTENT>
     <ANCHOR NAME="START_ROUTE_HARNESS_LIST"    COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_LIST"/>
     <ANCHOR NAME="START_ROUTE_HARNESS_DOSSIER" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_DOSSIER"/>
-    <ANCHOR NAME="START_ROUTE_HARNESS_ASK_WHY" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_ASK_WHY"/>
+    <ANCHOR NAME="START_ROUTE_HARNESS_REFRESH" COORD="src/observatory/web/routes/harness.py#START_ROUTE_HARNESS_REFRESH"/>
   </MODULE_WEB_ROUTES_HARNESS>
 
   <MODULE_WEB_ROUTES_TOPIC ID="MOD-WEB-ROUTES-TOPIC"
                             FILE="src/observatory/web/routes/topic.py"
-                            STATE="PLANNED">
-    <INTENT>FastAPI router for topic profile pages: list all topics, show dossier for one topic with all harnesses that have data for it, handle "Ask the agent why" for topic-scoped insights.</INTENT>
+                            STATE="STARTED">
+    <INTENT>FastAPI router for topic profile pages: list all topics and show a dossier for one topic with all harnesses that have data for it, including shared Insight-card explanation rendering.</INTENT>
     <ANCHOR NAME="START_ROUTE_TOPIC_LIST"    COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_LIST"/>
     <ANCHOR NAME="START_ROUTE_TOPIC_DOSSIER" COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_DOSSIER"/>
-    <ANCHOR NAME="START_ROUTE_TOPIC_ASK_WHY" COORD="src/observatory/web/routes/topic.py#START_ROUTE_TOPIC_ASK_WHY"/>
   </MODULE_WEB_ROUTES_TOPIC>
 
   <MODULE_WEB_ROUTES_MATRIX ID="MOD-WEB-ROUTES-MATRIX"
                              FILE="src/observatory/web/routes/matrix.py"
-                             STATE="PLANNED">
+                             STATE="STARTED">
     <INTENT>FastAPI router for the comparison matrix view: renders harness x topic grid, handles cell-expand HTMX partials showing insight + evidence, and confidence band labels.</INTENT>
     <ANCHOR NAME="START_ROUTE_MATRIX_FULL"        COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_FULL"/>
     <ANCHOR NAME="START_ROUTE_MATRIX_CELL_EXPAND" COORD="src/observatory/web/routes/matrix.py#START_ROUTE_MATRIX_CELL_EXPAND"/>
@@ -283,10 +462,58 @@
 
   <MODULE_RUNNER_BASE ID="MOD-RUNNER-BASE"
                       FILE="src/observatory/runners/base.py"
-                      STATE="PLANNED">
-    <INTENT>AgentRunner abstract Protocol class defining the interface for all agent runner implementations. v0.1 provides the interface only; ClaudeRunner concrete implementation lands in a later phase. No `claude -p` invocation is allowed below this abstraction boundary.</INTENT>
+                      STATE="STARTED">
+    <INTENT>AgentRunner abstract Protocol class defining the interface for all agent runner implementations. No concrete subprocess invocation is allowed below this abstraction boundary.</INTENT>
     <ANCHOR NAME="START_RUNNER_PROTOCOL"       COORD="src/observatory/runners/base.py#START_RUNNER_PROTOCOL"/>
     <ANCHOR NAME="START_RUNNER_JOB_RESULT"     COORD="src/observatory/runners/base.py#START_RUNNER_JOB_RESULT"/>
+    <ANCHOR NAME="START_RUNNER_PREFLIGHT_RESULT" COORD="src/observatory/runners/base.py#START_RUNNER_PREFLIGHT_RESULT"/>
   </MODULE_RUNNER_BASE>
+
+  <MODULE_RUNNER_CLAUDE ID="MOD-RUNNER-CLAUDE"
+                        FILE="src/observatory/runners/claude.py"
+                        STATE="STARTED">
+    <INTENT>Claude CLI backed AgentRunner implementation. The concrete subprocess invocation lives here and nowhere else.</INTENT>
+    <ANCHOR NAME="START_CLAUDE_RUN" COORD="src/observatory/runners/claude.py#START_CLAUDE_RUN"/>
+  </MODULE_RUNNER_CLAUDE>
+
+  <MODULE_RUNNER_CODEX ID="MOD-RUNNER-CODEX"
+                       FILE="src/observatory/runners/codex.py"
+                       STATE="STARTED">
+    <INTENT>Codex CLI backed AgentRunner implementation. The concrete `codex exec` subprocess invocation lives here and nowhere else.</INTENT>
+    <ANCHOR NAME="START_CODEX_PREFLIGHT" COORD="src/observatory/runners/codex.py#START_CODEX_PREFLIGHT"/>
+    <ANCHOR NAME="START_CODEX_RUN" COORD="src/observatory/runners/codex.py#START_CODEX_RUN"/>
+  </MODULE_RUNNER_CODEX>
+
+  <MODULE_JOBS_SERVICE ID="MOD-JOBS-SERVICE"
+                       FILE="src/observatory/jobs/service.py"
+                       STATE="STARTED">
+    <INTENT>v0.2/v0.3 job service: creates manual harness refresh AgentJobs, resolves and preflights target cwd, runs runner preflight, executes via AgentRunner, writes raw logs, emits semantic events, and parses successful logs.</INTENT>
+    <ANCHOR NAME="START_JOB_REFRESH" COORD="src/observatory/jobs/service.py#START_JOB_REFRESH"/>
+    <ANCHOR NAME="START_JOB_PREFLIGHT" COORD="src/observatory/jobs/service.py#START_JOB_PREFLIGHT"/>
+  </MODULE_JOBS_SERVICE>
+
+  <MODULE_RUNTIME_SEMANTIC_LOG ID="MOD-RUNTIME-SEMANTIC-LOG"
+                               FILE="src/observatory/runtime/semantic_log.py"
+                               STATE="STARTED">
+    <INTENT>Append-only semantic JSONL event writer for AgentJob runtime traces.</INTENT>
+    <ANCHOR NAME="START_SEMANTIC_EVENT_LOG" COORD="src/observatory/runtime/semantic_log.py#START_SEMANTIC_EVENT_LOG"/>
+  </MODULE_RUNTIME_SEMANTIC_LOG>
+
+  <MODULE_JOB_LOG_PARSER ID="MOD-JOB-LOG-PARSER"
+                         FILE="src/observatory/jobs/log_parser.py"
+                         STATE="STARTED">
+    <INTENT>v0.2b parser that turns one real refresh raw log into proposed Insight and EvidenceItem rows while preserving the raw log.</INTENT>
+    <ANCHOR NAME="START_JOB_LOG_PARSE" COORD="src/observatory/jobs/log_parser.py#START_JOB_LOG_PARSE"/>
+  </MODULE_JOB_LOG_PARSER>
+
+  <MODULE_WEB_ROUTES_JOBS ID="MOD-WEB-ROUTES-JOBS"
+                          FILE="src/observatory/web/routes/jobs.py"
+                          STATE="STARTED">
+    <INTENT>FastAPI router for Job Dashboard list/detail/log views, including compact semantic event traces for a job.</INTENT>
+    <ANCHOR NAME="START_ROUTE_JOBS_LIST"   COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LIST"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_DETAIL" COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_DETAIL"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_SEMANTIC_EVENTS" COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_SEMANTIC_EVENTS"/>
+    <ANCHOR NAME="START_ROUTE_JOBS_LOG"    COORD="src/observatory/web/routes/jobs.py#START_ROUTE_JOBS_LOG"/>
+  </MODULE_WEB_ROUTES_JOBS>
 
 </Why_Graph>

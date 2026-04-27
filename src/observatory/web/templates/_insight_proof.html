@@ -1,0 +1,97 @@
+<!--
+FILE: src/observatory/web/templates/_insight_proof.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Shared Insight-over-EvidenceItem rendering for Insight cards.
+PRD_REF: docs/PRD.md §4.8, §24 v0.7, §26.2
+WHY_REF: docs/why-graph.xml#FEAT-EVIDENCE-RICH-VIEW
+SCOPE: insight card; explain action; revision notes; collapsed proof details; optional verification pass breakdown
+INVARIANTS:
+- Insight text appears before the proof control in DOM order.
+- The proof control label matches the project-required copy.
+- Ask-why appears only for persisted real Insights, not synthetic evidence placeholders.
+:END_MODULE_CONTRACT
+-->
+<article class="insight-card">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h3 class="text-base font-semibold tracking-normal text-slate-950">{{ insight.short_title }}</h3>
+      <p class="mt-2 text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+      {% if insight.why_it_matters %}
+        <p class="mt-2 text-sm leading-6 text-slate-600">{{ insight.why_it_matters }}</p>
+      {% endif %}
+    </div>
+    <span class="status-badge">{{ insight.status }}</span>
+  </div>
+  <p class="mt-3 text-xs font-medium uppercase tracking-normal text-slate-500">
+    Confidence: {{ insight.confidence_band or "unverified" }}
+  </p>
+  {% if insight.id is defined and insight.id %}
+    <form class="mt-3" action="/insights/{{ insight.id }}/explain" method="post">
+      {% for evidence in evidence_items|default([]) %}
+        {% if evidence.id %}
+          <input name="evidence_item_ids" type="hidden" value="{{ evidence.id }}">
+        {% endif %}
+      {% endfor %}
+      <button class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50" type="submit">
+        Ask the agent why
+      </button>
+    </form>
+    {% set note_map = revision_notes_by_insight|default({}) %}
+    {% set revision_notes = note_map.get(insight.id, []) %}
+    {% if revision_notes %}
+      <section class="mt-4 space-y-2 rounded-md bg-emerald-50 px-3 py-3">
+        <h4 class="text-sm font-semibold tracking-normal text-emerald-950">Agent explanations</h4>
+        {% for revision_note in revision_notes %}
+          <p class="text-sm leading-6 text-emerald-900">{{ revision_note.note }}</p>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endif %}
+  <details class="proof-details mt-4">
+    <summary>Show the proof</summary>
+    <div class="mt-3 space-y-3">
+      {% if evidence_items %}
+        {% for evidence in evidence_items %}
+          <div class="proof-item">
+            <p class="text-sm font-medium text-slate-800">{{ evidence.claim_summary }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+              Verification: {{ evidence.confidence or "unverified" }}
+              · Passes: {{ evidence.verification_passes }}
+            </p>
+            {% if evidence.file_path %}
+              <p class="mt-1 text-xs text-slate-500">
+                {{ evidence.file_path }}{% if evidence.line_number %}:{{ evidence.line_number }}{% endif %}
+              </p>
+            {% endif %}
+            {% if evidence.exact_citation %}
+              <p class="mt-2 text-sm text-slate-600">{{ evidence.exact_citation }}</p>
+            {% endif %}
+            {% if evidence.code_snippet %}
+              <pre class="mt-2 overflow-x-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100"><code>{{ evidence.code_snippet }}</code></pre>
+            {% endif %}
+          </div>
+        {% endfor %}
+        {% set pass_rows = verification_passes|default([]) %}
+        {% if pass_rows %}
+          <section class="proof-item">
+            <h4 class="text-sm font-semibold tracking-normal text-slate-900">Verification passes</h4>
+            <ul class="mt-2 space-y-2">
+              {% for verification_pass in pass_rows %}
+                <li class="text-xs leading-5 text-slate-600">
+                  <span class="font-semibold text-slate-900">{{ verification_pass.outcome }}</span>
+                  by {{ verification_pass.verifier_agent }}
+                  on EvidenceItem #{{ verification_pass.evidence_item_id }}
+                  {% if verification_pass.job_id %}via verify job #{{ verification_pass.job_id }}{% endif %}
+                  {% if verification_pass.note %}<span class="block text-slate-500">{{ verification_pass.note }}</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      {% else %}
+        <p class="text-sm text-slate-500">No EvidenceItem is linked for this imported view yet.</p>
+      {% endif %}
+    </div>
+  </details>
+</article>

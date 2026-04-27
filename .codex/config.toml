@@ -1,0 +1,9 @@
+# Project-local Codex defaults for harness-observatory.
+# Session/developer policy may override these values.
+
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+
+[agents]
+max_threads = 5
+max_depth = 1

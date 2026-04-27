@@ -22,7 +22,8 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 5. `docs/why-contracts-v1.md` — contract and anchor rules for v1 scope
 6. `CONTEXT.md` — current handoff state (where we are, recent decisions, blockers)
 7. `WORKLOG.md` — durable state for *current* work (active items, next queue, blocked, recent history). The runbook explaining how to use it lives in "Interrupt-and-Resume Pattern" below.
-8. `DELEGATION-PLAN.md` — orchestration plan (read this if you are coordinating subagents)
+8. `EVOLUTION.md` — teaching-facing development trajectory log (agent mistakes, process friction, rule changes)
+9. `DELEGATION-PLAN.md` — orchestration plan (read this if you are coordinating subagents)
 
 ### Key Semantic Distinctions (§5 applies immediately)
 
@@ -39,10 +40,18 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - **AGENTS.md** (this file) is the canonical operating rules and required-reading list for agents. If you need to know "what should I read next" — it lives here, not in README and not in CONTEXT.
 - **CONTEXT.md** is the running handoff log — current state, recent decisions, what just changed. Append new dated sections; do not rewrite history.
 - **WORKLOG.md** is the durable state of *current work in flight* — active items, next ordered queue, blocked items, recent history of dispatches and commits. Updated after every meaningful step. See "Interrupt-and-Resume Pattern" below for the discipline. Distinct from CONTEXT.md (CONTEXT = decision log; WORKLOG = task state).
+- **EVOLUTION.md** is the development trajectory log — lessons from actual project evolution, including agent-version inertia, tool friction, subagent-process changes, and reusable teaching observations. It is not current task state; put active work in WORKLOG.
 - **SPIRIT.md** is the constitution — slow-changing intent, pedagogy, anti-patterns. Changes to SPIRIT.md require owner discussion.
 - **DELEGATION-PLAN.md** is the orchestration plan — read it if you are coordinating subagents or are a code-writing subagent.
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
 - README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.
+
+### Change discipline
+
+- Product or architecture changes start in `docs/PRD.md` and `docs/why-graph.xml`, then move into code in the same working slice. If code already drifted ahead, record the drift in `EVOLUTION.md`/`WORKLOG.md` and fix the docs before adding more behavior.
+- Use correct English technical terms in durable docs and UI when Russian shorthand is ambiguous. Target documentation language is simple English (roughly B1); Russian is acceptable for owner-facing conversation, not as a reason to invent translated terms that create semantic drift.
+- Prefer CLI tools and progressively loaded `SKILL.md` workflows for local project work. Avoid MCP as the default mechanism when a CLI does the job, because unused tool schemas consume model context. Use MCP/connectors when the task genuinely requires connected app data, the user asks for them, or the active harness only exposes that capability through MCP.
+- UI changes require agent-visible visual QA. Do not rely only on route tests or owner screenshots. Prefer Playwright CLI screenshots/tests for local web UI checks; use higher-level computer-use tools when the task needs flexible visual interaction beyond deterministic browser automation.
 
 ### Cross-Harness Lead-Agent Model
 
@@ -54,7 +63,25 @@ The project role is **lead agent**, not "Claude-only lead." Claude Code, Codex, 
 
 Roman grants standing project-level authorization for lead agents to use subagents when the active harness permits it. Use delegation to protect lead context, parallelize independent work, and route low-risk or highly bounded tasks to cheaper/faster agents. If a harness-level policy still requires a fresh session-level user request before spawning subagents, ask Roman to restate the authorization in that session instead of silently falling back.
 
+Codex session note: on 2026-04-26 Roman explicitly reaffirmed session-level authorization for the Codex lead agent to use Codex subagents as an efficiency mechanism during v0.1 work. Subagents are encouraged when they help the lead preserve context, parallelize bounded work, or validate results; they are not mandatory ritual. Future sessions should treat this as durable project intent while still obeying any active harness policy that requires fresh confirmation.
+
 Lead agents should run **serially across harnesses**, not concurrently, unless Roman explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates WORKLOG/CONTEXT/git, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low for a personal-subscription educational project.
+
+When working in Codex, read `docs/codex-subagent-profile.md` before dispatching subagents. The profile and `.codex/agents/*.toml` files are Codex-specific operating aids; they do not override this file, WORKLOG, CONTEXT, the PRD, or the WHY graph.
+
+#### Spirit lead vs Execution lead
+
+This project runs with a two-lead model — **spirit lead** (constitutional, periodic) and **execution lead** (operational, continuous). Both are "lead" in the sense of agent1st §1 (Role Contract): both can dispatch subagents, both own their decisions, both are accountable to the owner. The constitutional split is described in `SPIRIT.md` "Collaboration Model"; this addendum records only the operational rules.
+
+- A new lead session, when uncertain which role it is filling, defaults to **execution lead** (continue the WORKLOG queue; do not rewrite SPIRIT/PRD/AGENTS).
+- **Spirit-lead sessions are owner-initiated** as deep-review passes (e.g. "посмотри, как агент GPT-5.5 реализовал твой план"). They read `EVOLUTION.md` first thing, produce SPIRIT/PRD/AGENTS deltas, and write a v-bump in PRD §24 with explicit acceptance criteria for the next phase.
+- Execution-lead sessions read those deltas as authoritative and queue them in WORKLOG.
+- Execution lead pushes back to spirit lead by writing the friction into `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax). The next spirit-lead pass will see it.
+- Both leads commit with their own agent identity so git history shows which lead made which change. Agent-authored commits must **not** use Roman's human author identity (`Roman Siewko <applerom@gmail.com>`) unless Roman personally authored that commit content. This is load-bearing, not cosmetic: multiple agents and Roman all work in this repo, and future agents need authorship to distinguish human edits from Opus/Codex edits.
+- Before creating a commit, the lead agent checks `git config user.name` / `git config user.email` or uses per-command environment variables (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL`) so the commit author matches the active agent/harness. Suggested identities:
+  - Claude spirit lead: `Claude Opus <noreply@anthropic.com>`
+  - Codex execution lead: `Codex GPT-5.5 <noreply@openai.com>` (or the active Codex model if different)
+- Use `Co-Authored-By: <subagent/reviewer>` trailers when a commit integrates a reviewer or implementation subagent's substantive findings. Do not use a co-author trailer as a substitute for correct primary author identity.
 
 ### Interrupt-and-Resume Pattern
 

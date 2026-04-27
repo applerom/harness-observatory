@@ -1,7 +1,7 @@
 # Delegation Plan — v0.1 First Working Slice
 
 > **Audience:** lead agent (architect) coordinating subagents who will write the v0.1 code.
-> **Status:** Draft — pending owner review of foundational docs before dispatch.
+> **Status:** v0.1 executed — retained as the historical delegation contract and source for post-v0.1 retrospectives.
 > **References:** `SPIRIT.md`, `docs/PRD.md` §24/§26, `docs/why-graph.xml`, `AGENTS.md` §9 Delegation Design.
 
 ---
@@ -34,13 +34,13 @@ When v0.1 is "done", the owner can:
 7. Run `uv run pytest` — all tests pass.
 8. Run `uv run python scripts/validate_anchors.py` — every `<ANCHOR>` in `why-graph.xml` resolves to a real `START_*` marker in source (or reports concrete failures).
 
-**NOT in v0.1 (deferred to later phases):** any AgentJob execution, any cron, Live Studio, "Ask the agent why", confidence label rendering (data model has the field; UI just shows the raw status), engagement hooks, doc generation.
+**NOT in v0.1 (deferred to later phases):** any AgentJob execution, any cron, Live Studio, "Ask the agent why", full confidence-band automation or per-pass breakdowns (v0.1 may show raw status badges and "not yet verified" placeholders), engagement hooks, doc generation.
 
 ---
 
 ## 3. Subagent decomposition
 
-Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except for shared seed of types). Tasks D–E are **sequential** (depend on A and C respectively).
+Five subagent tasks. Tasks A–C can run **in parallel** once file ownership is clear. Task D depends on A+B+C. Task E depends on A.
 
 ### Task A — Data model + migrations (sequential prerequisite for D and E)
 
@@ -97,7 +97,7 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 - Tests in `tests/importers/` — sample fixture markdown files exercise each parser path; the real `harness-architecture/` is read in an end-to-end test.
 
 **Acceptance:**
-- Running the importer against the real `D:/ai/harnesses/harness-architecture/` populates SQLite with ≥8 Harnesses and ≥10 Topics. (Empty DB → populated → re-run is idempotent.)
+- Running the importer against the real `D:/ai/harnesses/harness-architecture/` populates SQLite with ≥8 Harnesses and ≥11 Topics. (Empty DB → populated → re-run is idempotent.)
 - Importer handles markdown-table edge cases: footnotes, code spans inside cells, non-ASCII characters.
 - For markdown that doesn't parse cleanly (e.g., row with merged cells), the importer logs a warning and continues — does NOT silently drop data, does NOT crash.
 - `pytest tests/importers/` green.
@@ -157,10 +157,16 @@ Five subagent tasks. Tasks A–C can run **in parallel** (no shared files except
 This plan is harness-independent. A lead agent maps each task to the delegation primitive available in its current environment:
 
 - **Claude Code:** create one TaskCreate item per subagent, then dispatch through Claude Code's Agent/Task tool. Use Opus/Sonnet/Haiku according to task risk and owner subscription availability.
-- **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
+- **Codex:** use `spawn_agent` for parallel bounded work when the user/session has authorized subagents (Roman gave standing project authorization in `AGENTS.md`). Follow `docs/codex-subagent-profile.md` and the `.codex/agents/*.toml` profiles when available. Prefer `worker` for implementation, `explorer` for read-only codebase questions, and the default/current model for difficult integration. Use smaller/faster models only for low-risk, bounded tasks when the harness allows explicit model choice and the lead has a concrete reason.
 - **Other harnesses:** use their equivalent bounded-agent mechanism only if it can preserve the same contract: self-contained brief, disjoint write ownership, evidence report, no commits by subagents, and lead-owned integration.
 
-Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary.
+Lead agents should not run multiple lead-agent sessions in parallel by default. Roman serializes lead sessions across Claude Code and Codex; durable state in WORKLOG/CONTEXT/git is the handoff boundary. Codex-led sessions should start with the smaller scout-then-worker shape in `docs/codex-subagent-profile.md` unless the lead can explain why direct implementation is safer. Completed Codex subagents should be closed promptly after their evidence is summarized into durable state, so the configured thread cap remains available for real work.
+
+When Codex subagents are used, record the stable dispatch label from
+`docs/codex-subagent-profile.md`: `<profile>[<model>/<reasoning>] (<nickname>)`.
+The profile/model/reasoning is the analyzable part for future orchestration
+quality reviews; the nickname is the human-readable session alias. Long agent
+ids are recorded only when a live technical operation needs them.
 
 ### How subagents are dispatched
 
@@ -257,6 +263,120 @@ Before staging any v0.1 commit:
 When v0.1 ships, lead agent writes a v0.2 delegation plan addendum (this file gets appended; doesn't need to be a new file). v0.2 introduces the AgentRunner concrete + first AgentJob type — that's where the orchestration engine actually starts running.
 
 Owner's feedback after using v0.1 hands-on is the input to v0.2 planning. Probable adjustments: schema fields that turned out wrong on real import, UI affordances that didn't feel right, performance hot spots in matrix rendering. These are normal iteration material — see SPIRIT.md "What Differentiates This Project" §3 (Live, not archival) and the iterative-simplicity principle.
+
+### v0.2a addendum — OpenCode refresh execution spine
+
+Decision: split PRD v0.2 into smaller feedback slices. The first slice ships the durable job spine before parsing freeform agent output into Insights.
+
+Deliverable:
+
+- OpenCode dossier has an active Refresh button.
+- POST refresh creates an `AgentJob(type="refresh", target_kind="Harness")`.
+- The job runs through selected `AgentRunner` (`CodexRunner` by default, `ClaudeRunner` optional). Concrete CLI subprocess code lives only in the corresponding runner module under `src/observatory/runners/`.
+- Raw runner output is written to `live-sessions/agent-job-*.log`.
+- `/jobs` lists jobs; `/jobs/{id}` shows status/error/log link; `/jobs/{id}/log` serves the raw log.
+
+Non-goals for v0.2a:
+
+- no parser from raw log to `Insight`;
+- no cron;
+- no all-harness refresh;
+- no SSE/live studio;
+- no six-job-type forms.
+
+Why: the full v0.2 chain mixes subprocess behavior, prompt shape, parsing, and UI. Preserving raw logs first makes the next parser slice evidence-driven and keeps agent fallibility visible.
+
+Acceptance:
+
+- `uv run pytest` green;
+- `uv run ruff check src/ tests/ scripts/validate_anchors.py` green;
+- `uv run mypy src/observatory tests` green;
+- `uv run python scripts/validate_anchors.py` green;
+- grep confirms the concrete CLI invocation text does not leak outside the runner boundary.
+- Playwright CLI visual QA confirms matrix top-scroll and cell-detail reveal behavior.
+
+Lead-implementation note:
+
+- v0.2a matrix/Playwright work was implemented directly by the lead because it established the project's first visual-QA pattern.
+- This should not become the default. Similar bounded UI/test follow-ups should be delegated to a subagent after the lead updates PRD/WHY and writes the acceptance contract.
+
+### v0.2b addendum — Parse one real refresh log into Insights
+
+Preferred execution: delegate implementation to a bounded subagent after a useful raw log exists. Lead owns PRD/WHY updates, prompt contract decisions, and final integration review.
+
+Deliverable:
+
+- Use one real OpenCode refresh raw log from `live-sessions/agent-job-*.log`.
+- Parse the log into at least one proposed `Insight` and supporting `EvidenceItem` when evidence is present.
+- Show the parsed result in the OpenCode dossier using the existing Insight-over-proof layout.
+- Preserve the raw log as evidence of runner behavior; do not overwrite or delete it.
+
+Non-goals:
+
+- no all-harness parsing;
+- no cron;
+- no multi-pass verification;
+- no engagement hooks;
+- no invented parser format before a real log exists.
+
+Acceptance:
+
+- parser/service tests cover one successful parse and one no-evidence/ambiguous log path;
+- web route/test proves the parsed Insight appears in the OpenCode dossier;
+- Playwright CLI visual QA covers the changed dossier or job-to-dossier path if UI behavior changes;
+- `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green.
+
+### v0.3a addendum — Generalize manual refresh beyond OpenCode
+
+Preferred execution: lead owns PRD/WHY/WORKLOG and target-selection judgment; delegate the bounded service/route/parser/test implementation to a worker after a read-only scout identifies OpenCode-specific assumptions.
+
+Deliverable:
+
+- Harness dossiers show refresh controls for non-OpenCode harnesses.
+- `RefreshJobService.refresh_harness` no longer rejects all non-OpenCode targets.
+- Target cwd preflight can use a current local sibling architecture directory when imported registry paths are stale.
+- Prompt template naming/body are target-generic.
+- Parser stores proposed Insight/Evidence rows against the actual target harness, not a fallback OpenCode row.
+- Semantic events include the target harness slug and resolved cwd.
+
+Non-goals:
+
+- no cron scheduler yet;
+- no Curation Queue yet;
+- no multi-pass verification;
+- no full rewrite of the freeform parser.
+
+Acceptance:
+
+- focused tests cover a successful non-OpenCode refresh and stale-path cwd resolution;
+- existing OpenCode refresh tests still pass;
+- `uv run pytest`, `ruff`, `mypy`, and anchor validator stay green;
+- live smoke confirms at least one non-OpenCode dossier can create a durable refresh job without OpenCode-specific rejection.
+
+### v0.3b addendum — First guarded scheduler slice
+
+Preferred execution: lead owns PRD/WHY/WORKLOG and the guardrail decision; delegate bounded model/service/UI implementation.
+
+Deliverable:
+
+- DB-backed per-harness refresh schedule model.
+- APScheduler dependency pinned to the latest stable 3.x release; do not use 4.x alpha.
+- Scheduler service computes next-run metadata and registers enabled schedules without dispatching on import.
+- FastAPI app owns startup/shutdown lifecycle, but automatic scheduled dispatch is disabled by default unless an explicit setting/env enables it.
+- Job Dashboard displays schedule rows and next-run metadata.
+
+Non-goals:
+
+- no cron UI editor yet;
+- no background model calls by default on dev server startup;
+- no separate worker process;
+- no schedule persistence in APScheduler's own job store yet; SQLite remains the durable schedule source.
+
+Acceptance:
+
+- tests cover schedule model roundtrip, registration/next-run calculation, and Job Dashboard rendering;
+- test app startup does not call real Codex/Claude;
+- `uv run pytest`, `ruff`, `mypy`, anchor validator, and relevant visual smoke stay green.
 
 ---
 

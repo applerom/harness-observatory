@@ -1,0 +1,29 @@
+<!--
+FILE: src/observatory/web/templates/_nav.html
+VERSION: 2026-04-26
+START_MODULE_CONTRACT:
+PURPOSE: Shared top navigation for observatory web surfaces.
+PRD_REF: docs/PRD.md §26.2, §11.9
+WHY_REF: docs/why-graph.xml MOD-WEB-APP
+SCOPE: dashboard, harness, topic, matrix, jobs, curation, insight library, live, lenses, and exports entry links
+INVARIANTS:
+- Navigation names stay aligned with PRD §26.2 surfaces.
+:END_MODULE_CONTRACT
+-->
+<header class="border-b border-slate-200 bg-white">
+  <nav class="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+    <a href="/" class="font-semibold tracking-normal text-slate-950">Harness Observatory</a>
+    <div class="flex flex-wrap items-center justify-center gap-2 text-sm md:justify-end">
+      <a class="nav-link {% if active_nav == 'dashboard' %}nav-link-active{% endif %}" href="/">Dashboard</a>
+      <a class="nav-link {% if active_nav == 'harnesses' %}nav-link-active{% endif %}" href="/harnesses">Harnesses</a>
+      <a class="nav-link {% if active_nav == 'topics' %}nav-link-active{% endif %}" href="/topics">Topics</a>
+      <a class="nav-link {% if active_nav == 'matrix' %}nav-link-active{% endif %}" href="/matrix">Matrix</a>
+      <a class="nav-link {% if active_nav == 'jobs' %}nav-link-active{% endif %}" href="/jobs">Jobs</a>
+      <a class="nav-link {% if active_nav == 'curation' %}nav-link-active{% endif %}" href="/curation">Curation</a>
+      <a class="nav-link {% if active_nav == 'insights' %}nav-link-active{% endif %}" href="/insights">Insights</a>
+      <a class="nav-link {% if active_nav == 'live' %}nav-link-active{% endif %}" href="/live">Live</a>
+      <a class="nav-link {% if active_nav == 'lenses' %}nav-link-active{% endif %}" href="/lenses">Lenses</a>
+      <a class="nav-link {% if active_nav == 'exports' %}nav-link-active{% endif %}" href="/exports">Exports</a>
+    </div>
+  </nav>
+</header>

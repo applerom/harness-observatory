@@ -1,0 +1,27 @@
+## Summary
+Recent activity in the harness is mostly documentation and curriculum work, not source implementation. The main fresh wave is on **March 27, 2026**: a large `series/` teaching track was added, then revised to account for newer upstream prompt-routing behavior, then expanded with Codex/OpenCode comparison inserts and edit/LSP strategy notes. The only non-Markdown change in the recent window is a local harness permission tweak in `.claude/settings.local.json`.
+
+## Notable Changes
+- **Large new teaching/documentation tranche** in commit `5161326`:
+  added `series/README.md`, `series/CURRICULUM.md`, and episode drafts `ep00` through `ep09`, plus insert material for agent hierarchy.
+- **Prompt-routing audit refresh** in commit `f05f6d8`:
+  updated core architecture docs to preserve the old GPT-5.4 `codex.txt` story as historical context while correcting current-state docs toward `gpt.txt` and child-session subagents; also added a dedicated audit doc.
+- **Comparison inserts added** in commit `a0d564f`:
+  new series inserts compare OpenCode with Codex on loop/parallelism, multi-agent behavior, and control mechanisms.
+- **Edit/tooling strategy inserts added** in commit `e62d753`:
+  new material covers fuzzy edit strategies and OpenCode’s built-in formatting/LSP feedback path.
+- **Operational change is minimal**:
+  `.claude/settings.local.json` now allows a few more read-only shell patterns (`git`, targeted `grep`, `find`, `ls`), but there are **no recent `.ts`, `.py`, or other harness implementation files changed** in the inspected commit window.
+
+## Evidence Paths
+- Audit and correction pass: [research/revision-audit-2026-03-27.md](/D:/ai/harnesses/opencode-architecture/research/revision-audit-2026-03-27.md:11)
+- Current prompt-system narrative and routing update: [architecture/prompt-system.md](/D:/ai/harnesses/opencode-architecture/architecture/prompt-system.md:62)
+- Series index showing the new episode structure: [series/README.md](/D:/ai/harnesses/opencode-architecture/series/README.md:20)
+- New edit-strategy insert referencing OpenCode edit heuristics: [series/insert-edit-strategies.md](/D:/ai/harnesses/opencode-architecture/series/insert-edit-strategies.md:52)
+- New LSP/formatting insert: [series/insert-lsp-builtin.md](/D:/ai/harnesses/opencode-architecture/series/insert-lsp-builtin.md:20)
+- Local harness permission change: [.claude/settings.local.json](/D:/ai/harnesses/opencode-architecture/.claude/settings.local.json:1)
+
+## Uncertainty
+- The docs repeatedly cite `D:/ai/opencode-upstream/`, but that path does **not** exist in this workspace; I only found `D:\ai\opencode-upstream-minimal`. That limits independent re-verification of some “upstream checked” claims made by the docs.
+- Several `series/` files contain Cyrillic prose, and the constrained shell rendered parts of that text as mojibake. Commit history, filenames, and readable code snippets were still enough to identify the change themes, but not to fully validate every line of narrative text.
+- `git status --porcelain` returned no tracked changes, so the harness worktree appears clean.

@@ -10,9 +10,11 @@ The goal: anchor-first navigation that survives refactors, with intent readable 
 ## 0) TL;DR
 
 - Every governed file starts with a **Module Contract**.
-- Reusable functions/methods get a **Method Contract** when it helps navigation.
+- Reusable, risky, or non-obvious functions/methods get a **Method Contract**.
 - Non-trivial regions get paired **Block Anchors**.
+- Obvious tiny code should stay light: no contract, or a searchable `:SIMPLE_CODE:` marker when the project wants later audits.
 - Anchor names are stable, globally unique per file, and match what the Why Graph points to.
+- A stale contract is a bug. Update the contract in the same patch as the code.
 - No line numbers anywhere — in graph, in docs, in contracts.
 
 ---
@@ -24,30 +26,36 @@ The goal: anchor-first navigation that survives refactors, with intent readable 
 - Anchor names must match `START_*` markers referenced from `docs/why-graph.xml`.
 - Keep anchor names short, descriptive, and stable across refactors. Renaming an anchor is a graph-level change.
 - Field keys (PURPOSE, INVARIANTS, etc.) stay in English for deterministic parsing; narrative can be in any language your team uses.
+- For governed code, decide the contract level before implementation: full contract, block anchor, `:SIMPLE_CODE:`, or nothing.
+- If code changes purpose, scope, invariants, caller expectations, or side effects, update the contract before claiming the code is done.
+- `:SIMPLE_CODE:` is not a graph anchor and not a wrapping tag. It is a lightweight searchable note for code that is intentionally simple today but may need review if it grows.
 
 ---
 
 ## 2) Contract fields
 
 **Module-level (required):**
-- `FILE` — repo-relative path
-- `VERSION` — semver or `YYYY-MM-DD`
-- `PURPOSE` — why this file exists
-- `PRD_REF` — pointer into `docs/PRD.md`
-- `WHY_REF` — pointer into `docs/why-graph.xml` (optional but recommended)
-- `SCOPE` — primary responsibilities
-- `INVARIANTS` — policy-critical guarantees
+- `FILE` — repo-relative path. Gives agents and scripts a stable identity for this contract.
+- `VERSION` — semver or `YYYY-MM-DD`. Helps agents detect whether the contract was maintained with recent work.
+- `PURPOSE` — why this file exists. This is the fastest answer to "should I edit this file?"
+- `PRD_REF` — pointer into `docs/PRD.md`. Keeps product intent close to the implementation surface.
+- `WHY_REF` — pointer into `docs/why-graph.xml` (optional but recommended). Lets an agent jump from code to the intent map.
+- `SCOPE` — primary responsibilities. Prevents the file from becoming the place for everything nearby.
+- `INVARIANTS` — policy-critical guarantees. Protects behavior that tests may not name directly.
 
 **Module-level (optional):**
 - `MODULE_MAP` — one-line role per public symbol. Worth the tokens once a file has more than ~5 public symbols or an agent would otherwise have to grep to find the right entry point. Skip for small, obvious files.
+- `CALLER_CONTEXT` — data, permissions, or surrounding state that callers must provide. Use when a shared component, helper, service, or template is called from multiple places, or when the required context is surprising.
 - `CHANGE_HISTORY` — last meaningful change. Optional; git already has the full history. Add only when the "why of the last change" is load-bearing for the next agent.
 
 **Method-level (when used):**
 - `PURPOSE` — single responsibility
-- `INPUTS` — roles/constraints (not type signature — the code has that)
-- `OUTPUTS` — return shape and meaning
+- `INPUTS` — roles/constraints, not the type signature. Most useful at service boundaries, reusable helpers, imports/parsers, and any place where the data shape is surprising.
+- `OUTPUTS` — return shape and meaning. Most useful when callers depend on a normalized, partial, or domain-specific shape.
 - `LINKS` — PRD, WHY, or anchor references
 - Optional: `PRECONDITIONS`, `POSTCONDITIONS`, `INVARIANTS`, `ERRORS`, `SIDE_EFFECTS`
+
+Surprising data deserves explicit fields. Agent mistakes often come from assuming the ordinary shape: "this object has all columns", "this route always passes user context", "this helper only formats". If the shape or context is unusual, write it down.
 
 ---
 
@@ -65,6 +73,7 @@ The goal: anchor-first navigation that survives refactors, with intent readable 
 # SCOPE: <primary responsibilities, semicolon-separated>
 # INVARIANTS:
 # - <policy-critical guarantee>
+# CALLER_CONTEXT: <optional: required data/context from callers>
 # START_MODULE_MAP:
 # - <symbol>: <short role>
 # :END_MODULE_MAP
@@ -204,12 +213,15 @@ export function renderSources(sources: Source[]): JSX.Element { ... }
 
 1. Read the PRD and Why Graph for the affected feature.
 2. Update the graph first (see `why-graph-principles.md`).
-3. In the files you'll change, add or update contracts **before** writing the implementation.
-4. Keep patches small. For frequently edited modules, ~200–300 lines is a refactor signal (AGENTS.md §4).
-5. Run your validators before claiming done:
+3. In each file you will change, choose the contract level: module contract, method contract, block anchor, `:SIMPLE_CODE:`, or nothing.
+4. Add or update contracts **before** writing the implementation when intent changes. For small local edits, update contract and code in the same patch.
+5. Keep patches small. For frequently edited modules, ~200–300 lines is a refactor signal (AGENTS.md §4).
+6. Run your validators before claiming done:
    - anchor linter (every `START_*` has a matching `:END_*`)
    - graph↔anchor checker (every `<ANCHOR ... COORD="path#ANCHOR">` resolves)
    - whatever project-specific checks you've added
+
+If a session is interrupted after the contract update but before the code is complete, the next agent can see the intended target. If code changes but the old contract remains, the next agent receives false confidence. False confidence is worse than uncertainty.
 
 ---
 
@@ -219,6 +231,9 @@ export function renderSources(sources: Source[]): JSX.Element { ... }
 - **Contracts front-load intent and invariants** — the "why" is where the code is.
 - **Anchor-first retrieval** is robust to refactors; line-number references rot on first edit.
 - **Stable field keys** allow deterministic validation with simple scripts.
+- **Short contracts stay visible** — long contracts become background comments that agents skim past.
+- **Boundary fields prevent false assumptions** — `INPUTS`, `OUTPUTS`, and `CALLER_CONTEXT` are strongest where data shape or ownership is non-obvious.
+- **Contracts route attention, tests prove behavior** — a contract is a working surface, not a correctness proof.
 
 ---
 
@@ -228,12 +243,16 @@ Avoid:
 
 - anchors that are vague, duplicated, or unstable (`START_BLOCK_STUFF`, three of them in the same file)
 - contracts that paraphrase the code instead of capturing intent ("PURPOSE: returns the user" on `getUser`)
+- contracts so long they restate implementation details instead of boundary and intent
 - line-number references anywhere in canonical docs or contracts
 - adding anchors to every five-line block — anchors are for regions a human or agent would otherwise have to guess at
 - updating a file's code without updating its contract header — the contract becomes a lie on the first forgotten edit
 - leaving obsolete anchors after deleting the code they wrapped
+- leaving `:SIMPLE_CODE:` on code that has grown into a real boundary, shared helper, or risky implementation
 
 **Rule of thumb:** if an anchor doesn't help an agent answer "what is this region for and what depends on it," it's noise. Remove it.
+
+**Low-value places for full contracts:** one-line wrappers, obvious pure formatting helpers, and tiny private functions already named clearly. Use no marker when the code is outside governed scope. Use `:SIMPLE_CODE: <why this stays simple>` when the project wants a grep-able reminder to revisit it if it grows. The leading and trailing colons are intentional: they signal a standalone marker, so agents do not search for a matching end tag.
 
 **Inherited code without anchors.** You will land in files that never had contracts. Do not retrofit the whole tree. Leave stable, rarely-touched legacy untouched — the graph should only reference what you actively govern. The first time an agent edits an unanchored file, add a module contract and whatever block anchors aid navigation, and add the graph node in the same commit. Every touched file upgrades; the rest waits its turn.
 
@@ -246,6 +265,8 @@ How much of this to apply at once is a project decision. One pattern that works:
 1. All **new files** in governed directories start with a module contract.
 2. **Touched high-value entrypoints** gain block anchors immediately.
 3. **Reusable functions** gain method contracts when files are refactored or stabilized.
-4. Do **not** retrofit the whole repo at once. Every touched file upgrades. Orphan untouched legacy until it's being changed anyway.
+4. **Shared components, helpers, templates, and services** name their caller data/context when it is not obvious.
+5. **Simple governed code** may use `:SIMPLE_CODE:` instead of a full contract; upgrade it when it grows.
+6. Do **not** retrofit the whole repo at once. Every touched file upgrades. Orphan untouched legacy until it's being changed anyway.
 
 The graph and contracts grow together. A file without a contract that the graph doesn't reference is fine. A file the graph references without matching anchors is a bug.

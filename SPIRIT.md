@@ -81,6 +81,25 @@ Harness-observatory — приложение которое одновремен
 
 ---
 
+## Development as Curriculum
+
+То, как мы строим harness-observatory, само является учебным материалом. Не только итоговый код, но и реальные трения разработки: неверный выбор версии Python агентом, ограничение на число Codex subagent threads, stale docs после быстрых коммитов, удачные и неудачные делегации, решения "делаем минимально сейчас, улучшаем после фидбека".
+
+Это не backstage, который нужно спрятать. Это доказательство главной идеи проекта: работа с агентами — операторское искусство, где важны постановка задачи, проверка, логирование решений, корректировка процесса и спокойное отношение к ошибкам модели.
+
+Правило:
+
+- важные решения и трения фиксируются в `EVOLUTION.md`;
+- из повторяемых или хорошо показательных случаев делаются короткие уроки в `docs/lessons/`;
+- уроки пишутся из реальных эпизодов проекта, без ретуши под "идеальный процесс";
+- если агент выбирает путь сам, он записывает почему, чтобы следующий агент или студент мог спорить с решением по фактам, а не гадать по diff.
+- продуктовые изменения идут через PRD + WHY graph, а не только через код; если студент видит diff, он должен видеть и причину.
+- интерфейс и durable docs используют точные English terms (`target`, `runner`, `AgentJob`, `EvidenceItem`) там, где перевод создаёт риск разночтений.
+
+Антипаттерн: терять полезную разработческую правду в чате, коммит-месседже или памяти одного агента. Если из проблемы можно сделать урок для студента — это не шум, это контент проекта.
+
+---
+
 ## Engagement as First Principle
 
 Информация без вовлечения — мертвый учебник. Этот проект бьёт за вовлечение явно.
@@ -115,18 +134,39 @@ Harness-observatory — приложение которое одновремен
 
 ```
 Roman (Human) — owner, intent, acceptance criteria, lecturer
-  └── Lead agent (Claude Opus 4.7) — architecture, soul docs, orchestration
-        ├── Subagents (Sonnet/Haiku) — bounded implementation tasks
-        └── AgentRunner (other agents in future) — research tasks inside the running app
+  ├── Spirit lead (Claude Opus 4.x) — constitutional steward:
+  │     SPIRIT, PRD architecture, WHY graph; periodic deep review of trajectory
+  └── Execution lead (currently Codex GPT-5.x) — primary orchestrator:
+        dispatches subagents, ships product slices, maintains EVOLUTION.md + WORKLOG.md
+        ├── Subagents (Codex/Claude/Sonnet/Haiku class, bounded) — one delegation, one bounded task
+        └── AgentRunner (other agents in future) — runtime agents launched by the running application
 ```
 
-**Roman:** держит интент, говорит "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead agent.
+**Roman:** держит интент, говорит "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead-агентов.
 
-**Lead agent:** архитектор. Пишет SPIRIT/PRD/WHY-граф/делегационные контракты. Выбирает что делегировать кому. Проверяет результаты. Не пишет код напрямую — это работа субагентов. Опции: я могу остаться той же сессией Opus или быть переключён на свежую сессию (контекст — в SPIRIT/PRD/WHY/CONTEXT, всегда сохранён).
+**Spirit lead (Опус):** конституционный архитектор. Заложил SPIRIT/PRD/AGENTS на bootstrap. Возвращается для periodic deep review — оценить, держится ли дух при имплементации, нужна ли коррекция спецификации, не уехала ли реализация по сравнению с задумкой. Имеет standing right поправлять SPIRIT/PRD/AGENTS если видит drift. Может дёргать execution lead через owner. Может сам запускать субагентов когда находится в активной сессии и это уместно. По умолчанию не пишет ежедневный продуктовый код — это работа execution lead и его субагентов.
+
+**Execution lead (сейчас — Codex GPT-5.x):** основной оркестратор-исполнитель. Получает спецификацию от spirit lead через PRD/WHY/AGENTS, делегирует имплементацию субагентам, интегрирует, фиксит drift в момент возникновения, ведёт `EVOLUTION.md` и `WORKLOG.md`. Имеет standing right поднимать complaints (per agent1st §6 CDD) когда спецификация создаёт implementation pain — через `EVOLUTION.md`, чтобы spirit lead увидел и учёл при следующей ревизии.
 
 **Subagents:** ограниченное delegation per agent1st §9. Получают: deliverable, acceptance criteria, релевантный subtree WHY-графа, релевантные контракты. Возвращают: evidence (что сделано) + блокеры/трения если были.
 
 **AgentRunner (future):** runtime агенты которых **запускает само приложение** для исследовательских задач (refresh harness, abstract evidence into insight, etc.). Это другая категория чем lead/subagent — это часть продукта, не процесса разработки.
+
+### Why two leads instead of one?
+
+Это не дефект, это ценный teaching artifact (Level 2 dogfooding):
+
+- Студенты видят в `EVOLUTION.md` как два разных агента работают в связке: один держит vision, другой держит implementation — и они корректируют друг друга, а не конкурируют. Это идеальный dog-food во все стороны: для самих агентов, для студентов, для будущих lead-сессий.
+- Spirit lead защищён от context bloat, который неизбежен у того, кто непрерывно дёргает CLI и читает subagent-репорты — он возвращается со свежей головой для архитектурных решений.
+- Execution lead имеет полный operational context, нужный чтобы делегировать корректно — этот context нельзя заменить чтением WORKLOG. Чтение и работа — разные ёмкости памяти.
+
+Spirit lead и execution lead могут быть одним и тем же агентом в принципе — это допустимо. Но *в текущую эру* они разные, и это записано прямо здесь, чтобы будущие сессии не пытались механически "вернуть всё к Опусу" или наоборот "сделать всё через Codex".
+
+### Disagreement protocol (per agent1st §3 Right to Disagree)
+
+- На вопросах spirit/architecture финальное слово за spirit lead. Execution lead поднимает concern через `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax); spirit lead читает `EVOLUTION.md` первым делом на следующем deep-review проходе.
+- На вопросах implementation tactics финальное слово за execution lead. Spirit lead не микроменеджит, как именно выполнить слайс — задаёт acceptance criteria и отступает.
+- На спорах между ними — owner адъюдицирует.
 
 ---
 
@@ -140,6 +180,8 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
 - **Полировать формулировки** до того что они теряют остроту. Лучше провокационная и точная, чем гладкая и забываемая.
 - **Делать "perfect first version".** Каждая v0.X должна быть shippable. Если что-то не помещается — отложить до следующей итерации, не задерживать релиз.
 - **Hardcode `claude -p`** где-либо ниже AgentRunner абстракции. Это убивает Level 3 dogfooding.
+- **Смешивать target и runner.** OpenCode как target — это объект исследования. OpenCodeRunner как runner — это агентный исполнитель. Эти роли нельзя склеивать в UI, логах или объяснениях.
+- **Разрабатывать UI вслепую.** Если агент меняет визуальную поверхность, он обязан увидеть её через screenshot/visual QA инструмент, а не ждать пока Roman глазами найдёт проблему.
 - **Делать UI красивее чем содержательнее.** Tailwind по умолчанию, никаких визуальных новаций пока контент не доказал что заслуживает их.
 - **Изобретать своё там где есть популярное.** Стек популярный намеренно (см. PRD §4.7) — студент должен мочь форкнуть и улучшить.
 - **Убирать упоминания агентских ошибок из live-session логов** "для архива". Логи как есть. Грязное состояние — учебный материал.
