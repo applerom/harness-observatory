@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — v1.0-minimal snapshot hygiene and attribution discipline queued for main squash
-> **Phase:** v1.0-minimal working product; v1.1 honesty + hardening implementation starting
-> **Next milestone:** squash v1.0-minimal into `main`, then Codex execution lead implements V11-* items from WORKLOG queue while owner collects lecturer/student feedback
+> **Last update:** 2026-04-27 — v1.1 honesty + runner/parser hardening implemented and validated
+> **Phase:** v1.0-minimal published to local `main`; v1.1 honesty + hardening ready to commit on `development`
+> **Next milestone:** commit v1.1 with Codex author identity, then continue feedback-driven PRD queue while owner collects lecturer/student feedback
 
 ## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
 
@@ -30,7 +30,20 @@ What changed in this pass:
 - PRD §24 v1.1 now names v1.0 snapshot hygiene and commit author identity as explicit acceptance items.
 - AGENTS/EVOLUTION now treat agent commit attribution as a continuity rule, not a courtesy.
 
-What's now possible: `main` can receive a squash snapshot that honestly represents a working v1.0-minimal product and preserves a forward rule that future agent work must not be authored under Roman's human identity.
+Outcome: `development` was first committed as `371ce21` (`docs(v1): fix snapshot state and agent attribution`) with explicit Codex author identity. It was then squash-merged into `main` as `8dc0cdc` (`feat(v1): publish v1.0-minimal observatory snapshot`). The local `main` tree now represents the v1.0-minimal working product; push remains a separate operation.
+
+## Update 2026-04-27 — v1.1 runner/parser execution evidence
+
+Codex execution lead started PRD §24 v1.1 implementation after the v1.0-minimal main snapshot.
+
+What changed / was observed:
+- Engagement honesty UI now labels deterministic engagement copy as `template-generated` on Insight Library and Live detail surfaces.
+- Parser empty-result guard now marks successful runner output with zero parsed artifacts as `done_no_findings` and emits `parser_returned_no_findings`.
+- `ClaudeRunner` gained a cheap `preflight()` and Windows-runnable executable resolution.
+- Real ClaudeRunner refresh Job #9 ran against target `claude-code`; Claude CLI version was `2.1.119 (Claude Code)`, runner status `done`, raw log `live-sessions/agent-job-00009.log`.
+- Job #9 exposed a parser shape gap: Claude wrote plain evidence path bullets, not Markdown links. Parser was hardened to parse those; local Job #9 now has Insight #37 and EvidenceItems #80-#82.
+
+Validation evidence: `uv run pytest` passed 101 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 64 anchors / skipped 0; Playwright CLI `visual:insight`, `visual:jobs`, and `visual:live` passed. What's now possible: commit v1.1 with explicit Codex author identity.
 
 ---
 

@@ -7,5 +7,6 @@ test("insight library exposes filters and engagement copy", async ({ page }) => 
   await expect(page.getByLabel("Audience")).toBeVisible();
   await expect(page.getByLabel("Format")).toBeVisible();
   await expect(page.getByRole("button", { name: "Filter" })).toBeVisible();
+  await expect(page.getByText("template-generated").first()).toBeVisible();
 });
 

@@ -36,6 +36,14 @@ from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 
+AGENT_JOB_STATUS_QUEUED = "queued"
+AGENT_JOB_STATUS_RUNNING = "running"
+AGENT_JOB_STATUS_DONE = "done"
+AGENT_JOB_STATUS_DONE_NO_FINDINGS = "done_no_findings"
+AGENT_JOB_STATUS_FAILED = "failed"
+AGENT_JOB_STATUS_TIMEOUT = "timeout"
+
+
 def utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -309,7 +317,7 @@ class AgentJob(SQLModel, table=True):
     runner_version: str | None = None
     trigger: str | None = None
     parent_job_id: int | None = Field(default=None, foreign_key="agentjob.id")
-    status: str = Field(default="queued", index=True)
+    status: str = Field(default=AGENT_JOB_STATUS_QUEUED, index=True)
     stdout_log_path: str | None = None
     produced_artifact_ids: list[int] = Field(default_factory=list, sa_column=Column(JSON))
     error_message: str | None = None
@@ -340,6 +348,12 @@ class RefreshSchedule(SQLModel, table=True):
 
 __all__ = [
     "AgentJob",
+    "AGENT_JOB_STATUS_DONE",
+    "AGENT_JOB_STATUS_DONE_NO_FINDINGS",
+    "AGENT_JOB_STATUS_FAILED",
+    "AGENT_JOB_STATUS_QUEUED",
+    "AGENT_JOB_STATUS_RUNNING",
+    "AGENT_JOB_STATUS_TIMEOUT",
     "ComparisonCell",
     "EcosystemObject",
     "EvidenceItem",

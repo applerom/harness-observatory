@@ -69,11 +69,31 @@ INVARIANTS:
               {% if insight.first_observed_by %}
                 <p class="text-sm font-medium text-emerald-700">First observed by {{ insight.first_observed_by }}</p>
               {% endif %}
+              {% if insight.engagement_hook or insight.joke_or_telegram_seed %}
+                <!-- START_INSIGHT_TEMPLATE_ENGAGEMENT_HONESTY -->
+              {% endif %}
               {% if insight.engagement_hook %}
-                <p class="rounded-md bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-900">{{ insight.engagement_hook }}</p>
+                <div class="rounded-md bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-900">
+                  <div class="mb-1 flex flex-wrap items-center gap-2">
+                    <span class="status-badge template-badge">template-generated</span>
+                    <span class="text-xs font-medium text-emerald-800">Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2.</span>
+                  </div>
+                  <p>{{ insight.engagement_hook }}</p>
+                </div>
               {% endif %}
               {% if insight.joke_or_telegram_seed %}
-                <p class="rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">{{ insight.joke_or_telegram_seed }}</p>
+                <div class="rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">
+                  {% if not insight.engagement_hook %}
+                    <div class="mb-1 flex flex-wrap items-center gap-2">
+                      <span class="status-badge template-badge">template-generated</span>
+                      <span class="text-xs font-medium text-slate-600">Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2.</span>
+                    </div>
+                  {% endif %}
+                  <p>{{ insight.joke_or_telegram_seed }}</p>
+                </div>
+              {% endif %}
+              {% if insight.engagement_hook or insight.joke_or_telegram_seed %}
+                <!-- :END_INSIGHT_TEMPLATE_ENGAGEMENT_HONESTY -->
               {% endif %}
               {% set note_map = revision_notes_by_insight|default({}) %}
               {% set revision_notes = note_map.get(insight.id, []) %}

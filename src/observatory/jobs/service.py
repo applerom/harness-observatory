@@ -22,7 +22,16 @@ from typing import Protocol, cast
 from sqlmodel import Session, select
 
 from observatory.jobs.log_parser import parse_job_log
-from observatory.models import AgentJob, Harness, PromptTemplate
+from observatory.models import (
+    AGENT_JOB_STATUS_DONE,
+    AGENT_JOB_STATUS_DONE_NO_FINDINGS,
+    AGENT_JOB_STATUS_FAILED,
+    AGENT_JOB_STATUS_QUEUED,
+    AGENT_JOB_STATUS_RUNNING,
+    AgentJob,
+    Harness,
+    PromptTemplate,
+)
 from observatory.runners.base import AgentContext, AgentPreflightResult, AgentResult, AgentRunner
 from observatory.runtime.semantic_log import SemanticLogWriter
 
@@ -67,7 +76,7 @@ class RefreshJobService:
             runner_name=self.runner.name,
             runner_version=self.runner.version,
             trigger=trigger,
-            status="queued",
+            status=AGENT_JOB_STATUS_QUEUED,
         )
         session.add(job)
         session.commit()
@@ -83,7 +92,7 @@ class RefreshJobService:
         )
 
         job.started_at = utc_now()
-        job.status = "running"
+        job.status = AGENT_JOB_STATUS_RUNNING
         session.add(job)
         session.commit()
         session.refresh(job)
@@ -198,7 +207,7 @@ class RefreshJobService:
                 ),
             )
         self.emit_event(
-            level="info" if result.status == "done" else "error",
+            level="info" if result.status == AGENT_JOB_STATUS_DONE else "error",
             code="runner_result",
             anchor="START_JOB_REFRESH",
             expected="runner returns a terminal AgentResult",
@@ -219,30 +228,47 @@ class RefreshJobService:
         session.add(job)
         session.commit()
         session.refresh(job)
-        if job.status == "done" and job.stdout_log_path and not job.produced_artifact_ids:
+        if job.status == AGENT_JOB_STATUS_DONE and job.stdout_log_path and not job.produced_artifact_ids:
             try:
                 parse_result = parse_job_log(session, job)
-                self.emit_event(
-                    level="info",
-                    code="parser_succeeded",
-                    anchor="START_JOB_REFRESH",
-                    expected="successful refresh raw log is parsed without crashing",
-                    actual=(
-                        f"parsed {len(parse_result.insight_ids)} insights and "
-                        f"{len(parse_result.evidence_item_ids)} evidence items"
-                    ),
-                    job=job,
-                    metadata={
-                        "insight_ids": list(parse_result.insight_ids),
-                        "evidence_item_ids": list(parse_result.evidence_item_ids),
-                    },
-                )
+                # START_PARSER_EMPTY_GUARD:
+                if not parse_result.insight_ids and not parse_result.evidence_item_ids:
+                    job.status = AGENT_JOB_STATUS_DONE_NO_FINDINGS
+                    session.add(job)
+                    session.commit()
+                    session.refresh(job)
+                    self.emit_event(
+                        level="warning",
+                        code="parser_returned_no_findings",
+                        anchor="START_PARSER_EMPTY_GUARD",
+                        expected="successful runner output yields at least one parsed artifact",
+                        actual="parser returned zero Insights and zero EvidenceItems",
+                        job=job,
+                        metadata={"stdout_log_path": job.stdout_log_path},
+                    )
+                else:
+                    self.emit_event(
+                        level="info",
+                        code="parser_succeeded",
+                        anchor="START_JOB_REFRESH",
+                        expected="successful refresh raw log is parsed without crashing",
+                        actual=(
+                            f"parsed {len(parse_result.insight_ids)} insights and "
+                            f"{len(parse_result.evidence_item_ids)} evidence items"
+                        ),
+                        job=job,
+                        metadata={
+                            "insight_ids": list(parse_result.insight_ids),
+                            "evidence_item_ids": list(parse_result.evidence_item_ids),
+                        },
+                    )
+                # :END_PARSER_EMPTY_GUARD
             except Exception as exc:
                 parser_error = (
                     f"Parser failed after successful runner output: {type(exc).__name__}: {exc}"
                 )
                 append_job_log_error(Path(job.stdout_log_path), "[parser error]", parser_error)
-                job.status = "failed"
+                job.status = AGENT_JOB_STATUS_FAILED
                 job.error_message = parser_error
                 session.add(job)
                 session.commit()

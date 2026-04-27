@@ -87,7 +87,7 @@ INVARIANTS:
               <td class="px-4 py-3 text-slate-700">{{ job.type }}</td>
               <td class="px-4 py-3 text-slate-700">{{ item.target_label }}</td>
               <td class="px-4 py-3 text-slate-700">{{ item.runner_label }}</td>
-              <td class="px-4 py-3"><span class="status-badge">{{ job.status }}</span></td>
+              <td class="px-4 py-3"><span class="status-badge {% if job.status == 'done_no_findings' %}status-badge-warning{% endif %}">{{ job.status }}</span></td>
               <td class="px-4 py-3 text-slate-500">{{ job.created_at }}</td>
             </tr>
           {% else %}

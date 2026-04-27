@@ -14,7 +14,7 @@ def test_claude_runner_satisfies_protocol_shape() -> None:
     runner: AgentRunner = ClaudeRunner()
 
     assert runner.name == "claude"
-    assert runner.version == "0.2a-cli"
+    assert runner.version == "0.2c-cli"
 
 
 def test_runner_dto_defaults_are_small_and_explicit() -> None:
@@ -33,6 +33,16 @@ def test_claude_run_reports_missing_cli_without_crashing() -> None:
 
     assert result.status == "failed"
     assert "not found" in (result.error_message or "")
+
+
+def test_claude_preflight_reports_missing_cli_without_crashing() -> None:
+    runner = ClaudeRunner(executable_name="definitely-missing-observatory-claude")
+
+    result = asyncio.run(runner.preflight())
+
+    assert result.ok is False
+    assert "not found" in (result.error_message or "")
+    assert result.metadata["executable"] == "definitely-missing-observatory-claude"
 
 
 def test_claude_stream_reports_status_events() -> None:

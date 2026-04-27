@@ -57,7 +57,15 @@ INVARIANTS:
                   <p class="text-sm font-medium text-emerald-700">First observed by {{ insight.first_observed_by }}</p>
                 {% endif %}
                 {% if insight.joke_or_telegram_seed %}
-                  <p class="rounded-md bg-white px-3 py-2 text-sm leading-6 text-slate-700">{{ insight.joke_or_telegram_seed }}</p>
+                  <!-- START_LIVE_TEMPLATE_ENGAGEMENT_HONESTY -->
+                  <div class="rounded-md bg-white px-3 py-2 text-sm leading-6 text-slate-700">
+                    <div class="mb-1 flex flex-wrap items-center gap-2">
+                      <span class="status-badge template-badge">template-generated</span>
+                      <span class="text-xs font-medium text-slate-500">Engagement copy is currently template-generated.</span>
+                    </div>
+                    <p>{{ insight.joke_or_telegram_seed }}</p>
+                  </div>
+                  <!-- :END_LIVE_TEMPLATE_ENGAGEMENT_HONESTY -->
                 {% endif %}
               </div>
               <form class="flex flex-col gap-2 sm:min-w-64" action="/live/{{ job.id }}/insights/{{ insight.id }}/claim" method="post">

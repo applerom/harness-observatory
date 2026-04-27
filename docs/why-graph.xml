@@ -248,6 +248,22 @@
     <REL TYPE="DEPENDS_ON"     TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ENGAGEMENT_HOOKS>
 
+  <FEATURE_ENGAGEMENT_HONESTY ID="FEAT-ENGAGEMENT-HONESTY" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>v1.1 honesty pass: UI surfaces that render engagement copy must disclose when the copy is template-generated rather than agent-authored.</INTENT>
+    <PRD_REF>docs/PRD.md §24 v1.1 Engagement honesty</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-INSIGHT-LIBRARY"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-LIVE-DETAIL"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
+  </FEATURE_ENGAGEMENT_HONESTY>
+
+  <FEATURE_PARSER_EMPTY_GUARD ID="FEAT-PARSER-EMPTY-GUARD" PRIORITY="MEDIUM" STATE="STARTED">
+    <INTENT>v1.1 parser guard: a successful runner result that produces zero parsed Insights and zero EvidenceItems must not appear as a green success; it gets a distinct done_no_findings status plus semantic warning.</INTENT>
+    <PRD_REF>docs/PRD.md §24 v1.1 Parser silent-zero-Insights guard</PRD_REF>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-PARSER-EMPTY-GUARD"/>
+    <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
+    <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
+  </FEATURE_PARSER_EMPTY_GUARD>
+
   <FEATURE_EVIDENCE_RICH_VIEW ID="FEAT-EVIDENCE-RICH-VIEW" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Cell and dossier view with Insight always at top and EvidenceItem collapsed below it; "Show the proof" button expands the file:line citation from upstream. Button label is fixed — it communicates epistemology, not just UI affordance.</INTENT>
     <PRD_REF>docs/PRD.md §4.8 Three-stage learner journey, §11.3 Harness Dossier</PRD_REF>
@@ -396,6 +412,20 @@
     <ANCHOR NAME="START_ROUTE_INSIGHT_EXPLAIN" COORD="src/observatory/web/routes/insight.py#START_ROUTE_INSIGHT_EXPLAIN"/>
   </MODULE_WEB_ROUTES_INSIGHTS>
 
+  <MODULE_WEB_TEMPLATE_INSIGHT_LIBRARY ID="MOD-WEB-TEMPLATE-INSIGHT-LIBRARY"
+                                       FILE="src/observatory/web/templates/insight/index.html"
+                                       STATE="STARTED">
+    <INTENT>Insight Library template section that labels deterministic engagement copy as template-generated.</INTENT>
+    <ANCHOR NAME="START_INSIGHT_TEMPLATE_ENGAGEMENT_HONESTY" COORD="src/observatory/web/templates/insight/index.html#START_INSIGHT_TEMPLATE_ENGAGEMENT_HONESTY"/>
+  </MODULE_WEB_TEMPLATE_INSIGHT_LIBRARY>
+
+  <MODULE_WEB_TEMPLATE_LIVE_DETAIL ID="MOD-WEB-TEMPLATE-LIVE-DETAIL"
+                                   FILE="src/observatory/web/templates/live/detail.html"
+                                   STATE="STARTED">
+    <INTENT>Live Agent Studio detail template section that labels generated telegram seed copy as template-generated.</INTENT>
+    <ANCHOR NAME="START_LIVE_TEMPLATE_ENGAGEMENT_HONESTY" COORD="src/observatory/web/templates/live/detail.html#START_LIVE_TEMPLATE_ENGAGEMENT_HONESTY"/>
+  </MODULE_WEB_TEMPLATE_LIVE_DETAIL>
+
   <MODULE_EXPLAIN_SERVICE ID="MOD-EXPLAIN-SERVICE"
                           FILE="src/observatory/explain/service.py"
                           STATE="STARTED">
@@ -473,6 +503,7 @@
                         FILE="src/observatory/runners/claude.py"
                         STATE="STARTED">
     <INTENT>Claude CLI backed AgentRunner implementation. The concrete subprocess invocation lives here and nowhere else.</INTENT>
+    <ANCHOR NAME="START_CLAUDE_PREFLIGHT" COORD="src/observatory/runners/claude.py#START_CLAUDE_PREFLIGHT"/>
     <ANCHOR NAME="START_CLAUDE_RUN" COORD="src/observatory/runners/claude.py#START_CLAUDE_RUN"/>
   </MODULE_RUNNER_CLAUDE>
 
@@ -491,6 +522,13 @@
     <ANCHOR NAME="START_JOB_REFRESH" COORD="src/observatory/jobs/service.py#START_JOB_REFRESH"/>
     <ANCHOR NAME="START_JOB_PREFLIGHT" COORD="src/observatory/jobs/service.py#START_JOB_PREFLIGHT"/>
   </MODULE_JOBS_SERVICE>
+
+  <MODULE_PARSER_EMPTY_GUARD ID="MOD-PARSER-EMPTY-GUARD"
+                             FILE="src/observatory/jobs/service.py"
+                             STATE="STARTED">
+    <INTENT>Refresh job service branch that turns a parser-zero-artifacts result into done_no_findings plus semantic warning.</INTENT>
+    <ANCHOR NAME="START_PARSER_EMPTY_GUARD" COORD="src/observatory/jobs/service.py#START_PARSER_EMPTY_GUARD"/>
+  </MODULE_PARSER_EMPTY_GUARD>
 
   <MODULE_RUNTIME_SEMANTIC_LOG ID="MOD-RUNTIME-SEMANTIC-LOG"
                                FILE="src/observatory/runtime/semantic_log.py"

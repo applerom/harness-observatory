@@ -34,6 +34,29 @@ def test_parse_refresh_report_extracts_summary_insight_and_evidence_paths() -> N
     assert report.evidence[1].topic_slug == "prompt-system"
 
 
+def test_parse_refresh_report_extracts_plain_path_evidence() -> None:
+    markdown = """
+## Summary
+
+Claude found local documentation drift.
+
+## Evidence paths
+
+- `D:/ai/harnesses/claude-code-architecture/CONTEXT.md:30-43` — upstream path declaration and no-git caveat.
+- `D:/ai/harnesses/claude-code-architecture/.claude/settings.local.json:4` — read permission preserved.
+"""
+
+    report = parse_refresh_report(markdown)
+
+    assert report is not None
+    assert len(report.evidence) == 2
+    assert report.evidence[0].file_path == "CONTEXT.md"
+    assert report.evidence[0].line_number == 30
+    assert report.evidence[0].claim_summary == "upstream path declaration and no-git caveat."
+    assert report.evidence[1].file_path == ".claude/settings.local.json"
+    assert report.evidence[1].line_number == 4
+
+
 def test_parse_job_log_creates_proposed_insight_and_evidence_rows(tmp_path: Path) -> None:
     log_path = tmp_path / "agent-job-00003.log"
     log_path.write_text(FIXTURE.read_text(encoding="utf-8"), encoding="utf-8")
