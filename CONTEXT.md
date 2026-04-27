@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — Matrix detail feedback slice implemented, reviewed, and validated
+> **Last update:** 2026-04-27 — Curation action-affordance feedback slice implemented and Spark-validated
 > **Phase:** v1.1 published to `main`; feedback-hardening active on `development`
-> **Next milestone:** commit Matrix feedback + Spark-profile slice with Codex author identity
+> **Next milestone:** continue owner/student feedback hardening on the next surfaced tab
 
 ## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
 
@@ -62,6 +62,16 @@ Operational update: a new `fast_implementation_worker` profile based on `gpt-5.3
 Completed feedback item: Matrix detail hygiene. Roman reported that the side detail panel repeated scaffolding (`Expanded cell`, State/Confidence, repeated topic titles, repeated `Confidence: unverified`), rendered Markdown-ish payload as plain text, collapsed the selected cell after `Ask the agent why`, and showed duplicated explanations. PRD §11.2 and WHY graph now carry this intent. Spark worker Peirce implemented the bounded patch; reviewer Curie found no blockers and raised four issues, all addressed before commit: strict matrix reopen URL validation, duplicate status suppression, durable delegation evidence, and visual test coverage for Ask-why preservation.
 
 Validation evidence: `uv run pytest` passed 105 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 66 anchors / skipped 0; `npm run visual:matrix` passed and now covers detail hygiene plus Ask-why preservation.
+
+## Update 2026-04-27 — feedback-hardening: Curation actions must feel reversible
+
+Roman's next feedback item targeted the Curation Queue. The original buttons (`Mark verified`, `Mark disputed`, `Mark historical`) were technically small label mutations, but visually felt like opaque destructive actions: a user could not tell what pressing them changed, whether agent output/evidence would disappear, or whether a wrong click could be undone.
+
+Execution-lead decision: treat this as a trust and teaching problem, not only button copy. PRD §11.7 and the WHY graph now state that Curation actions are label-only, preserve agent output, and must show an immediate Undo path. Spark worker Harvey implemented the bounded route/template/test patch; the lead tightened undo semantics so Undo is offered after the original action but not again after restoration.
+
+Process correction captured: Roman explicitly deprioritized heavy strong-agent review during early visual-feedback churn. The project now keeps a lightweight `docs/agent-run-ledger.md` to tune which subagent profiles are useful. Spark is preferred for small implementation and validation/server tasks; strong reviewers are reserved for stabilized/risky checkpoints.
+
+Validation evidence: Spark validator Herschel ran focused curation route tests (`2 passed, 31 deselected`), `npm run visual:curation` on a fresh server (`1 passed`), `uv run ruff check .`, `uv run mypy src tests`, and `uv run python scripts/validate_anchors.py` (66 anchors OK). A first visual run against a stale long-running server failed before the fresh-server rerun, reinforcing that visual QA after template/route edits should restart or isolate the server.
 
 ---
 

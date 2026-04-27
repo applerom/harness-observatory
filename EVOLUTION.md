@@ -102,6 +102,52 @@ Rule added:
   They need explicit acceptance criteria, disjoint write scope, and lead/reviewer
   verification before commit.
 
+## 2026-04-27 — Early Feedback Does Not Want Gold-Plated Review
+
+Observation:
+- Roman pointed out that applying strong-agent code review to every early visual
+  feedback slice is locally "best practice" but globally wrong for this moment.
+- The product has only just reached v1.0-minimal and feedback has started on the
+  first of many tabs. Many UI decisions will be thrown away or revised quickly.
+- Waiting for expensive review on each small visual iteration makes the owner
+  wait longer and burns tokens where the right answer may be "try it, look, and
+  revise."
+
+Impact:
+- The lead can accidentally optimize for correctness ceremony instead of
+  feedback-cycle speed.
+- Strong reviewers remain valuable, but only when a slice stabilizes or carries
+  real risk.
+
+Action:
+- Added `docs/agent-run-ledger.md` to track which agent profiles work well for
+  which feedback tasks.
+- Policy shift: Spark workers can run simple implementation, validation, server
+  restart, and screenshot tasks; the lead reviews product fit and uses strong
+  reviewers sparingly.
+
+Rule added:
+- In the feedback-hardening phase, optimize for fast reversible evidence. Use
+  heavyweight review only for risky/stable checkpoints.
+
+## 2026-04-27 — Curation Buttons Need Reversibility Before Trust
+
+Observation:
+- Roman's next screenshot showed the Curation Queue buttons: "Mark verified",
+  "Mark disputed", and "Mark historical".
+- The user cannot tell what pressing them changes, whether the original agent
+  output is deleted, or whether a mistaken click can be undone.
+
+Impact:
+- Even a technically safe curation surface feels unsafe if the action model is
+  opaque.
+- This is an agent-product lesson: humans need reversible control when managing
+  uncertain agent output.
+
+Action:
+- PRD/WHY now say Curation actions must explain that they change labels only,
+  preserve agent output, and provide a visible undo after action.
+
 ## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
 
 Observation:

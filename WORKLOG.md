@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — Matrix detail feedback slice implemented, reviewed, and validated
+**Last update:** 2026-04-27 — Curation action-affordance feedback slice implemented and Spark-validated
 **Active session lead:** Codex GPT-5.5 (execution lead)
-**Current phase:** v1.1 published to `main`; Matrix feedback + Spark-profile slice ready to commit on `development`
+**Current phase:** v1.1 published to `main`; feedback-hardening active on `development`
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.1 are implemented and published to `main`; `development` is processing feedback-hardening slices from Roman/student/lecturer use. Matrix density and Matrix detail hygiene are implemented, reviewed, and validated; the current local slice is ready to commit.
+v0.1 through v1.1 are implemented and published to `main`; `development` is processing feedback-hardening slices from Roman/student/lecturer use. Curation action affordances are implemented: buttons now explain their label-only effect, action redirects show confirmation, and Undo restores prior status/confidence.
 
 ## 2. Active items
 
@@ -63,6 +63,7 @@ Current ordered queue after v0.2a+:
 | FB-MATRIX-DENSITY | Roman feedback: Matrix cells are too large and word-heavy for mostly `present/unknown/unverified` data; make Matrix fit and scan on one laptop page, with detail beside/below. | Codex execution lead | completed | Dense symbolic matrix + side detail implemented; pytest/ruff/mypy/anchors and Playwright `visual:matrix` green; screenshots captured |
 | FB-MATRIX-DETAIL-HYGIENE | Roman feedback: Matrix side detail repeats scaffolding (`Expanded cell`, State/Confidence, topic title, confidence), renders Markdown-ish text as plain text, Ask-why clears the panel, and explanations duplicate. | Codex lead + fast_implementation_worker[gpt-5.3-codex-spark/medium] (Peirce) + reviewer[gpt-5.5/high] (Curie) | completed | Peirce patch integrated; Curie findings fixed; pytest/ruff/mypy/anchors and Playwright `visual:matrix` green |
 | OPS-SPARK-PROFILE | Add fast Codex Spark worker profile for feedback-hardening iterations while preserving lead/reviewer quality gates. | Codex lead + reviewer[gpt-5.5/high] (Curie) | completed | `.codex/agents/fast_implementation_worker.toml` added; config thread cap raised to 7 as headroom; docs profile updated from official OpenAI sources and reviewer checked |
+| FB-CURATION-ACTION-AFFORDANCE | Roman feedback: Curation buttons do not explain what they do, whether pressing is safe, or whether action can be undone. | Codex lead + fast_implementation_worker[gpt-5.3-codex-spark/medium] (Harvey) + Spark validator (Herschel) | completed | Curation copy/buttons/confirmation/undo implemented; focused route tests, ruff, mypy, anchors, and fresh-server `visual:curation` green |
 
 ## 4. Blocked / waiting
 
@@ -87,6 +88,10 @@ Current ordered queue after v0.2a+:
 - **2026-04-27** — Roman opened FEEDBACK-HARDENING with a Matrix screenshot: current `Harness x Topic` cells are too large for repeated `present/unknown/unverified` data, forcing unpleasant horizontal/vertical scanning. Codex execution-lead decision: implement a dense symbolic Matrix first (without transposing yet), because the main failure is card-like cell density and below-table detail, not necessarily row/column orientation. PRD §11.2 and WHY graph updated; code now uses compact state symbols, vertical topic labels, a legend, and side detail on desktop. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 65/skipped 0; `npm run visual:matrix` passed; screenshots captured at `test-results/matrix-dense-feedback.png` and `test-results/matrix-dense-feedback-clicked.png`. Next action: commit with explicit Codex author identity.
 
 - **2026-04-27** — Roman corrected execution-lead process drift: feedback fixes must still pass through PRD/task/WHY/delegation rather than direct lead implementation. Codex recorded this as active discipline and dispatched Matrix detail hygiene to Spark worker Peirce (`fast_implementation_worker[gpt-5.3-codex-spark/medium]`) with write scope limited to Matrix detail templates/routes/tests. Acceptance: remove `Expanded cell`; remove duplicated State/Confidence/proposed/unverified noise; render inline backtick/bold markup; preserve selected Matrix cell after Ask-why; dedupe explanations; avoid non-Matrix regressions. Peirce returned with focused validation (`pytest ... -k "matrix or explain"` and `visual:matrix` green). Lead fixed additional integration issues: strict matrix reopen URL regex, latest-only Matrix explanation, Matrix-only status/confidence suppression, proof-line noise suppression, and stronger visual Ask-why coverage. Reviewer Curie (`reviewer[gpt-5.5/high]`) found no blockers and four fixable issues; all were addressed. Final validation: `uv run pytest` 105 passed; ruff passed; mypy passed; anchor validator checked 66/skipped 0; `npm run visual:matrix` passed. Official OpenAI sources checked the same day describe GPT-5.3-Codex-Spark as a Codex research preview with non-final credit rates, so project policy adds Spark as a fast implementation lane for simple feedback slices, not as a reviewer/hard-architecture replacement.
+
+- **2026-04-27** — Roman corrected the feedback-era agent policy: strong review is wasteful for every early visual iteration because many screens will churn. Codex accepted: use Spark for simple implementation/validation/server tasks, track agent usefulness in `docs/agent-run-ledger.md`, and reserve strong reviewers for stabilized or risky slices. New feedback item opened for Curation Queue: buttons are unclear and scary because the user cannot tell what they do or whether actions can be undone. PRD/WHY updated. Acceptance for Spark: button copy/help text explains label-only effect, action returns with an Undo affordance, undo restores prior status/confidence and logs it, route tests + visual curation check pass.
+
+- **2026-04-27** — Completed FB-CURATION-ACTION-AFFORDANCE. Spark worker Harvey implemented clearer Curation action copy, action-specific button labels, confirmation banner, Undo route, and route/visual tests. Lead integration tightened undo behavior so the page does not offer a second Undo after restoration and validates restorable status/confidence values. Spark validator Herschel ran mechanical checks without edits: focused curation route tests passed (`2 passed, 31 deselected`), ruff passed, mypy passed, anchors passed (66 checked), and `visual:curation` passed on a fresh server. One stale-server visual run failed before restart, reinforcing the operational rule: visual validation after route/template edits should use a fresh server when a long-running dev server may hold old code.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.

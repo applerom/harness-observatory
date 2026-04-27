@@ -741,6 +741,8 @@ Workbench surface for the owner. **Not an approval gate** — Insights are alrea
 
 Actions available: promote to `corroborated`, mark `human-verified`, mark `disputed`, correct, or demote. All actions are logged in `Insight.revisions`.
 
+Feedback-hardening update (2026-04-27): curation actions are scary if their effect and reversibility are unclear. The Curation Queue must state near the buttons that actions only change confidence/status labels and never delete agent output. Each action label should name the intended effect in plain language, and after a click the page should show a short confirmation with an Undo action that restores the previous status/confidence while the user is still in context.
+
 ### 11.8 Live Agent Studio
 
 Projector-optimized surface for teaching sessions.
@@ -1241,6 +1243,7 @@ v0.3c acceptance:
 - A Curation Queue route surfaces `proposed` and `disputed` Insights without hiding them from dossiers or the matrix.
 - Queue rows show status, confidence band, harness/topic labels when known, and evidence count.
 - Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
+- Feedback-hardening acceptance: action controls explain their effect; a completed action returns to Curation with a visible undo affordance; undo restores the previous status/confidence and logs that restoration.
 - The navigation exposes Curation as an owner/workbench surface.
 
 Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.
