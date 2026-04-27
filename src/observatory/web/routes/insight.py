@@ -10,6 +10,7 @@
 # - Engagement and explain actions delegate to deterministic services and make no model calls.
 # :END_MODULE_CONTRACT
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,6 +29,7 @@ from observatory.web.revision_notes import revision_notes_by_insight_id
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 router = APIRouter(prefix="/insights", tags=["insights"])
+MATRIX_REOPEN_URL_RE = re.compile(r"^/matrix/cells/[A-Za-z0-9][A-Za-z0-9_-]*/[A-Za-z0-9][A-Za-z0-9_-]*$")
 
 
 @dataclass(frozen=True)
@@ -114,6 +116,7 @@ def explain_insight(
     insight_id: int,
     request: Request,
     evidence_item_ids: list[int] | None = Form(default=None),
+    matrix_reopen_url: str | None = Form(default=None),
     session: Session = Depends(db.get_session),
 ) -> RedirectResponse:
     insight = session.get(Insight, insight_id)
@@ -121,6 +124,8 @@ def explain_insight(
         raise HTTPException(status_code=404, detail="Insight not found")
     create_explain_job(session, insight, evidence_item_ids=evidence_item_ids or [])
     redirect_url = request.headers.get("referer") or "/insights"
+    if matrix_reopen_url and MATRIX_REOPEN_URL_RE.match(matrix_reopen_url):
+        redirect_url = matrix_reopen_url
     return RedirectResponse(url=redirect_url, status_code=303)
 
 

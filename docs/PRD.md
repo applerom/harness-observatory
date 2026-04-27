@@ -680,6 +680,8 @@ Capabilities:
 - Topic headers may use vertical/rotated labels when that lets the full harness x topic field fit on a normal laptop viewport.
 - Expanded cell detail appears beside the matrix on desktop and below it on narrow screens, so selecting a cell does not force an unpleasant scroll away from the overview.
 - Horizontal scrolling remains only as a fallback for future topic growth, not the default first impression.
+- **feedback-hardening update (2026-04-27, detail panel):** the expanded cell panel must not repeat low-information scaffolding (`Expanded cell`, duplicated `State/Confidence`, repeated topic names, repeated `Confidence: unverified`). It should foreground the cell summary, distinct Insight payload, proof, and the latest/deduplicated agent explanation. Inline code/backticks and bold markers from imported text should render legibly rather than as raw Markdown punctuation.
+- `Ask the agent why` from Matrix must preserve the selected cell context after the explain job is created; it must not collapse the side panel back to the empty placeholder.
 
 ### 11.3 Harness Dossier
 

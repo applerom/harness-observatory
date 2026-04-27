@@ -1,9 +1,9 @@
 <!--
 FILE: src/observatory/web/templates/matrix/_cell_detail.html
-VERSION: 2026-04-26
+VERSION: 2026-04-27
 START_MODULE_CONTRACT:
-PURPOSE: HTMX partial for expanded matrix cell details.
-PRD_REF: docs/PRD.md §26.2
+PURPOSE: HTMX partial for compact selected matrix cell details.
+PRD_REF: docs/PRD.md §11.2, §26.2
 WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-MATRIX
 SCOPE: cell state; topic Insights; collapsed EvidenceItems; verification passes
 INVARIANTS:
@@ -11,21 +11,35 @@ INVARIANTS:
 :END_MODULE_CONTRACT
 -->
 <div class="space-y-4">
+  <!-- START_MATRIX_CELL_DETAIL_COMPACT -->
   <div>
-    <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Expanded cell</p>
     <h2 class="mt-1 text-xl font-semibold tracking-normal text-slate-950">
       {{ detail.harness.name }} / {{ detail.topic.name }}
     </h2>
-    <p class="mt-2 text-sm text-slate-600">
-      State: <span class="font-medium text-slate-900">{{ detail.cell.state if detail.cell else "unknown" }}</span>
-      · Confidence: <span class="font-medium text-slate-900">{{ detail.cell.confidence_band if detail.cell else "unverified" }}</span>
-    </p>
-    {% if detail.cell and detail.cell.cell_summary %}
-      <p class="mt-2 text-sm leading-6 text-slate-600">{{ detail.cell.cell_summary }}</p>
+    {% if detail.cell and (detail.cell.state != "present" or detail.cell.confidence_band != "unverified") %}
+      <div class="mt-2 flex flex-wrap gap-2 text-xs">
+        {% if detail.cell.state != "present" %}
+          <span class="state-badge">{{ detail.cell.state }}</span>
+        {% endif %}
+        {% if detail.cell.confidence_band != "unverified" %}
+          <span class="state-badge">{{ detail.cell.confidence_band }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if detail.cell_summary_html %}
+      <p class="mt-2 text-sm leading-6 text-slate-700">{{ detail.cell_summary_html | safe }}</p>
     {% endif %}
   </div>
 
   {% for insight in detail.insights %}
+    {% set matrix_reopen_url = "/matrix/cells/" ~ detail.harness.slug ~ "/" ~ detail.topic.slug %}
+    {% set show_card_title = detail.topic.name|lower not in insight.short_title|lower %}
+    {% set matrix_cell_detail = True %}
+    {% set matrix_cell_confidence = detail.cell.confidence_band if detail.cell else "unverified" %}
+    {% set insight_body_html = detail.insight_body_html_by_id.get(insight.id) %}
+    {% set insight_why_html = detail.insight_why_html_by_id.get(insight.id) %}
+    {% set evidence_claim_html_by_id = detail.evidence_claim_html_by_id %}
+    {% set evidence_citation_html_by_id = detail.evidence_citation_html_by_id %}
     {% set evidence_items = detail.evidence_items %}
     {% set verification_passes = detail.verification_passes %}
     {% include "_insight_proof.html" %}
@@ -38,6 +52,12 @@ INVARIANTS:
         "status": "proposed",
         "confidence_band": detail.cell.confidence_band if detail.cell else "unverified"
       } %}
+      {% set show_card_title = true %}
+      {% set matrix_reopen_url = "/matrix/cells/" ~ detail.harness.slug ~ "/" ~ detail.topic.slug %}
+      {% set matrix_cell_detail = True %}
+      {% set matrix_cell_confidence = detail.cell.confidence_band if detail.cell else "unverified" %}
+      {% set evidence_claim_html_by_id = detail.evidence_claim_html_by_id %}
+      {% set evidence_citation_html_by_id = detail.evidence_citation_html_by_id %}
       {% set evidence_items = detail.evidence_items %}
       {% set verification_passes = detail.verification_passes %}
       {% include "_insight_proof.html" %}
@@ -45,4 +65,5 @@ INVARIANTS:
       <p class="text-sm text-slate-500">No imported Insight or EvidenceItem for this cell yet.</p>
     {% endif %}
   {% endfor %}
+  <!-- :END_MATRIX_CELL_DETAIL_COMPACT -->
 </div>

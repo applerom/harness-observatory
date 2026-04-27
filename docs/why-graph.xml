@@ -103,7 +103,7 @@
   </FEATURE_MARKDOWN_IMPORT>
 
   <FEATURE_COMPARISON_MATRIX_RO ID="FEAT-COMPARISON-MATRIX-RO" PRIORITY="HIGH" STATE="STARTED">
-    <INTENT>Read-only matrix view of harness x topic with dense symbolic cells for scanning and expandable detail for the selected cell; the overview stays compact while the side/below detail preserves Insight and EvidenceItem proof.</INTENT>
+    <INTENT>Read-only matrix view of harness x topic with dense symbolic cells for scanning and compact expandable detail for the selected cell; the overview stays compact while the side/below detail foregrounds payload, latest/deduplicated explanation, and EvidenceItem proof without repeated scaffolding.</INTENT>
     <PRD_REF>docs/PRD.md §11.2 Comparison Matrix</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-MATRIX"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-MATRIX"/>
@@ -497,6 +497,13 @@
     <INTENT>Matrix page template that renders the dense symbolic scan grid and side detail panel requested during feedback hardening.</INTENT>
     <ANCHOR NAME="START_MATRIX_DENSE_GRID" COORD="src/observatory/web/templates/matrix/index.html#START_MATRIX_DENSE_GRID"/>
   </MODULE_WEB_TEMPLATE_MATRIX>
+
+  <MODULE_WEB_TEMPLATE_MATRIX_CELL_DETAIL ID="MOD-WEB-TEMPLATE-MATRIX-CELL-DETAIL"
+                                          FILE="src/observatory/web/templates/matrix/_cell_detail.html"
+                                          STATE="STARTED">
+    <INTENT>Matrix selected-cell detail partial that removes duplicated scaffolding and renders the useful summary, explanation, and proof payload compactly.</INTENT>
+    <ANCHOR NAME="START_MATRIX_CELL_DETAIL_COMPACT" COORD="src/observatory/web/templates/matrix/_cell_detail.html#START_MATRIX_CELL_DETAIL_COMPACT"/>
+  </MODULE_WEB_TEMPLATE_MATRIX_CELL_DETAIL>
 
   <MODULE_RUNNER_BASE ID="MOD-RUNNER-BASE"
                       FILE="src/observatory/runners/base.py"

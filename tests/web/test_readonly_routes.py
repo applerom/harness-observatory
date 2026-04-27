@@ -241,10 +241,11 @@ def test_matrix_and_htmx_cell_render_imported_data(client: TestClient) -> None:
     assert "unverified" in matrix_response.text
     assert "not yet verified" not in matrix_response.text
     assert cell_response.status_code == 200
-    assert "Expanded cell" in cell_response.text
-    assert "Instruction files change authority" in cell_response.text
+    assert "Expanded cell" not in cell_response.text
+    assert "Instruction files change authority" not in cell_response.text
+    assert "OpenCode places project instructions" in cell_response.text
     assert "loadProjectInstructions(system_context)" in cell_response.text
-    assert "Confidence:" in cell_response.text
+    assert "Confidence:" not in cell_response.text
 
 
 def test_confidence_labels_and_pass_breakdown_render_after_verification(client: TestClient) -> None:
@@ -279,7 +280,7 @@ def test_confidence_labels_and_pass_breakdown_render_after_verification(client: 
     assert "corroborated" in matrix_response.text
     assert "not yet verified" not in matrix_response.text
     assert cell_response.status_code == 200
-    assert "Confidence:" in cell_response.text
+    assert "Confidence:" not in cell_response.text
     assert "corroborated" in cell_response.text
     assert "Verification passes" in cell_response.text
     assert "support" in cell_response.text
@@ -326,6 +327,84 @@ def test_show_the_proof_appears_below_insight_text(client: TestClient) -> None:
     proof_index = response.text.index("Show the proof")
     evidence_index = response.text.index("loadProjectInstructions(system_context)")
     assert insight_index < proof_index < evidence_index
+
+
+def test_matrix_cell_summary_renders_inline_markdown(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        cell = session.exec(
+            select(ComparisonCell)
+            .where(ComparisonCell.harness_id == 1)
+            .where(ComparisonCell.topic_id == 1)
+        ).first()
+        assert cell is not None
+        cell.cell_summary = "Instruction files are loaded from `AGENTS.md` as **strong** directives."
+        session.add(cell)
+        session.commit()
+
+    response = client.get("/matrix/cells/opencode/instruction-files", headers={"HX-Request": "true"})
+
+    assert response.status_code == 200
+    assert "<code>AGENTS.md</code>" in response.text
+    assert "<strong>strong</strong>" in response.text
+    assert "`AGENTS.md`" not in response.text
+
+
+def test_matrix_explain_redirect_restores_cell_detail(client: TestClient) -> None:
+    response = client.post(
+        "/insights/1/explain",
+        data={"evidence_item_ids": ["1"], "matrix_reopen_url": "/matrix/cells/opencode/instruction-files"},
+        headers={"HX-Request": "true"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/matrix/cells/opencode/instruction-files"
+    detail_response = client.get(response.headers["location"], headers={"HX-Request": "true"})
+    assert detail_response.status_code == 200
+    assert "OpenCode / Instruction Files" in detail_response.text
+
+
+def test_matrix_explain_ignores_non_matrix_restore_url(client: TestClient) -> None:
+    response = client.post(
+        "/insights/1/explain",
+        data={"matrix_reopen_url": "https://example.com/phishing"},
+        headers={"referer": "/insights"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/insights"
+
+
+def test_matrix_explain_rejects_malformed_matrix_restore_url(client: TestClient) -> None:
+    response = client.post(
+        "/insights/1/explain",
+        data={"matrix_reopen_url": "/matrix/cells/../../insights"},
+        headers={"referer": "/insights"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/insights"
+
+
+def test_matrix_deduplicates_repeated_agent_explanations(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        session.add(RevisionNote(insight_id=1, note="The linked proof points to ./src/session.ts:2."))
+        session.add(RevisionNote(insight_id=1, note="The linked proof points to ./src/session.ts:2."))
+        session.add(RevisionNote(insight_id=1, note="A different note about sources."))
+        session.commit()
+
+    matrix_response = client.get(
+        "/matrix/cells/opencode/instruction-files",
+        headers={"HX-Request": "true"},
+    )
+
+    assert matrix_response.status_code == 200
+    assert "A different note about sources." in matrix_response.text
+    assert "The linked proof points to ./src/session.ts:2." not in matrix_response.text
 
 
 def test_opencode_refresh_creates_job_and_raw_log(client: TestClient) -> None:
@@ -912,7 +991,7 @@ def test_explain_action_uses_contextual_proof_and_renders_on_dossiers(
     assert topic_response.status_code == 200
     assert "Agent explanations" in topic_response.text
     assert matrix_response.status_code == 200
-    assert "Agent explanations" in matrix_response.text
+    assert "Latest explanation" in matrix_response.text
 
 
 def test_engagement_service_preserves_existing_copy_and_creates_agent_job(client: TestClient) -> None:

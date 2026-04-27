@@ -21,7 +21,10 @@ test("matrix is dense and reveals clicked cell detail beside the grid", async ({
 
   await cell.click();
 
-  await expect(detail).toContainText("Expanded cell");
+  await expect(detail).toContainText("OpenCode / Instruction Files");
+  await expect(detail).not.toContainText("Expanded cell");
+  await expect(detail).not.toContainText("State:");
+  await expect(detail).not.toContainText("Confidence:");
   await expect
     .poll(async () =>
       detail.evaluate((element) => {
@@ -30,4 +33,9 @@ test("matrix is dense and reveals clicked cell detail beside the grid", async ({
       }),
     )
     .toBe(true);
+
+  await detail.getByRole("button", { name: "Ask the agent why" }).first().click();
+  await expect(detail).toContainText("OpenCode / Instruction Files");
+  await expect(detail).toContainText("Latest explanation");
+  await expect(detail).not.toContainText("Select a cell");
 });

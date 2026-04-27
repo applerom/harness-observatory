@@ -1,8 +1,8 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — first feedback-hardening UI pass validated on Matrix density
-> **Phase:** v1.1 published to `main`; Matrix density feedback slice ready to commit on `development`
-> **Next milestone:** commit feedback slice with Codex author identity, then continue processing incoming usage feedback
+> **Last update:** 2026-04-27 — Matrix detail feedback slice implemented, reviewed, and validated
+> **Phase:** v1.1 published to `main`; feedback-hardening active on `development`
+> **Next milestone:** commit Matrix feedback + Spark-profile slice with Codex author identity
 
 ## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
 
@@ -52,6 +52,16 @@ Roman's first usage-feedback item targeted the Comparison Matrix: the old cell d
 Execution-lead decision: keep harnesses as rows and topics as columns for now, but convert the table into a dense symbolic scan surface before trying a stronger transpose. Cells use compact symbols for state, confidence is visual styling with accessible labels/tooltips, topic headers can be vertical, and expanded cell detail moves beside the matrix on desktop. This preserves the original intent (click cell -> Insight + proof) while making the default view useful at classroom/laptop scale.
 
 Validation evidence: `uv run pytest` passed 101 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 65 anchors / skipped 0; `npm run visual:matrix` passed. Additional Playwright screenshots were captured at `test-results/matrix-dense-feedback.png` and `test-results/matrix-dense-feedback-clicked.png`.
+
+## Update 2026-04-27 — feedback-hardening process correction + Matrix detail slice
+
+Roman corrected the execution process after the Matrix-density pass: feedback fixes should still follow PRD/task/WHY/delegation rather than direct lead implementation. Codex accepts this correction. The lead owns intent, scope, review, durable state, and integration; bounded implementation goes to subagents when the harness permits it.
+
+Operational update: a new `fast_implementation_worker` profile based on `gpt-5.3-codex-spark` was added for small, reversible feedback-hardening slices. Official OpenAI sources checked on 2026-04-27 list Spark as a Codex research preview with non-final credit rates, so the project treats it as a fast implementation lane with lead verification, not as a replacement for reviewer/hard-worker roles.
+
+Completed feedback item: Matrix detail hygiene. Roman reported that the side detail panel repeated scaffolding (`Expanded cell`, State/Confidence, repeated topic titles, repeated `Confidence: unverified`), rendered Markdown-ish payload as plain text, collapsed the selected cell after `Ask the agent why`, and showed duplicated explanations. PRD §11.2 and WHY graph now carry this intent. Spark worker Peirce implemented the bounded patch; reviewer Curie found no blockers and raised four issues, all addressed before commit: strict matrix reopen URL validation, duplicate status suppression, durable delegation evidence, and visual test coverage for Ask-why preservation.
+
+Validation evidence: `uv run pytest` passed 105 tests; `uv run ruff check src/ tests/ scripts/validate_anchors.py` passed; `uv run mypy src/observatory tests` passed; `uv run python scripts/validate_anchors.py` checked 66 anchors / skipped 0; `npm run visual:matrix` passed and now covers detail hygiene plus Ask-why preservation.
 
 ---
 

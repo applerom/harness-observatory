@@ -70,6 +70,38 @@ Rule added:
   into detail panels. If every repeated cell says the same words, the UI should
   probably encode that state visually instead.
 
+## 2026-04-27 — Feedback Speed Still Needs the Agent1st Loop
+
+Observation:
+- Roman corrected Codex after the first Matrix-density pass: even feedback UI
+  fixes must pass through PRD/task/WHY/delegation, because the lead agent's
+  context and judgment are the scarce resource.
+- The direct implementation was useful, but it skipped the project's own
+  pedagogy: make intent durable, delegate bounded work, then integrate with
+  evidence.
+- Roman also pointed out a new tactical resource: GPT-5.3-Codex-Spark workers
+  appear to have separate practical limits and are very fast, which matters
+  during iterative feedback where the first UI attempt may need quick revision.
+
+Impact:
+- Direct lead coding can make the product move faster for one turn while making
+  the process less teachable and less repeatable for the next turn.
+- Without a formal Spark lane, future agents may either ignore a useful fast
+  worker class or overuse it for tasks that need stronger reasoning/review.
+
+Action:
+- Added `fast_implementation_worker` based on `gpt-5.3-codex-spark` for small,
+  reversible feedback-hardening edits.
+- Raised Codex thread headroom from 5 to 7, while keeping the policy that thread
+  count is headroom, not a default swarm.
+- Dispatched the Matrix detail hygiene fix to Spark worker Peirce with a narrow
+  write scope while the lead owned PRD/WHY/WORKLOG/EVOLUTION/profile updates.
+
+Rule added:
+- Spark workers are for speed on bounded implementation, not for final truth.
+  They need explicit acceptance criteria, disjoint write scope, and lead/reviewer
+  verification before commit.
+
 ## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
 
 Observation:

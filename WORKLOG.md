@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — feedback-hardening Matrix density pass validated; ready to commit
+**Last update:** 2026-04-27 — Matrix detail feedback slice implemented, reviewed, and validated
 **Active session lead:** Codex GPT-5.5 (execution lead)
-**Current phase:** v1.1 published to `main`; Matrix density feedback slice ready to commit on `development`
+**Current phase:** v1.1 published to `main`; Matrix feedback + Spark-profile slice ready to commit on `development`
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.1 are implemented and published to `main`; `development` is now processing feedback-hardening slices from Roman/student/lecturer use. The first feedback item, Matrix density, is implemented and validated: the old card-like cells are replaced by a dense symbolic overview with side detail while preserving click-through proof.
+v0.1 through v1.1 are implemented and published to `main`; `development` is processing feedback-hardening slices from Roman/student/lecturer use. Matrix density and Matrix detail hygiene are implemented, reviewed, and validated; the current local slice is ready to commit.
 
 ## 2. Active items
 
@@ -61,6 +61,8 @@ Current ordered queue after v0.2a+:
 | V11-CLAUDE-RUNNER-EMPIRICAL | Run at least one real refresh through `ClaudeRunner` against a real harness target; record evidence in `live-sessions/`, EVOLUTION, and `docs/runtime-dependencies.md`. | Codex execution lead | completed | Real Job #9 done against `claude-code`; raw log `live-sessions/agent-job-00009.log`; Claude CLI `2.1.119`; parser plain-path hardening added after evidence-shape gap |
 | V11-COAUTHOR-DISCIPLINE | Apply `Co-Authored-By: <reviewer>` trailer to v1.1 integration commits that include reviewer-subagent findings; baseline rule, applies forward. | Codex execution lead | completed | No reviewer/subagent participated in this v1.1 slice, so the implementation commit needs explicit Codex author identity but no `Co-Authored-By` trailer |
 | FB-MATRIX-DENSITY | Roman feedback: Matrix cells are too large and word-heavy for mostly `present/unknown/unverified` data; make Matrix fit and scan on one laptop page, with detail beside/below. | Codex execution lead | completed | Dense symbolic matrix + side detail implemented; pytest/ruff/mypy/anchors and Playwright `visual:matrix` green; screenshots captured |
+| FB-MATRIX-DETAIL-HYGIENE | Roman feedback: Matrix side detail repeats scaffolding (`Expanded cell`, State/Confidence, topic title, confidence), renders Markdown-ish text as plain text, Ask-why clears the panel, and explanations duplicate. | Codex lead + fast_implementation_worker[gpt-5.3-codex-spark/medium] (Peirce) + reviewer[gpt-5.5/high] (Curie) | completed | Peirce patch integrated; Curie findings fixed; pytest/ruff/mypy/anchors and Playwright `visual:matrix` green |
+| OPS-SPARK-PROFILE | Add fast Codex Spark worker profile for feedback-hardening iterations while preserving lead/reviewer quality gates. | Codex lead + reviewer[gpt-5.5/high] (Curie) | completed | `.codex/agents/fast_implementation_worker.toml` added; config thread cap raised to 7 as headroom; docs profile updated from official OpenAI sources and reviewer checked |
 
 ## 4. Blocked / waiting
 
@@ -83,6 +85,8 @@ Current ordered queue after v0.2a+:
 - **2026-04-27** — Implemented and validated PRD §24 v1.1 first pass on `development`: engagement copy is visibly labelled `template-generated`; successful refresh logs with zero parsed artifacts now become `done_no_findings` with semantic warning `parser_returned_no_findings`; `ClaudeRunner` has preflight and Windows executable resolution; real ClaudeRunner Job #9 against `claude-code` completed with raw log `live-sessions/agent-job-00009.log`. Job #9 revealed that Claude emits plain evidence path bullets, so the parser now accepts `path:line — note` evidence and local Job #9 was repaired to attach EvidenceItems #80-#82 to Insight #37. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 64/skipped 0; Playwright CLI `visual:insight`, `visual:jobs`, and `visual:live` passed. Next action: commit with explicit Codex author identity.
 
 - **2026-04-27** — Roman opened FEEDBACK-HARDENING with a Matrix screenshot: current `Harness x Topic` cells are too large for repeated `present/unknown/unverified` data, forcing unpleasant horizontal/vertical scanning. Codex execution-lead decision: implement a dense symbolic Matrix first (without transposing yet), because the main failure is card-like cell density and below-table detail, not necessarily row/column orientation. PRD §11.2 and WHY graph updated; code now uses compact state symbols, vertical topic labels, a legend, and side detail on desktop. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 65/skipped 0; `npm run visual:matrix` passed; screenshots captured at `test-results/matrix-dense-feedback.png` and `test-results/matrix-dense-feedback-clicked.png`. Next action: commit with explicit Codex author identity.
+
+- **2026-04-27** — Roman corrected execution-lead process drift: feedback fixes must still pass through PRD/task/WHY/delegation rather than direct lead implementation. Codex recorded this as active discipline and dispatched Matrix detail hygiene to Spark worker Peirce (`fast_implementation_worker[gpt-5.3-codex-spark/medium]`) with write scope limited to Matrix detail templates/routes/tests. Acceptance: remove `Expanded cell`; remove duplicated State/Confidence/proposed/unverified noise; render inline backtick/bold markup; preserve selected Matrix cell after Ask-why; dedupe explanations; avoid non-Matrix regressions. Peirce returned with focused validation (`pytest ... -k "matrix or explain"` and `visual:matrix` green). Lead fixed additional integration issues: strict matrix reopen URL regex, latest-only Matrix explanation, Matrix-only status/confidence suppression, proof-line noise suppression, and stronger visual Ask-why coverage. Reviewer Curie (`reviewer[gpt-5.5/high]`) found no blockers and four fixable issues; all were addressed. Final validation: `uv run pytest` 105 passed; ruff passed; mypy passed; anchor validator checked 66/skipped 0; `npm run visual:matrix` passed. Official OpenAI sources checked the same day describe GPT-5.3-Codex-Spark as a Codex research preview with non-final credit rates, so project policy adds Spark as a fast implementation lane for simple feedback slices, not as a reviewer/hard-architecture replacement.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.

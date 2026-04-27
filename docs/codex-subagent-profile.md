@@ -32,9 +32,14 @@ Project-specific adjustments:
 | Lead/orchestrator | main session | strongest available GPT-5.x, normally inherited | high for architecture/integration | yes |
 | Repository scout | `repo_explorer` or built-in `explorer` | smaller/faster acceptable | medium | no |
 | Default implementation | `implementation_worker` or built-in `worker` | strong default/inherited | medium | yes, bounded |
+| Fast feedback implementation | `fast_implementation_worker` or built-in `worker` with `gpt-5.3-codex-spark` | GPT-5.3-Codex-Spark research preview | low/medium | yes, tiny bounded |
 | Hard implementation | `hard_worker` or built-in `worker` | strongest available | high | yes, bounded |
 | Validation | `validator` or built-in `worker` | smaller/faster acceptable | low/medium | command-running only |
 | Review | `reviewer` or built-in `explorer` | strongest available | high | no |
+
+`fast_implementation_worker` is for feedback-hardening speed, not architectural judgment. Use it for small, reversible UI/template/route/test changes where the lead has already written acceptance criteria and can inspect the result with tests and Playwright. Default to `medium` reasoning for UI/route behavior; `low` is acceptable for mechanical copy/tests. Do not use Spark for schema design, security boundaries, cross-cutting refactors, or final review.
+
+Official-source note checked on 2026-04-27: OpenAI Help lists `GPT-5.3-Codex-Spark` as a Codex research preview with non-final credit rates, and OpenAI model docs list GPT-5.3-Codex as the capable agentic coding model with `low`/`medium`/`high`/`xhigh` reasoning. Project policy therefore treats Spark as a fast implementation lane requiring lead verification, while reviewer/final-risk checks stay on `reviewer`/stronger models.
 
 `xhigh` is an escalation mode only: repeated failure, architecture contradiction, difficult root-cause debugging, or final high-risk review.
 
@@ -53,7 +58,7 @@ The default v0.1 sequence is:
 5. Dispatch Task E after Task A creates enough project structure for runner stubs and validator tests.
 6. Dispatch Task D after A/B/C are integrated and validated.
 7. Use reviewer/validator subagents after meaningful integration points, not after every tiny edit.
-8. Keep at most 2-4 subagents actively working in normal flow; the fifth thread is operational headroom for a validator or follow-up worker.
+8. Keep at most 2-4 subagents actively working in normal flow; during feedback-hardening, the lead may briefly run up to 4 Spark workers plus one validator/reviewer when write scopes are disjoint and the lead can review every result. `agents.max_threads = 7` is headroom, not a default swarm.
 
 ## Subagent Contract
 
@@ -84,6 +89,7 @@ Example:
 
 ```text
 implementation_worker[gpt-5.5/medium] (Leibniz)
+fast_implementation_worker[gpt-5.3-codex-spark/medium] (Peirce)
 ```
 
 Later entries may refer to the nickname if the dispatch label was already
@@ -122,15 +128,17 @@ done / partial / blocked
 - The lead owns architecture, integration, evidence, and final truth.
 - Subagents never commit.
 - Subagents do not edit outside their ownership boundary.
-- Parallel write-heavy work requires disjoint write sets.
+- Parallel write-heavy work requires disjoint write sets; Spark workers are no exception.
 - If a subagent returns noisy output, the lead extracts only the durable evidence into WORKLOG/CONTEXT or the commit message.
 - If direct lead implementation is safer than delegation, do it and record why.
 
 ## Official OpenAI Docs Checked
 
-These project choices were checked against official OpenAI docs on 2026-04-26:
+These project choices were checked against official OpenAI docs on 2026-04-26 and refreshed for Spark on 2026-04-27:
 
 - Codex subagents can run specialized agents in parallel, but Codex should only use them when explicitly requested; parallel read-heavy tasks are a safer starting point than parallel write-heavy edits: https://developers.openai.com/codex/concepts/subagents
 - Codex custom agent files can define `model`, `model_reasoning_effort`, and `sandbox_mode`; omitted fields inherit from the parent session: https://developers.openai.com/codex/subagents
 - GPT-5.5 is a strong fit for complex coding and long-running agent workflows; `medium` is the default balanced reasoning effort, and `high`/`xhigh` should be justified by task complexity: https://developers.openai.com/api/docs/guides/latest-model
 - Reasoning effort trades speed/cost for deeper reasoning; `xhigh` should be reserved for cases where the extra latency/cost has clear value: https://developers.openai.com/api/docs/guides/reasoning
+- GPT-5.3-Codex supports `low`, `medium`, `high`, and `xhigh` reasoning effort and is the stronger review/agentic-coding reference point for the 5.3 Codex family: https://developers.openai.com/api/docs/models/gpt-5.3-codex
+- GPT-5.3-Codex-Spark may be available in Codex as a research preview and its credit rates are not final; treat it as a fast lane with lead verification rather than a replacement for reviewer/hard-worker roles: https://help.openai.com/en/articles/20001106-codex-rate-card
