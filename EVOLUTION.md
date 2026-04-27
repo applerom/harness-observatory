@@ -8,6 +8,71 @@
 > process friction, tool/version drift, and rule changes that future agents and
 > students should understand.
 
+## 2026-04-27 — Spirit Lead Returns: Two-Lead Model Made Explicit
+
+Observation:
+- One day after v1.0-minimal shipped, the owner asked the original spirit lead
+  (Claude Opus, who wrote SPIRIT/PRD/AGENTS at bootstrap) to deep-review the
+  trajectory: how faithfully had the execution lead (Codex GPT-5.5, who ran the
+  v0.1 → v1.0 implementation) honored the original intent.
+- Spirit lead dispatched 3 parallel Explore subagents (PRD-vs-implementation gap,
+  SPIRIT fidelity, engineering quality) and synthesized the answer instead of
+  re-deriving the codebase from scratch — which would have burned context for
+  no marginal value.
+- The single most important finding was not technical: the SPIRIT.md
+  "Collaboration Model" still said "Lead agent (Claude Opus 4.7)" while in
+  reality Codex GPT-5.5 had been the lead for the entire v0.1 → v1.0
+  implementation. The doc and the practice had silently diverged.
+
+Impact:
+- A teaching project that hides its own collaboration model from itself cannot
+  teach that model to students.
+- Future spirit-lead sessions need a reading order that surfaces this
+  discrepancy fast — `EVOLUTION.md` first, not `SPIRIT.md` first, when the
+  question is "what did the project actually do."
+- Two-lead collaboration is not a defect to fix; it is itself a Level 2
+  dogfooding artifact (per SPIRIT). Students see in this very file how two
+  agents from different families (Claude / OpenAI) coordinate around a single
+  intent, with one keeping vision and one keeping operational context.
+
+Action:
+- `SPIRIT.md` "Collaboration Model" rewritten to make the two-lead split
+  explicit: **spirit lead** (constitutional, periodic deep-review, owns
+  SPIRIT/PRD/AGENTS) vs **execution lead** (operational, continuous, owns
+  WORKLOG/EVOLUTION/code dispatch). Same agent in principle; different agents
+  in this era; both honor agent1st §3 (Right to Disagree) with a clear
+  disagreement protocol.
+- `AGENTS.md` Cross-Harness Lead-Agent Model gained an operational subsection:
+  default-to-execution-lead when uncertain, spirit-lead sessions are
+  owner-initiated and produce PRD v-bumps with acceptance criteria, both leads
+  use their own `Co-Authored-By` tag.
+- `PRD.md` §24 gained a v1.1 phase block with four explicit acceptance items
+  (engagement honesty labelling pass; parser silent-zero-Insights guard;
+  ClaudeRunner empirical validation; Co-Authored-By discipline). Out-of-scope
+  list explicit so the parallel implementation track will not collide with the
+  feedback-driven UI redesign that v1.2 may demand.
+- `PRD.md` §14.2 entry for the `engagement` job amended to state v1.1 =
+  deterministic templating, not agent-authored. Honest naming over hidden
+  compromise.
+
+Rule added:
+- When the spirit lead returns for a deep-review pass, the first artifact to
+  read is `EVOLUTION.md`, not `SPIRIT.md`. The spirit lead wrote `SPIRIT.md`;
+  it does not need to re-read its own constitution to find drift.
+  `EVOLUTION.md` is where the execution lead's complaints, surprises, and
+  actual operating decisions live — that is the diff against original intent.
+- Spirit-lead deep-review passes end with: (a) PRD v-bump with acceptance
+  criteria written in the same style as `§26` v0.1 (the execution lead has
+  said this format is the most useful to delegate from); (b) WORKLOG queue
+  items with concrete IDs prefixed by the version; (c) at most one or two
+  SPIRIT/AGENTS deltas per pass (large rewrites destroy continuity).
+
+Teaching extraction (deferred):
+- A short student-facing lesson on "the two-lead model" can be extracted later,
+  once v1.1 has run through the cycle and confirmed the disagreement protocol
+  in practice. Premature extraction would teach a pattern that has not yet been
+  stress-tested.
+
 ## 2026-04-26 — Live Streaming Must Be End-To-End
 
 Observation:

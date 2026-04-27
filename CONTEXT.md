@@ -1,8 +1,24 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-26
-> **Phase:** v1.0-minimal complete — feedback-ready product pass
-> **Next milestone:** feedback-driven hardening after real use
+> **Last update:** 2026-04-27 — spirit-lead deep review; v1.1 honesty + hardening phase added to PRD §24
+> **Phase:** v1.0-minimal shipped; v1.1 spec'd; FEEDBACK-HARDENING wave starting in parallel
+> **Next milestone:** owner collects real lecturer/student feedback; Codex execution lead implements V11-* items from WORKLOG queue
+
+## Update 2026-04-27 — spirit-lead deep review after v1.0-minimal
+
+Owner asked the spirit lead (Claude Opus, original author of SPIRIT/PRD/AGENTS) to deep-review the trajectory now that Codex GPT-5.5 has carried the project from v0.1 to v1.0-minimal in ~30 commits over one day. Three parallel Explore subagents produced converging findings: implementation is substantially faithful to PRD; spirit is well-honored on the most important fronts (Insight>Evidence, L1 auto-merge, file:line citations, target/runner naming, real lessons in `docs/lessons/`); engineering is shipped-but-solid (97/97 tests; ruff/mypy clean; 60/60 anchors).
+
+Two real drifts found and addressed in this pass:
+
+1. **Lead role moved from Opus to Codex GPT-5.5 in practice without SPIRIT update.** Owner confirmed the reality and the intent: Opus stays lead by spirit (constitutional steward, periodic deep review), Codex GPT-5.5 is the primary execution lead (orchestrator-implementer, runs subagents, maintains EVOLUTION). Both useful for students seeing real cross-harness collaboration in EVOLUTION.md. Spirit lead has standing right to refine SPIRIT/PRD/AGENTS based on observed drift. Now formalized in `SPIRIT.md` "Collaboration Model" and `AGENTS.md` Cross-Harness Lead-Agent Model.
+
+2. **`engagement` job is deterministic templating, not agent-authored** — currently labelled as if it were an agent job. Owner direction: don't reimplement, just spec honestly. v1.1 = labelling pass (UI badge + Insight detail note + PRD §14.2 amendment); real agent-authored engagement deferred to v1.2 or later (only if FEEDBACK-HARDENING shows engagement copy is actually noticed/used).
+
+PRD §24 gained a v1.1 phase block with four acceptance items (engagement honesty / parser silent-zero-Insights guard / ClaudeRunner empirical validation / Co-Authored-By discipline) chosen to be **feedback-orthogonal** so the parallel implementation track does not collide with the UI/product moves the FEEDBACK-HARDENING wave may demand. Items deliberately deferred to v1.2+: Feature Radar (PRD §11.5), real engagement agent, operational hardening (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests).
+
+Owner-stated philosophy locked in this pass: production-ready was never the v1.0 aim; minimum-working-version-for-feedback was. Engineering hardening enters PRD only when feedback creates demand. Both leads run in parallel (FEEDBACK-HARDENING owner-driven; v1.1 execution-lead-driven), both feed into the next spirit-lead pass.
+
+---
 
 This file is the **current handoff state**. Read it after `SPIRIT.md` and `AGENTS.md` to understand where work is right now.
 

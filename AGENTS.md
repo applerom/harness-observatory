@@ -69,6 +69,16 @@ Lead agents should run **serially across harnesses**, not concurrently, unless R
 
 When working in Codex, read `docs/codex-subagent-profile.md` before dispatching subagents. The profile and `.codex/agents/*.toml` files are Codex-specific operating aids; they do not override this file, WORKLOG, CONTEXT, the PRD, or the WHY graph.
 
+#### Spirit lead vs Execution lead
+
+This project runs with a two-lead model — **spirit lead** (constitutional, periodic) and **execution lead** (operational, continuous). Both are "lead" in the sense of agent1st §1 (Role Contract): both can dispatch subagents, both own their decisions, both are accountable to the owner. The constitutional split is described in `SPIRIT.md` "Collaboration Model"; this addendum records only the operational rules.
+
+- A new lead session, when uncertain which role it is filling, defaults to **execution lead** (continue the WORKLOG queue; do not rewrite SPIRIT/PRD/AGENTS).
+- **Spirit-lead sessions are owner-initiated** as deep-review passes (e.g. "посмотри, как агент GPT-5.5 реализовал твой план"). They read `EVOLUTION.md` first thing, produce SPIRIT/PRD/AGENTS deltas, and write a v-bump in PRD §24 with explicit acceptance criteria for the next phase.
+- Execution-lead sessions read those deltas as authoritative and queue them in WORKLOG.
+- Execution lead pushes back to spirit lead by writing the friction into `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax). The next spirit-lead pass will see it.
+- Both leads commit with their own `Co-Authored-By` tag (`Claude Opus <noreply@anthropic.com>` or the active execution-lead model's tag) so git history shows which lead made which change.
+
 ### Interrupt-and-Resume Pattern
 
 This project runs on the owner's personal Claude Pro and ChatGPT Plus / Codex Plus subscriptions, both of which use 5-hour rolling rate windows. Agent sessions can also be compacted, terminated, or otherwise lose context without warning. Plan as if any session can stop mid-action — because it can.

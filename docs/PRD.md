@@ -482,7 +482,7 @@ Fields:
 - `discover` — find new Insights in a harness or topic not currently in the DB
 - `verify` — re-run a previous claim against current upstream; updates `verification_passes`, may change status to `corroborated` or `disputed`
 - `abstract` — produce a higher-level diagram, ascii art, or mermaid summary from a set of EvidenceItems
-- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights
+- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights. **v1.1 status:** deterministic template generation (no model call). The `AgentJob` row is created with `runner_name="deterministic"` and immediately marked `done`. Real agent-authored engagement is planned for v1.2 (or later — may be deprioritized if v1.1 feedback shows engagement copy is unused). UI must surface this distinction per v1.1 acceptance — see §24 v1.1.
 - `refresh` — full re-sweep of a harness or topic (may chain discover + verify)
 - `explain` — triggered by "Ask the agent why" button; agent explains its own reasoning for a specific Insight
 
@@ -1328,6 +1328,49 @@ v1.0-minimal acceptance:
 - Legacy Markdown archive support exists as a deterministic export/archive manifest under generated output; it records source path, generated-at time, and copied/covered Markdown counts without treating legacy Markdown as the source of truth.
 - Onboarding is represented by a short generated checklist or docs section that names the actual current commands from clone/import/migrate/server/first refresh.
 - Tests cover scoring seed/refresh, export generation, archive manifest, and the new web routes. Playwright CLI covers the new Lens and Export surfaces.
+
+### v1.1 — Honesty pass + foundational hardening
+
+This phase is added after the spirit-lead deep review of v1.0-minimal (2026-04-27). It runs **in parallel with the first FEEDBACK-HARDENING wave** (per WORKLOG): owner is collecting real lecturer/student feedback, while execution lead implements items chosen to be **feedback-orthogonal** — they fix observed spirit-vs-implementation drift and improve proof-quality of the existing surface, without committing to UI shapes or product moves that real student/lecturer use will redesign.
+
+Items deliberately deferred to v1.2 or beyond, so the parallel implementation track does not conflict with feedback findings:
+- **Feature Radar UI** (PRD §11.5) — will be informed by whether real students/lecturers actually experience the Topic-vs-Feature distinction as missing. Today it is a structural PRD miss; tomorrow it might be obvious that nobody noticed.
+- **Real `engagement` agent job** — depends on whether feedback shows engagement copy is even noticed/used. Investing in agent-authored engagement before knowing this would be over-investment.
+- **Operational hardening** (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests, performance work on 1000+ Insights) — defer until real usage exposes which one breaks first. v1.0-minimal was never aimed at production-ready by owner intent; production hardening enters PRD only when feedback creates the demand.
+
+v1.1 acceptance:
+
+- **Engagement honesty (labelling pass, not implementation).** The current `engagement` job type is deterministic template generation, not an agent invocation — `AgentJob.runner_name="deterministic"`, `status="done"` mid-creation, no model call, hardcoded copy templates in `src/observatory/engagement/service.py`. This is fine as v0.6a compromise but must not be hidden behind the word "engagement agent." Concretely:
+  - Insight Library and any other UI surface rendering `Insight.engagement_hook` / `Insight.joke_or_telegram_seed` displays a small `template-generated` badge near that copy, visually distinct from confidence badges.
+  - The Insight detail surface displays a one-line note: "Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2."
+  - PRD §14.2 entry for the `engagement` job type is amended to say: "v1.1 = deterministic template generation; planned upgrade to a real agent-authored job in v1.2 (or later, if feedback shows the feature is unused)."
+  - No code changes to engagement service logic; this is a labelling + doc pass only.
+  - Acceptance test: a Playwright smoke run on the Insight Library surface confirms the `template-generated` badge is visible on at least one Insight whose `engagement_hook` was set by the deterministic service.
+
+- **Parser silent-zero-Insights guard.** Today, when `parse_refresh_report()` returns no parsed Insights/EvidenceItems for a successful refresh job, the job is marked `done` with zero artifacts and the operator sees a green status with empty findings — a misleading signal. Concretely:
+  - `RefreshJobService` emits a semantic event with code `parser_returned_no_findings` (level: `warning`) into the job's JSONL trace whenever a successful runner result produces zero Insights and zero EvidenceItems.
+  - `AgentJob.status` is set to a new value distinct from `done` — name chosen by execution lead during implementation; suggested `done_no_findings`. The new status MUST be added to the schema as a discrete enum/literal value, not a free-text marker.
+  - Job Dashboard renders `done_no_findings` jobs with a distinct visual marker (amber badge, not green).
+  - Tests: at least one unit test exercises this path with a deliberately empty/malformed runner output; at least one route test confirms the Job Dashboard renders the new status correctly.
+  - WHY graph adds a new `MOD-PARSER-EMPTY-GUARD` PLANNED node at slice start; flips to STARTED when the slice merges.
+
+- **ClaudeRunner empirical validation.** The dual-runner architecture is currently theatrical — `ClaudeRunner` is wired in `src/observatory/web/routes/harness.py:53-54` but no live refresh job through `claude -p` exists in `live-sessions/`. Concretely:
+  - At least one real refresh job is executed end-to-end through `ClaudeRunner` against a real harness target (suggested: claude-code-architecture or any harness whose local upstream path resolves successfully). Raw log preserved in `live-sessions/agent-job-NNNNN.log`; semantic events captured in `live-sessions/semantic-events.jsonl`.
+  - `EVOLUTION.md` records the episode: what worked, what failed, any version/CLI surprises (mirror the `CodexRunner` empirical episode pattern from 2026-04-26 "Runtime Runner CLI Truth Beats Remembered CLI Shape").
+  - If `claude -p` invocation fails for environmental reasons (missing CLI, version mismatch, OAuth flow surprises), record that failure mode in `docs/runtime-dependencies.md` and adjust runner preflight accordingly. Failure is acceptable evidence; absence of any attempt is not.
+  - WORKLOG and CONTEXT show the live job id and outcome.
+
+- **Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation: integration commits that include reviewer-subagent findings credit the reviewer in the commit trailer, not only in `EVOLUTION.md`. Acceptance: at least the v1.1 implementation commits show `Co-Authored-By: <reviewer-subagent-name>` in `git log` for any commit that integrates a reviewer pass; v1.1 is the baseline, the rule applies forward thereafter.
+
+- **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No `claude -p` literal leaks below the runner abstraction (DELEGATION-PLAN Task E acceptance still holds, extended to ClaudeRunner now that it executes for real).
+
+**Out of scope for v1.1, by design:**
+- No new Insight/Evidence storage shape changes.
+- No new product surfaces (no Feature Radar, no media rendering, no lesson-package CMS).
+- No engagement agent rewrite (only labelling).
+- No SSE / scheduler / DB-lock hardening unless feedback wave forces it.
+
+This phase is feedback-orthogonal by construction: nothing here forecloses on UI or product shape that real lecturer/student use will reshape.
 
 ---
 

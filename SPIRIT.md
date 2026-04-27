@@ -134,18 +134,39 @@ Harness-observatory — приложение которое одновремен
 
 ```
 Roman (Human) — owner, intent, acceptance criteria, lecturer
-  └── Lead agent (Claude Opus 4.7) — architecture, soul docs, orchestration
-        ├── Subagents (Sonnet/Haiku) — bounded implementation tasks
-        └── AgentRunner (other agents in future) — research tasks inside the running app
+  ├── Spirit lead (Claude Opus 4.x) — constitutional steward:
+  │     SPIRIT, PRD architecture, WHY graph; periodic deep review of trajectory
+  └── Execution lead (currently Codex GPT-5.x) — primary orchestrator:
+        dispatches subagents, ships product slices, maintains EVOLUTION.md + WORKLOG.md
+        ├── Subagents (Codex/Claude/Sonnet/Haiku class, bounded) — one delegation, one bounded task
+        └── AgentRunner (other agents in future) — runtime agents launched by the running application
 ```
 
-**Roman:** держит интент, говорит "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead agent.
+**Roman:** держит интент, говорит "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead-агентов.
 
-**Lead agent:** архитектор. Пишет SPIRIT/PRD/WHY-граф/делегационные контракты. Выбирает что делегировать кому. Проверяет результаты. Не пишет код напрямую — это работа субагентов. Опции: я могу остаться той же сессией Opus или быть переключён на свежую сессию (контекст — в SPIRIT/PRD/WHY/CONTEXT, всегда сохранён).
+**Spirit lead (Опус):** конституционный архитектор. Заложил SPIRIT/PRD/AGENTS на bootstrap. Возвращается для periodic deep review — оценить, держится ли дух при имплементации, нужна ли коррекция спецификации, не уехала ли реализация по сравнению с задумкой. Имеет standing right поправлять SPIRIT/PRD/AGENTS если видит drift. Может дёргать execution lead через owner. Может сам запускать субагентов когда находится в активной сессии и это уместно. По умолчанию не пишет ежедневный продуктовый код — это работа execution lead и его субагентов.
+
+**Execution lead (сейчас — Codex GPT-5.x):** основной оркестратор-исполнитель. Получает спецификацию от spirit lead через PRD/WHY/AGENTS, делегирует имплементацию субагентам, интегрирует, фиксит drift в момент возникновения, ведёт `EVOLUTION.md` и `WORKLOG.md`. Имеет standing right поднимать complaints (per agent1st §6 CDD) когда спецификация создаёт implementation pain — через `EVOLUTION.md`, чтобы spirit lead увидел и учёл при следующей ревизии.
 
 **Subagents:** ограниченное delegation per agent1st §9. Получают: deliverable, acceptance criteria, релевантный subtree WHY-графа, релевантные контракты. Возвращают: evidence (что сделано) + блокеры/трения если были.
 
 **AgentRunner (future):** runtime агенты которых **запускает само приложение** для исследовательских задач (refresh harness, abstract evidence into insight, etc.). Это другая категория чем lead/subagent — это часть продукта, не процесса разработки.
+
+### Why two leads instead of one?
+
+Это не дефект, это ценный teaching artifact (Level 2 dogfooding):
+
+- Студенты видят в `EVOLUTION.md` как два разных агента работают в связке: один держит vision, другой держит implementation — и они корректируют друг друга, а не конкурируют. Это идеальный dog-food во все стороны: для самих агентов, для студентов, для будущих lead-сессий.
+- Spirit lead защищён от context bloat, который неизбежен у того, кто непрерывно дёргает CLI и читает subagent-репорты — он возвращается со свежей головой для архитектурных решений.
+- Execution lead имеет полный operational context, нужный чтобы делегировать корректно — этот context нельзя заменить чтением WORKLOG. Чтение и работа — разные ёмкости памяти.
+
+Spirit lead и execution lead могут быть одним и тем же агентом в принципе — это допустимо. Но *в текущую эру* они разные, и это записано прямо здесь, чтобы будущие сессии не пытались механически "вернуть всё к Опусу" или наоборот "сделать всё через Codex".
+
+### Disagreement protocol (per agent1st §3 Right to Disagree)
+
+- На вопросах spirit/architecture финальное слово за spirit lead. Execution lead поднимает concern через `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax); spirit lead читает `EVOLUTION.md` первым делом на следующем deep-review проходе.
+- На вопросах implementation tactics финальное слово за execution lead. Spirit lead не микроменеджит, как именно выполнить слайс — задаёт acceptance criteria и отступает.
+- На спорах между ними — owner адъюдицирует.
 
 ---
 
