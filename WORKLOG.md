@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — WHY protocol docs folded agent field notes into core rules
+**Last update:** 2026-04-27 — SIMPLE_CODE marker corrected to standalone form
 **Active session lead:** Codex GPT-5.5-class (interactive)
 **Current phase:** v1.0-minimal complete — feedback-ready product pass
 
@@ -111,7 +111,8 @@ Current ordered queue after v0.2a+:
 - **2026-04-25** — Committed `bd6ee8e`: alignment pass 1 (8 drifts caught by gpt-5.5 review — PRD §1 framing, importer path/CLI form, validator filename, 18 stale PRD_REFs in WHY graph, AgentRun-history/QueueItem removed from DELEGATION Task A, validator skip-PLANNED policy, Documentation conventions formalized in AGENTS.md, README/SPIRIT/CONTEXT reading-order deferral to AGENTS.md).
 - **2026-04-25** — Committed `94423c3`: bootstrap of foundational docs (SPIRIT, AGENTS, PRD v2, WHY graph, README, DELEGATION-PLAN, CONTEXT, CLAUDE.md, .gitignore, media+live-sessions placeholders, three verbatim agent1st reference docs — 14 files, ~3250 lines docs, 0 lines code).
 - **2026-04-25** — Interview between Roman (owner) and Claude Opus 4.7 (lead) covering 6 discriminating questions: scope (orchestration-first hybrid), location (`harness-observatory/` sibling), stack (Python + uv + FastAPI + SQLite + HTMX), demo model (live agent runs with student attribution), autonomy (L1 auto-merge with confidence labels), agent abstraction (`AgentRunner` Protocol + `ClaudeRunner` v1), v0.1 slice (read-only viewer + markdown importer).
-- **2026-04-27** — Folded Codex lead-agent field notes into the core WHY protocol docs instead of keeping them as appendices. `why-contracts-v1.md` now explains the agent value of contract fields, `WHY_SIMPLE:`, `CALLER_CONTEXT`, short-contract discipline, and stale-contract risk. `why-graph-principles.md` now defines trustworthy state semantics, ownership-over-callgraph mapping, relation-before-node guidance, and cheap drift checks.
+- **2026-04-27** — Folded Codex lead-agent field notes into the core WHY protocol docs instead of keeping them as appendices. `why-contracts-v1.md` now explains the agent value of contract fields, `CALLER_CONTEXT`, short-contract discipline, and stale-contract risk. `why-graph-principles.md` now defines trustworthy state semantics, ownership-over-callgraph mapping, relation-before-node guidance, and cheap drift checks.
+- **2026-04-27** — Replaced the ambiguous one-sided simple-code marker with standalone `:SIMPLE_CODE:` wording. Rationale: one-sided labels look like opening anchors/contracts to agents, while the colon-wrapped form signals a single local marker with no matching end tag.
 
 ---
 
