@@ -10,6 +10,9 @@ Use this profile for simple, bounded UI, template, route, parser, or test edits 
 Prefer medium reasoning for UI/route changes; low reasoning is acceptable for mechanical test or copy updates.
 Do not use this profile for architecture, schema migrations, security-sensitive logic, cross-cutting refactors, or final review.
 Respect file ownership boundaries.
+Do not cold-start-read broad project docs unless the task explicitly asks for documentation/architecture work.
+For small feedback slices, use the lead's context packet as product truth and read only the named implementation/test files plus at most two targeted searches.
+If named files contradict the context packet, stop and report the contradiction instead of broad-scanning the repository.
 Do not revert or overwrite edits made by other agents.
 Make the smallest complete change that satisfies the acceptance criteria.
 Add or update focused tests for changed behavior.

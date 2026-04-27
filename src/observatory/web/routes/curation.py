@@ -1,10 +1,10 @@
 # FILE: src/observatory/web/routes/curation.py
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
-# PURPOSE: Curation Queue for proposed, disputed, and unverified Insights.
-# PRD_REF: docs/PRD.md §11.7, §24
+# PURPOSE: Curation Queue views for review, verified, historical, and all Insights.
+# PRD_REF: docs/PRD.md section 11.7, section 24
 # WHY_REF: docs/why-graph.xml#FEAT-CURATION-QUEUE
-# SCOPE: list curation-needed Insights; quick status labelling actions
+# SCOPE: list curation queue by tabbed views; quick status/confidence label actions
 # INVARIANTS:
 # - This is not an approval gate; proposed Insights remain visible elsewhere.
 # - Actions update confidence/status labels only and do not delete agent output.
@@ -31,6 +31,7 @@ ALLOWED_CURATION_STATUSES = {
     "disputed": "disputed",
     "historical": "historical",
 }
+ALLOWED_CURATION_VIEWS = {"all", "historical", "review", "verified"}
 RESTORABLE_INSIGHT_STATUSES = {
     "proposed",
     "corroborated",
@@ -46,7 +47,15 @@ RESTORABLE_CONFIDENCE_BANDS = {
     "verified",
     "historical",
 }
+VERIFIED_STATUSES = {"human-verified", "corroborated"}
+VERIFIED_CONFIDENCE_BANDS = {"verified", "corroborated"}
 CURATION_VISIBLE_STATUSES = {"proposed", "disputed"}
+CURATION_VIEW_CONFIG = [
+    {"slug": "review", "label": "Needs review"},
+    {"slug": "verified", "label": "Verified"},
+    {"slug": "historical", "label": "Historical"},
+    {"slug": "all", "label": "All"},
+]
 
 
 @dataclass(frozen=True)
@@ -88,14 +97,79 @@ def _read_feedback(request: Request) -> dict[str, str] | None:
     }
 
 
+def _normalize_view(view: str | None) -> str:
+    if view in ALLOWED_CURATION_VIEWS:
+        return view
+    return "review"
+
+
+def _is_review_view(insight: Insight) -> bool:
+    return insight.status in CURATION_VISIBLE_STATUSES or insight.confidence_band == "unverified"
+
+
+def _is_verified_view(insight: Insight) -> bool:
+    return insight.status in VERIFIED_STATUSES or insight.confidence_band in VERIFIED_CONFIDENCE_BANDS
+
+
+def _is_historical_view(insight: Insight) -> bool:
+    return insight.status == "historical" or insight.confidence_band == "historical"
+
+
+def _is_visible_for_view(insight: Insight, view: str) -> bool:
+    if view == "verified":
+        return _is_verified_view(insight)
+    if view == "historical":
+        return _is_historical_view(insight)
+    if view == "all":
+        return True
+    return _is_review_view(insight)
+
+
+def _view_counts(insights: list[Insight]) -> dict[str, int]:
+    return {
+        "review": sum(1 for insight in insights if _is_review_view(insight)),
+        "verified": sum(1 for insight in insights if _is_verified_view(insight)),
+        "historical": sum(1 for insight in insights if _is_historical_view(insight)),
+        "all": len(insights),
+    }
+
+
+def _target_view_for_status(status: str, confidence_band: str) -> str:
+    if status == "historical":
+        return "historical"
+    if status == "human-verified":
+        return "verified"
+    if status == "disputed" or confidence_band == "unverified":
+        return "review"
+    if status in {"proposed", "corroborated"} or confidence_band in {"verified", "corroborated"}:
+        return "verified"
+    return "all"
+
+
 # START_ROUTE_CURATION_LIST:
 @router.get("", response_class=HTMLResponse)
-def curation_queue(request: Request, session: Session = Depends(db.get_session)) -> HTMLResponse:
+def curation_queue(
+    request: Request,
+    view: str = "review",
+    session: Session = Depends(db.get_session),
+) -> HTMLResponse:
+    selected_view = _normalize_view(view)
     insights = sorted(
         session.exec(select(Insight)).all(),
         key=lambda insight: insight.agent_authored_at,
         reverse=True,
     )
+    view_counts = _view_counts(insights)
+    tabs = [
+        {
+            "slug": tab["slug"],
+            "label": tab["label"],
+            "count": view_counts[tab["slug"]],
+            "is_active": tab["slug"] == selected_view,
+            "href": f"/curation?view={tab['slug']}",
+        }
+        for tab in CURATION_VIEW_CONFIG
+    ]
     queue_items = [
         CurationInsightView(
             insight=insight,
@@ -104,13 +178,15 @@ def curation_queue(request: Request, session: Session = Depends(db.get_session))
             evidence_count=len(insight.evidence_items),
         )
         for insight in insights
-        if insight.status in CURATION_VISIBLE_STATUSES or insight.confidence_band == "unverified"
+        if _is_visible_for_view(insight, selected_view)
     ]
     return templates.TemplateResponse(
         request,
         "curation/index.html",
         {
             "active_nav": "curation",
+            "tabs": tabs,
+            "current_view": selected_view,
             "queue_items": queue_items,
             "feedback": _read_feedback(request),
         },
@@ -148,6 +224,7 @@ def update_insight_status(
     )
     session.add_all([insight, note])
     session.commit()
+    target_view = _target_view_for_status(insight.status, insight.confidence_band)
     return RedirectResponse(
         url="/curation?"
         + urlencode(
@@ -159,6 +236,7 @@ def update_insight_status(
                 "previous_confidence": previous_confidence,
                 "new_status": insight.status,
                 "new_confidence": insight.confidence_band,
+                "view": target_view,
             }
         ),
         status_code=303,
@@ -196,6 +274,7 @@ def undo_insight_status(
 
     insight.status = restored_status
     insight.confidence_band = restored_confidence
+    target_view = _target_view_for_status(restored_status, restored_confidence)
     note = RevisionNote(
         insight_id=insight.id,
         created_by="curation-ui",
@@ -218,6 +297,7 @@ def undo_insight_status(
                 "previous_confidence": restored_confidence,
                 "new_status": current_status,
                 "new_confidence": current_confidence,
+                "view": target_view,
             }
         ),
         status_code=303,

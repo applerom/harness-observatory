@@ -1,6 +1,6 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — Curation action-affordance feedback slice implemented and Spark-validated
+> **Last update:** 2026-04-27 — Curation status views and Spark prompt-budget feedback implemented
 > **Phase:** v1.1 published to `main`; feedback-hardening active on `development`
 > **Next milestone:** continue owner/student feedback hardening on the next surfaced tab
 
@@ -72,6 +72,21 @@ Execution-lead decision: treat this as a trust and teaching problem, not only bu
 Process correction captured: Roman explicitly deprioritized heavy strong-agent review during early visual-feedback churn. The project now keeps a lightweight `docs/agent-run-ledger.md` to tune which subagent profiles are useful. Spark is preferred for small implementation and validation/server tasks; strong reviewers are reserved for stabilized/risky checkpoints.
 
 Validation evidence: Spark validator Herschel ran focused curation route tests (`2 passed, 31 deselected`), `npm run visual:curation` on a fresh server (`1 passed`), `uv run ruff check .`, `uv run mypy src tests`, and `uv run python scripts/validate_anchors.py` (66 anchors OK). A first visual run against a stale long-running server failed before the fresh-server rerun, reinforcing that visual QA after template/route edits should restart or isolate the server.
+
+## Update 2026-04-27 — feedback-hardening: verified items need a visible home
+
+Roman tested the improved Curation buttons and found the next trust problem: after pressing `Verify`, the Insight no longer appears in the default Curation Queue. That is correct under the old filter, but wrong for user confidence because the item feels lost. The product answer is explicit status navigation, not more explanation.
+
+What changed:
+- `/curation` now has visible views/tabs: `Needs review`, `Verified`, `Historical`, and `All`, with counts.
+- `Verify` redirects into `view=verified`, so the changed Insight stays visible.
+- `Archive historical` redirects into `view=historical`.
+- `Flag dispute` stays in `view=review`.
+- Undo redirects to the view where the restored status is visible.
+
+Process lesson from the same feedback: Roman inspected Spark logs and caught a lead-orchestration problem. A fast Spark worker had read the broad cold-start docs and compacted before a tiny patch. The Codex subagent profile and fast-worker profile now require context-budgeted Spark prompts: a tiny context packet, exact allowed files, and no broad SPIRIT/PRD/WHY/WORKLOG/CONTEXT/EVOLUTION read unless the delegated task explicitly needs it.
+
+Validation evidence: Faraday (`gpt-5.3-codex-spark/medium`) implemented the bounded Curation patch while obeying the read budget. Carver (`gpt-5.3-codex-spark/low`) ran validation without edits and caught an ambiguous Playwright locator. After the lead narrowed the locator, `uv run pytest tests/web/test_readonly_routes.py -k "curation"` passed (`3 passed, 31 deselected`) and `npm run visual:curation` passed.
 
 ---
 

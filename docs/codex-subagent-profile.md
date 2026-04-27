@@ -41,6 +41,16 @@ Project-specific adjustments:
 
 Official-source note checked on 2026-04-27: OpenAI Help lists `GPT-5.3-Codex-Spark` as a Codex research preview with non-final credit rates, and OpenAI model docs list GPT-5.3-Codex as the capable agentic coding model with `low`/`medium`/`high`/`xhigh` reasoning. Project policy therefore treats Spark as a fast implementation lane requiring lead verification, while reviewer/final-risk checks stay on `reviewer`/stronger models.
 
+Spark context-budget note (2026-04-27): the lead must not rely on Spark to infer a minimal read set from the project's required-reading ritual. For tiny feedback-hardening slices, the lead prompt should say:
+
+- do not cold-start-read `SPIRIT.md`, full `docs/PRD.md`, full WHY graph, `CONTEXT.md`, `WORKLOG.md`, or `EVOLUTION.md` unless explicitly told;
+- use the provided context packet as the product truth for this slice;
+- read only the exact implementation/test files named in the prompt, plus at most 2 targeted `rg` checks if needed;
+- stop and report if those files contradict the packet instead of broad-scanning the repository;
+- keep validation command-running separate from implementation when possible.
+
+Reason: OpenAI docs describe Codex usage as token-sensitive to task size and extended sessions that require more context, while GPT-5.3-Codex-Spark is a research-preview fast lane with non-final credit rates. The project therefore treats Spark context as something the lead budgets deliberately, not a free resource.
+
 `xhigh` is an escalation mode only: repeated failure, architecture contradiction, difficult root-cause debugging, or final high-risk review.
 
 ## v0.1 Dispatch Shape
@@ -66,6 +76,7 @@ Every Codex subagent prompt must include:
 
 - role and task boundary;
 - exact file or module ownership;
+- context budget and allowed read set;
 - files it must not edit;
 - acceptance criteria copied from `DELEGATION-PLAN.md` or PRD;
 - command/test expectations;

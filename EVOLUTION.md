@@ -148,6 +148,51 @@ Action:
 - PRD/WHY now say Curation actions must explain that they change labels only,
   preserve agent output, and provide a visible undo after action.
 
+## 2026-04-27 — Fast Agents Need Small Context Contracts
+
+Observation:
+- Roman inspected the live Spark-worker log and saw the worker immediately read
+  broad cold-start documentation (`SPIRIT.md`, full PRD, WHY graph, WORKLOG,
+  CONTEXT, EVOLUTION) before a small UI/route patch.
+- The worker then hit context compaction and repeated local file reads.
+- This was not "Spark is bad"; it was a lead-agent prompt design problem. The
+  worker followed a project ritual that was useful for a lead session but
+  wasteful for a tiny delegated slice.
+
+Impact:
+- The speed advantage of a fast agent can disappear if the lead hands it a broad
+  context surface.
+- Subagent quality is partly orchestration quality: model capability, prompt
+  contract, read budget, and acceptance criteria interact.
+
+Action:
+- Spark feedback prompts must now include a tiny context packet, exact allowed
+  files, and an explicit read budget.
+- For tiny implementation slices, Spark should not cold-start-read SPIRIT/PRD/WHY
+  unless the delegated task is itself documentation/architecture work.
+
+Rule added:
+- Fast subagents get context-budgeted prompts. The lead preserves project
+  context; the worker reads only what the worker needs.
+
+## 2026-04-27 — Verified Should Not Feel Lost
+
+Observation:
+- After pressing `Verify` in the Curation Queue, the Insight is filtered out of
+  the default queue because it is no longer `proposed`, `disputed`, or
+  `unverified`.
+- Technically the Insight still exists elsewhere, but the user cannot tell where
+  it went or how to inspect verified/historical curation results.
+
+Impact:
+- A non-destructive action still feels destructive if the destination state has
+  no visible place in the UI.
+- Undo helps only immediately; durable trust also needs browsable status views.
+
+Action:
+- PRD/WHY now require Curation status views/tabs for Needs review, Verified,
+  Historical, and All.
+
 ## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
 
 Observation:

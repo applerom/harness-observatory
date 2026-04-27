@@ -743,6 +743,8 @@ Actions available: promote to `corroborated`, mark `human-verified`, mark `dispu
 
 Feedback-hardening update (2026-04-27): curation actions are scary if their effect and reversibility are unclear. The Curation Queue must state near the buttons that actions only change confidence/status labels and never delete agent output. Each action label should name the intended effect in plain language, and after a click the page should show a short confirmation with an Undo action that restores the previous status/confidence while the user is still in context.
 
+Feedback-hardening update (2026-04-27, status visibility): after `Verify` or `Archive historical`, an Insight must not appear to disappear into nowhere. The Curation Queue needs explicit status views/tabs for at least `Needs review`, `Verified`, `Historical`, and `All`. Action confirmation should keep the user in a view where the changed Insight is visible, or give an obvious link to that view. The point is trust calibration: curation changes where the Insight is listed, not whether the Insight exists.
+
 ### 11.8 Live Agent Studio
 
 Projector-optimized surface for teaching sessions.
@@ -1244,6 +1246,7 @@ v0.3c acceptance:
 - Queue rows show status, confidence band, harness/topic labels when known, and evidence count.
 - Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
 - Feedback-hardening acceptance: action controls explain their effect; a completed action returns to Curation with a visible undo affordance; undo restores the previous status/confidence and logs that restoration.
+- Feedback-hardening acceptance: Curation has visible status views/tabs so `human-verified` and `historical` Insights can be found after action, with counts or labels that make the destination clear.
 - The navigation exposes Curation as an owner/workbench surface.
 
 Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.

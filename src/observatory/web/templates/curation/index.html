@@ -2,10 +2,10 @@
 FILE: src/observatory/web/templates/curation/index.html
 VERSION: 2026-04-26
 START_MODULE_CONTRACT:
-PURPOSE: Curation Queue page for proposed, disputed, and unverified Insights.
-PRD_REF: docs/PRD.md §11.7
+PURPOSE: Curation Queue page for review, verified, historical, and all Insights.
+PRD_REF: docs/PRD.md section 11.7
 WHY_REF: docs/why-graph.xml#FEAT-CURATION-QUEUE
-SCOPE: queue rows, labels, evidence counts, quick confidence actions
+SCOPE: queue tabs, rows, labels, evidence counts, quick confidence actions
 INVARIANTS:
 - Copy avoids approval-gate semantics.
 :END_MODULE_CONTRACT
@@ -15,14 +15,43 @@ INVARIANTS:
 {% block title %}Curation Queue - Harness Observatory{% endblock %}
 
 {% block content %}
+  {% set _tabs = tabs if tabs is defined else [] %}
+  {% if _tabs | length == 0 %}
+    {% set _tabs = [
+      {
+        "slug": "review",
+        "label": "Needs review",
+        "count": 0,
+        "is_active": current_view == "review" if current_view is defined else true,
+        "href": "/curation?view=review",
+      },
+      {"slug": "verified", "label": "Verified", "count": 0, "is_active": false, "href": "/curation?view=verified"},
+      {"slug": "historical", "label": "Historical", "count": 0, "is_active": false, "href": "/curation?view=historical"},
+      {"slug": "all", "label": "All", "count": 0, "is_active": false, "href": "/curation?view=all"},
+    ] %}
+  {% endif %}
+  {% set current_tab = _tabs | selectattr("is_active") | first %}
   <section class="space-y-6">
     <div>
       <p class="text-sm font-medium uppercase tracking-normal text-emerald-700">Curation Queue</p>
-      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Unverified Insights</h1>
+      <h1 class="mt-2 text-3xl font-semibold tracking-normal text-slate-950">
+        {{ current_tab.label if current_tab else "Needs review" }}
+      </h1>
       <p class="mt-3 max-w-3xl text-base leading-7 text-slate-700">
         These buttons only change the insight status/confidence labels. They do not delete or hide agent output.
       </p>
     </div>
+
+    <nav aria-label="Curation view tabs" class="flex flex-wrap gap-2">
+      {% for tab in _tabs %}
+        <a
+          class="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium {% if tab.is_active %}bg-slate-950 text-white{% else %}bg-white text-slate-900 hover:bg-slate-50{% endif %}"
+          href="{{ tab.href }}"
+        >
+          {{ tab.label }} ({{ tab.count }})
+        </a>
+      {% endfor %}
+    </nav>
 
     {% if feedback %}
       <section class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -111,7 +140,7 @@ INVARIANTS:
         </article>
       {% else %}
         <p class="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow-sm">
-          No proposed or unverified Insights are waiting for confidence labelling.
+          No matching Insights are waiting in this Curation view.
         </p>
       {% endfor %}
     </section>

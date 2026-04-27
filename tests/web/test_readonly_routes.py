@@ -643,8 +643,12 @@ def test_curation_queue_lists_unverified_insights_and_actions_write_revision_not
     queue_response = client.get("/curation")
 
     assert queue_response.status_code == 200
-    assert "Unverified Insights" in queue_response.text
+    assert "Needs review" in queue_response.text
     assert "These buttons only change the insight status/confidence labels." in queue_response.text
+    assert "Needs review (1)" in queue_response.text
+    assert "Verified (1)" in queue_response.text
+    assert "Historical (0)" in queue_response.text
+    assert "All (2)" in queue_response.text
     assert "Instruction files change authority" in queue_response.text
     assert "Any harness" in queue_response.text
     assert "Instruction Files" in queue_response.text
@@ -678,6 +682,7 @@ def test_curation_queue_lists_unverified_insights_and_actions_write_revision_not
     assert parsed["previous_confidence"] == ["unverified"]
     assert parsed["new_status"] == ["disputed"]
     assert parsed["new_confidence"] == ["disputed"]
+    assert parsed["view"] == ["review"]
 
     app = cast(Any, client.app)
     with Session(app.state.test_engine) as session:
@@ -693,6 +698,7 @@ def test_curation_queue_lists_unverified_insights_and_actions_write_revision_not
 
     disputed_queue_response = client.get(action_location)
     assert disputed_queue_response.status_code == 200
+    assert "Needs review (1)" in disputed_queue_response.text
     assert "Action applied:" in disputed_queue_response.text
     assert "Instruction files change authority" in disputed_queue_response.text
     assert "moved from" in disputed_queue_response.text
@@ -700,6 +706,7 @@ def test_curation_queue_lists_unverified_insights_and_actions_write_revision_not
 
     disputed_queue_response = client.get("/curation")
     assert disputed_queue_response.status_code == 200
+    assert "Needs review (1)" in disputed_queue_response.text
     assert "Instruction files change authority" in disputed_queue_response.text
     assert "disputed" in disputed_queue_response.text
 
@@ -716,6 +723,7 @@ def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
     action_location = action_response.headers["location"]
     assert action_location.startswith("/curation?")
     parsed = parse_qs(urlparse(action_location).query)
+    assert parsed["view"] == ["historical"]
 
     app = cast(Any, client.app)
     with Session(app.state.test_engine) as session:
@@ -724,8 +732,9 @@ def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
         assert insight.status == "historical"
         assert insight.confidence_band == "historical"
 
-    queue_after_action = client.get("/curation")
-    assert "Instruction files change authority" not in queue_after_action.text
+    queue_after_action = client.get(action_location)
+    assert "Instruction files change authority" in queue_after_action.text
+    assert "Historical (1)" in queue_after_action.text
 
     undo_response = client.post(
         "/curation/1/undo",
@@ -739,6 +748,8 @@ def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
     )
     assert undo_response.status_code == 303
     undo_location = undo_response.headers["location"]
+    undo_parsed = parse_qs(urlparse(undo_location).query)
+    assert undo_parsed["view"] == ["review"]
 
     with Session(app.state.test_engine) as session:
         insight = session.get(Insight, 1)
@@ -746,7 +757,7 @@ def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
         assert insight.status == "proposed"
         assert insight.confidence_band == "unverified"
 
-    queue_after_undo = client.get("/curation")
+    queue_after_undo = client.get(undo_location)
     assert queue_after_undo.status_code == 200
     assert "Instruction files change authority" in queue_after_undo.text
     assert "proposed" in queue_after_undo.text
@@ -773,6 +784,48 @@ def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
         follow_redirects=False,
     )
     assert invalid_undo_response.status_code == 400
+
+
+def test_curation_queue_actions_redirect_to_expected_tabs(client: TestClient) -> None:
+    verify_action = client.post(
+        "/curation/1/status",
+        data={"status": "human-verified"},
+        follow_redirects=False,
+    )
+    assert verify_action.status_code == 303
+    verify_location = verify_action.headers["location"]
+    assert verify_location.startswith("/curation?")
+    verify_parsed = parse_qs(urlparse(verify_location).query)
+    assert verify_parsed["view"] == ["verified"]
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        verified_insight = session.get(Insight, 1)
+
+    assert verified_insight is not None
+    assert verified_insight.status == "human-verified"
+    assert verified_insight.confidence_band == "verified"
+
+    verified_queue_response = client.get(verify_location)
+    assert verified_queue_response.status_code == 200
+    assert "Verified (2)" in verified_queue_response.text
+    assert "human-verified" in verified_queue_response.text
+
+    historical_action = client.post(
+        "/curation/1/status",
+        data={"status": "historical"},
+        follow_redirects=False,
+    )
+    assert historical_action.status_code == 303
+    historical_location = historical_action.headers["location"]
+    assert historical_location.startswith("/curation?")
+    historical_parsed = parse_qs(urlparse(historical_location).query)
+    assert historical_parsed["view"] == ["historical"]
+
+    historical_queue_response = client.get(historical_location)
+    assert historical_queue_response.status_code == 200
+    assert "Historical (1)" in historical_queue_response.text
+    assert "historical" in historical_queue_response.text
 
 
 def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> None:
