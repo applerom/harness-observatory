@@ -11,11 +11,16 @@
 # :END_MODULE_CONTRACT
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from contextlib import suppress
+from pathlib import Path
 
-from observatory.runners.base import AgentContext, AgentEvent, AgentResult
+from observatory.runners.base import AgentContext, AgentEvent, AgentPreflightResult, AgentResult
+
+
+WINDOWS_RUNNABLE_EXTENSIONS = (".exe", ".cmd", ".bat", ".com")
 
 
 @dataclass(slots=True)
@@ -26,15 +31,69 @@ class ClaudeRunner:
     timeout_seconds: float = 120.0
 
     name: str = "claude"
-    version: str = "0.2a-cli"
+    version: str = "0.2c-cli"
+
+    # START_CLAUDE_PREFLIGHT:
+    async def preflight(self) -> AgentPreflightResult:
+        """Resolve Claude CLI and read its version without running a model call."""
+        executable = resolve_runnable_command(self.executable_name)
+        try:
+            process = await asyncio.create_subprocess_exec(
+                executable,
+                "--version",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(
+                process.communicate(),
+                timeout=min(self.timeout_seconds, 15.0),
+            )
+        except FileNotFoundError as exc:
+            return AgentPreflightResult(
+                ok=False,
+                error_message=f"Claude CLI executable not found: {exc.filename}",
+                metadata={"executable": executable},
+            )
+        except asyncio.TimeoutError:
+            await _clean_up_timed_out_process(process)
+            return AgentPreflightResult(
+                ok=False,
+                error_message="Claude CLI version preflight timed out",
+                metadata={"executable": executable},
+            )
+        except OSError as exc:
+            return AgentPreflightResult(
+                ok=False,
+                error_message=f"Claude CLI failed to launch: {exc}",
+                metadata={"executable": executable},
+            )
+
+        stdout = stdout_bytes.decode("utf-8", errors="replace")
+        stderr = stderr_bytes.decode("utf-8", errors="replace")
+        output = (stdout + stderr).strip()
+        if process.returncode != 0:
+            return AgentPreflightResult(
+                ok=False,
+                output=output,
+                error_message=output or f"Claude CLI --version exited with code {process.returncode}",
+                metadata={"executable": executable},
+            )
+        return AgentPreflightResult(
+            ok=True,
+            output=output,
+            metadata={"executable": executable, "version_output": output},
+        )
+
+    # :END_CLAUDE_PREFLIGHT
 
     # START_CLAUDE_RUN:
     async def run(self, context: AgentContext) -> AgentResult:
         """Execute one prompt through the configured Claude CLI."""
         cwd = context.metadata.get("cwd") or None
+        executable = resolve_runnable_command(self.executable_name)
         try:
             process = await asyncio.create_subprocess_exec(
-                self.executable_name,
+                executable,
                 "-p",
                 context.prompt,
                 cwd=cwd,
@@ -59,6 +118,12 @@ class ClaudeRunner:
                 output="",
                 error_message=f"Claude CLI timed out after {self.timeout_seconds:g} seconds",
             )
+        except OSError as exc:
+            return AgentResult(
+                status="failed",
+                output="",
+                error_message=f"Claude CLI failed to launch: {exc}",
+            )
 
         stdout = stdout_bytes.decode("utf-8", errors="replace")
         stderr = stderr_bytes.decode("utf-8", errors="replace")
@@ -82,9 +147,10 @@ class ClaudeRunner:
     async def _stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
         yield AgentEvent(kind="status", message="started")
         cwd = context.metadata.get("cwd") or None
+        executable = resolve_runnable_command(self.executable_name)
         try:
             process = await asyncio.create_subprocess_exec(
-                self.executable_name,
+                executable,
                 "-p",
                 context.prompt,
                 cwd=cwd,
@@ -98,6 +164,10 @@ class ClaudeRunner:
             )
             yield AgentEvent(kind="status", message="failed")
             return
+        except OSError as exc:
+            yield AgentEvent(kind="error", message=f"Claude CLI failed to launch: {exc}")
+            yield AgentEvent(kind="status", message="failed")
+            return
 
         async for event in _stream_process_output(
             process=process,
@@ -107,6 +177,37 @@ class ClaudeRunner:
             yield event
 
     # :END_CLAUDE_RUN
+
+
+def resolve_runnable_command(executable_name: str) -> str:
+    """Resolve a Windows-runnable Claude CLI command without choosing npm shims."""
+    if not _is_windows():
+        return executable_name
+
+    executable_path = Path(executable_name)
+    if executable_path.suffix:
+        return executable_name
+
+    if executable_path.parent != Path("."):
+        for suffix in WINDOWS_RUNNABLE_EXTENSIONS:
+            candidate = executable_path.with_suffix(suffix)
+            if candidate.is_file():
+                return str(candidate)
+        return executable_name
+
+    for directory in os.environ.get("PATH", "").split(os.pathsep):
+        if not directory:
+            continue
+        base = Path(directory) / executable_name
+        for suffix in WINDOWS_RUNNABLE_EXTENSIONS:
+            candidate = base.with_suffix(suffix)
+            if candidate.is_file():
+                return str(candidate)
+    return executable_name
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
 
 
 async def _stream_process_output(

@@ -40,6 +40,39 @@ Rule added:
   Co-author trailers credit subagents/reviewers; they do not repair an incorrect
   primary author.
 
+## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
+
+Observation:
+- v1.1 required a real refresh through `ClaudeRunner` because the dual-runner
+  architecture was otherwise partly theatrical.
+- Job #9 ran through the product `RefreshJobService` with `ClaudeRunner`
+  against target `claude-code`.
+- The run succeeded: Claude CLI preflight resolved
+  `C:\Users\Intel\.local\bin\claude.exe`, version `2.1.119 (Claude Code)`,
+  and the runner returned `done`.
+- The useful surprise was downstream: Claude emitted evidence paths as plain
+  bullets (`path:line — note`) rather than Markdown links. The existing parser
+  only understood Markdown links, so the first parse created an Insight without
+  EvidenceItems.
+
+Impact:
+- Real runner diversity is not only about subprocess syntax. Different agents
+  shape evidence differently.
+- An Insight without EvidenceItems violates the project pedagogy even when the
+  raw log itself contains proof.
+
+Action:
+- `ClaudeRunner` now has a cheap `preflight()` like `CodexRunner`, including
+  Windows-runnable command resolution and launch-error handling.
+- The refresh parser now accepts plain evidence path bullets and line ranges,
+  in addition to Markdown links.
+- Local Job #9 was repaired by attaching EvidenceItems #80-#82 to Insight #37
+  from the preserved raw log; no agent output was deleted.
+
+Rule added:
+- Empirical runner validation must inspect the parsed artifacts, not only the
+  runner terminal status. `done` is not enough if the proof layer is missing.
+
 ## 2026-04-27 — Spirit Lead Returns: Two-Lead Model Made Explicit
 
 Observation:

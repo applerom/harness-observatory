@@ -45,6 +45,21 @@ class SuccessfulRunner:
         return self._empty_stream()
 
 
+class EmptyFindingsRunner:
+    name = "empty-findings"
+    version = "test"
+
+    async def run(self, _context: AgentContext) -> AgentResult:
+        return AgentResult(status="done", output="No notable changes found in this pass.")
+
+    async def _empty_stream(self) -> AsyncIterator[AgentEvent]:
+        if False:
+            yield AgentEvent(kind="noop", message="")
+
+    def stream(self, context: AgentContext) -> AsyncIterator[AgentEvent]:
+        return self._empty_stream()
+
+
 class RecordingRunner:
     name = "recording"
     version = "test"
@@ -163,6 +178,39 @@ def test_refresh_service_can_label_cron_trigger(tmp_path: Path) -> None:
     assert persisted_job.trigger == "cron"
     semantic_events = read_semantic_events(tmp_path)
     assert semantic_events[0]["metadata"]["trigger"] == "cron"
+
+
+def test_refresh_service_marks_empty_parser_result_done_no_findings(tmp_path: Path) -> None:
+    with make_session() as session:
+        harness = Harness(
+            name="OpenCode",
+            slug="opencode",
+            local_upstream_path=".",
+        )
+        session.add(harness)
+        session.commit()
+        session.refresh(harness)
+
+        job = RefreshJobService(EmptyFindingsRunner(), log_dir=tmp_path).refresh_harness(
+            session, harness
+        )
+        persisted_job = session.get(AgentJob, job.id)
+        insights = session.exec(select(Insight)).all()
+        evidence_items = session.exec(select(EvidenceItem)).all()
+
+    assert persisted_job is not None
+    assert persisted_job.status == "done_no_findings"
+    assert persisted_job.produced_artifact_ids == []
+    assert persisted_job.stdout_log_path is not None
+    assert Path(persisted_job.stdout_log_path).read_text(encoding="utf-8").startswith(
+        "No notable changes found"
+    )
+    assert insights == []
+    assert evidence_items == []
+    semantic_events = read_semantic_events(tmp_path)
+    assert semantic_events[-1]["code"] == "parser_returned_no_findings"
+    assert semantic_events[-1]["level"] == "warning"
+    assert semantic_events[-1]["anchor"] == "START_PARSER_EMPTY_GUARD"
 
 
 def test_refresh_service_persists_exact_rendered_prompt_text(tmp_path: Path) -> None:

@@ -28,7 +28,7 @@ INVARIANTS:
     </div>
 
     <dl class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 text-sm shadow-sm sm:grid-cols-2">
-      <div><dt class="font-medium text-slate-900">Status</dt><dd class="mt-1"><span class="status-badge">{{ job.status }}</span></dd></div>
+      <div><dt class="font-medium text-slate-900">Status</dt><dd class="mt-1"><span class="status-badge {% if job.status == 'done_no_findings' %}status-badge-warning{% endif %}">{{ job.status }}</span></dd></div>
       <div><dt class="font-medium text-slate-900">Type</dt><dd class="mt-1 text-slate-700">{{ job.type }}</dd></div>
       <div><dt class="font-medium text-slate-900">Target</dt><dd class="mt-1 text-slate-700">{{ job_view.target_label }}</dd></div>
       <div><dt class="font-medium text-slate-900">Runner</dt><dd class="mt-1 text-slate-700">{{ job_view.runner_label }}</dd></div>
@@ -47,6 +47,8 @@ INVARIANTS:
       <h2 class="text-lg font-semibold tracking-normal text-slate-950">Produced Artifacts</h2>
       {% if job.produced_artifact_ids %}
         <p class="mt-2 font-mono text-sm text-slate-700">produced_artifact_ids: {{ job.produced_artifact_ids | join(", ") }}</p>
+      {% elif job.status == "done_no_findings" %}
+        <p class="mt-2 text-sm text-amber-800">Runner finished, but the parser found no publishable Insights or EvidenceItems. Inspect the raw log before treating this as success.</p>
       {% else %}
         <p class="mt-2 text-sm text-slate-500">No produced artifacts recorded yet.</p>
       {% endif %}

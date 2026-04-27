@@ -54,6 +54,13 @@ INVARIANTS:
   white-space: nowrap;
 }
 
+.status-badge-warning,
+.template-badge {
+  background: rgb(254 249 195);
+  border-color: rgb(253 224 71);
+  color: rgb(133 77 14);
+}
+
 .insight-card {
   background: rgb(248 250 252);
   border: 1px solid rgb(226 232 240);

@@ -29,6 +29,11 @@ from observatory.models import AgentJob, EvidenceItem, Harness, Insight, Topic
 
 SECTION_RE = re.compile(r"^##\s+(?P<title>.+?)\s*$", re.MULTILINE)
 EVIDENCE_LINK_RE = re.compile(r"-\s*(?P<label>.+?):\s*\[(?P<link_text>[^\]]+)\]\((?P<target>[^)]+)\)")
+PLAIN_EVIDENCE_PATH_RE = re.compile(
+    r"^-\s*`?(?P<target>(?:[A-Za-z]:)?[/\\][^`—\n]+?)"
+    r"(?P<line_suffix>:\d+(?:-\d+)?)?`?\s+[—-]\s*(?P<label>.+)$",
+    re.MULTILINE,
+)
 PATH_LINE_RE = re.compile(r"^(?P<path>.+?)(?::(?P<line>\d+))?$")
 
 TOPIC_PATH_HINTS = {
@@ -167,17 +172,37 @@ def split_sections(markdown: str) -> dict[str, str]:
 
 def parse_evidence_links(markdown: str) -> list[ParsedEvidence]:
     evidence: list[ParsedEvidence] = []
+    seen_locations: set[str] = set()
     for match in EVIDENCE_LINK_RE.finditer(markdown):
         label = clean_text(match.group("label"))
         link_text = clean_text(match.group("link_text"))
         target = match.group("target").strip()
         file_path, line_number = parse_markdown_link_target(target)
         claim_summary = label or link_text or file_path
+        source_location = format_source_location(file_path, line_number)
+        seen_locations.add(source_location)
         evidence.append(
             ParsedEvidence(
                 claim_summary=claim_summary,
                 file_path=file_path,
-                source_location=format_source_location(file_path, line_number),
+                source_location=source_location,
+                line_number=line_number,
+                topic_slug=infer_topic_slug(f"{claim_summary} {file_path}"),
+            )
+        )
+    for match in PLAIN_EVIDENCE_PATH_RE.finditer(markdown):
+        target = f"{match.group('target').strip()}{match.group('line_suffix') or ''}"
+        file_path, line_number = parse_plain_path_target(target)
+        source_location = format_source_location(file_path, line_number)
+        if source_location in seen_locations:
+            continue
+        seen_locations.add(source_location)
+        claim_summary = clean_text(match.group("label")) or file_path
+        evidence.append(
+            ParsedEvidence(
+                claim_summary=claim_summary,
+                file_path=file_path,
+                source_location=source_location,
                 line_number=line_number,
                 topic_slug=infer_topic_slug(f"{claim_summary} {file_path}"),
             )
@@ -196,6 +221,14 @@ def parse_markdown_link_target(target: str) -> tuple[str, int | None]:
     file_path = path_match.group("path")
     line_number = path_match.group("line")
     return trim_known_repo_prefix(file_path), int(line_number) if line_number else None
+
+
+def parse_plain_path_target(target: str) -> tuple[str, int | None]:
+    stripped = target.strip().strip("`")
+    range_match = re.match(r"^(?P<path>.+):(?P<line>\d+)(?:-\d+)?$", stripped)
+    if range_match is None:
+        return trim_known_repo_prefix(stripped), None
+    return trim_known_repo_prefix(range_match.group("path")), int(range_match.group("line"))
 
 
 def trim_known_repo_prefix(file_path: str) -> str:

@@ -492,6 +492,35 @@ def test_job_detail_exposes_produced_artifact_ids(client: TestClient) -> None:
     assert "START_ABSTRACT_JOB" in detail_response.text
 
 
+def test_job_dashboard_marks_done_no_findings_as_amber(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    log_path = Path("live-sessions") / "agent-job-00001.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text("No notable changes found.\n", encoding="utf-8")
+    with Session(app.state.test_engine) as session:
+        job = AgentJob(
+            type="refresh",
+            target_kind="Harness",
+            target_id=1,
+            runner_name="fake",
+            runner_version="test",
+            status="done_no_findings",
+            stdout_log_path=log_path.as_posix(),
+        )
+        session.add(job)
+        session.commit()
+
+    list_response = client.get("/jobs")
+    detail_response = client.get("/jobs/1")
+
+    assert list_response.status_code == 200
+    assert "done_no_findings" in list_response.text
+    assert "status-badge-warning" in list_response.text
+    assert detail_response.status_code == 200
+    assert "parser found no publishable Insights" in detail_response.text
+    assert "status-badge-warning" in detail_response.text
+
+
 def test_job_dashboard_empty_state(client: TestClient) -> None:
     response = client.get("/jobs")
 
@@ -775,6 +804,8 @@ def test_insight_library_filters_and_renders_engagement_fields(client: TestClien
     assert "verified" in response.text
     assert "Wait for this live trace before trusting a summary." in response.text
     assert "Telegram seed: live runner uncertainty is part of the lesson." in response.text
+    assert "template-generated" in response.text
+    assert "Engagement copy is currently template-generated" in response.text
     assert "Ask the agent why" in response.text
     assert "Generate engagement" in response.text
     assert audience_response.status_code == 200

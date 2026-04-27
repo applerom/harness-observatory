@@ -10,15 +10,15 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — v1.0 snapshot hygiene validated; ready to commit and squash to main
+**Last update:** 2026-04-27 — v1.1 honesty + runner/parser hardening implemented and validated
 **Active session lead:** Codex GPT-5.5 (execution lead)
-**Current phase:** v1.0-minimal working product; preparing squash merge to `main`; v1.1 implementation next
+**Current phase:** v1.0-minimal working product published to local `main`; v1.1 implementation ready to commit on `development`
 
 ---
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.0-minimal are implemented and validated locally. The product now has importer/viewer, refresh jobs, parser persistence, scheduler, curation, live studio, abstract artifacts, verification/confidence, engagement/Insight Library, explain jobs, lens scoring, generated Markdown exports, legacy archive manifest, and onboarding checklist. Codex execution lead is first fixing stale docs/process attribution so v1.0-minimal can be squash-merged into `main`, then will implement the feedback-orthogonal v1.1 items while Roman collects lecturer/student feedback.
+v0.1 through v1.0-minimal are implemented and validated locally, and the v1.0-minimal tree has been squash-merged into local `main` as `8dc0cdc`. The product now has importer/viewer, refresh jobs, parser persistence, scheduler, curation, live studio, abstract artifacts, verification/confidence, engagement/Insight Library, explain jobs, lens scoring, generated Markdown exports, legacy archive manifest, and onboarding checklist. Codex execution lead is implementing feedback-orthogonal v1.1 honesty and proof-quality fixes while Roman collects lecturer/student feedback.
 
 ## 2. Active items
 
@@ -56,10 +56,10 @@ Current ordered queue after v0.2a+:
 | V10-LENSES-EXPORTS | Add v1.0-minimal lens scoring UI and generated docs/export/archive surfaces | Codex lead + delegated implementation | completed | Covered by V07-V10-MINIMAL-PRODUCT |
 | FEEDBACK-HARDENING | Use Roman/student feedback to improve the rough v1.0-minimal product without pretending it is final. | Owner-driven (collects feedback); Codex execution lead processes resulting tickets | active | Owner is testing the running app + giving access to lecturers/students; findings → WORKLOG → EVOLUTION → next PRD slice |
 | V10-SNAPSHOT-HYGIENE | Fix stale v1.0-minimal docs/contracts and record agent commit attribution discipline before squash-merging `development` into `main`. | Codex execution lead | completed | README/CONTEXT/PRD/AGENTS/EVOLUTION/contracts updated; pytest/ruff/mypy/anchors green |
-| V11-ENGAGEMENT-HONESTY | Labelling pass: surface that engagement copy is template-generated, not agent-authored. UI badge + Insight detail note + PRD §14.2 amendment. No engagement service code change. | Codex execution lead + delegated UI subagent | pending | PRD §24 v1.1 acceptance ready; safe to start in parallel with FEEDBACK-HARDENING; ~1 hour bounded slice |
-| V11-PARSER-EMPTY-GUARD | Add `done_no_findings` AgentJob status + `parser_returned_no_findings` semantic event + Job Dashboard amber marker + tests. | Codex execution lead + delegated implementation subagent | pending | PRD §24 v1.1 acceptance ready; needs new schema enum value (Alembic migration); ~2-3 hour bounded slice |
-| V11-CLAUDE-RUNNER-EMPIRICAL | Run at least one real refresh through `ClaudeRunner` against a real harness target; record evidence in `live-sessions/`, EVOLUTION, and `docs/runtime-dependencies.md`. | Codex execution lead (live operation; not subagent-suitable since it's interactive runtime probing) | pending | PRD §24 v1.1 acceptance ready; depends on `claude -p` CLI being available in this environment; failure mode is acceptable evidence |
-| V11-COAUTHOR-DISCIPLINE | Apply `Co-Authored-By: <reviewer>` trailer to v1.1 integration commits that include reviewer-subagent findings; baseline rule, applies forward. | Codex execution lead | pending | Process change only; no code; AGENTS.md already updated |
+| V11-ENGAGEMENT-HONESTY | Labelling pass: surface that engagement copy is template-generated, not agent-authored. UI badge + Insight detail note + PRD §14.2 amendment. No engagement service code change. | Codex execution lead | completed | Insight Library and Live detail surfaces render `template-generated` badges/notes; route + visual tests green |
+| V11-PARSER-EMPTY-GUARD | Add `done_no_findings` AgentJob status + `parser_returned_no_findings` semantic event + Job Dashboard amber marker + tests. | Codex execution lead | completed | Added canonical AgentJob status constants, empty parser guard, amber dashboard badge, route/unit tests; no Alembic migration needed because current SQLite schema stores status as indexed string |
+| V11-CLAUDE-RUNNER-EMPIRICAL | Run at least one real refresh through `ClaudeRunner` against a real harness target; record evidence in `live-sessions/`, EVOLUTION, and `docs/runtime-dependencies.md`. | Codex execution lead | completed | Real Job #9 done against `claude-code`; raw log `live-sessions/agent-job-00009.log`; Claude CLI `2.1.119`; parser plain-path hardening added after evidence-shape gap |
+| V11-COAUTHOR-DISCIPLINE | Apply `Co-Authored-By: <reviewer>` trailer to v1.1 integration commits that include reviewer-subagent findings; baseline rule, applies forward. | Codex execution lead | completed | No reviewer/subagent participated in this v1.1 slice, so the implementation commit needs explicit Codex author identity but no `Co-Authored-By` trailer |
 
 ## 4. Blocked / waiting
 
@@ -76,6 +76,10 @@ Current ordered queue after v0.2a+:
   - Next action: owner runs FEEDBACK-HARDENING; Codex GPT-5.5 (execution lead) picks up V11-ENGAGEMENT-HONESTY first as smallest bounded slice, then V11-PARSER-EMPTY-GUARD, then V11-CLAUDE-RUNNER-EMPIRICAL.
 
 - **2026-04-27** — Codex execution lead resumed after Roman's request to fix stale docs/process drift, squash v1.0-minimal into `main`, then continue PRD v1.1 execution. Direct evidence from `git log`: recent agent-led commits were authored as `Roman Siewko <applerom@gmail.com>`, which hides agent-vs-human authorship. Doc-only pass updated README/CONTEXT/source contracts, recorded attribution discipline in AGENTS/PRD/EVOLUTION, and validated with `uv run pytest` (97 passed), `uv run ruff check src/ tests/ scripts/validate_anchors.py`, `uv run mypy src/observatory tests`, and `uv run python scripts/validate_anchors.py` (60 anchors OK). Commit will use explicit Codex author identity.
+
+- **2026-04-27** — Codex committed `371ce21` (`docs(v1): fix snapshot state and agent attribution`) on `development` with author/committer `Codex GPT-5.5 <noreply@openai.com>`, then squash-merged `development` into local `main` as `8dc0cdc` (`feat(v1): publish v1.0-minimal observatory snapshot`). The squash merge used the `development` tree exactly after resolving add/add conflicts from the orphan public-history shape; `git diff --name-status development` was empty before the `main` snapshot commit.
+
+- **2026-04-27** — Implemented and validated PRD §24 v1.1 first pass on `development`: engagement copy is visibly labelled `template-generated`; successful refresh logs with zero parsed artifacts now become `done_no_findings` with semantic warning `parser_returned_no_findings`; `ClaudeRunner` has preflight and Windows executable resolution; real ClaudeRunner Job #9 against `claude-code` completed with raw log `live-sessions/agent-job-00009.log`. Job #9 revealed that Claude emits plain evidence path bullets, so the parser now accepts `path:line — note` evidence and local Job #9 was repaired to attach EvidenceItems #80-#82 to Insight #37. Validation: `uv run pytest` 101 passed; ruff passed; mypy passed; anchor validator checked 64/skipped 0; Playwright CLI `visual:insight`, `visual:jobs`, and `visual:live` passed. Next action: commit with explicit Codex author identity.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.
