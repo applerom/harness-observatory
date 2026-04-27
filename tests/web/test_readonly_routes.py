@@ -711,6 +711,31 @@ def test_curation_queue_lists_unverified_insights_and_actions_write_revision_not
     assert "disputed" in disputed_queue_response.text
 
 
+def test_curation_queue_renders_inline_markup_and_escapes_raw_html(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 1)
+        assert insight is not None
+        insight.body = (
+            "Use **bold** markup, `inline code`, and a heading.\n"
+            "### Why this works\n"
+            "- one\n"
+            "- two\n"
+            "<script>alert('x')</script>"
+        )
+        session.add(insight)
+        session.commit()
+
+    curation_response = client.get("/curation")
+    assert curation_response.status_code == 200
+    assert "<strong>bold</strong>" in curation_response.text
+    assert "<code>inline code</code>" in curation_response.text
+    assert "<h3>Why this works</h3>" in curation_response.text
+    assert "<ul><li>one</li><li>two</li></ul>" in curation_response.text
+    assert "&lt;script&gt;" in curation_response.text
+    assert "<script>alert('x')</script>" not in curation_response.text
+
+
 def test_curation_queue_undo_restores_hidden_item_and_preserves_output(
     client: TestClient,
 ) -> None:
@@ -907,6 +932,37 @@ def test_live_studio_create_detail_and_stream_lifecycle(client: TestClient) -> N
     assert semantic_events[-1]["actual"] == "runner stream status: done"
 
 
+def test_live_detail_renders_inline_markup_and_escapes_raw_html(client: TestClient) -> None:
+    create_response = client.post(
+        "/live",
+        data={
+            "harness_id": "1",
+            "runner_name": "codex",
+            "task_prompt": "Find a live detail markup test.",
+        },
+        follow_redirects=False,
+    )
+    assert create_response.status_code == 303
+
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        job = session.get(AgentJob, 1)
+        assert job is not None
+        job.produced_artifact_ids = [2]
+        insight = session.get(Insight, 2)
+        assert insight is not None
+        insight.body = "Live detail has **bold** and `inline code`.\n<script>alert('x')</script>"
+        session.add_all([job, insight])
+        session.commit()
+
+    detail_response = client.get("/live/1")
+    assert detail_response.status_code == 200
+    assert "<strong>bold</strong>" in detail_response.text
+    assert "<code>inline code</code>" in detail_response.text
+    assert "&lt;script&gt;" in detail_response.text
+    assert "<script>alert('x')</script>" not in detail_response.text
+
+
 def test_live_first_observer_claim_stores_attribution_and_renders_seed(client: TestClient) -> None:
     create_response = client.post(
         "/live",
@@ -1041,6 +1097,23 @@ def test_insight_library_filters_and_renders_engagement_fields(client: TestClien
     assert format_response.status_code == 200
     assert "Instruction files change authority" in format_response.text
     assert "Live stream exposes runner uncertainty" not in format_response.text
+
+
+def test_insight_library_renders_inline_markup_and_escapes_raw_html(client: TestClient) -> None:
+    app = cast(Any, client.app)
+    with Session(app.state.test_engine) as session:
+        insight = session.get(Insight, 1)
+        assert insight is not None
+        insight.body = "A **bold** insight plus `inline code`.\n<script>alert('x')</script>"
+        session.add(insight)
+        session.commit()
+
+    response = client.get("/insights")
+    assert response.status_code == 200
+    assert "<strong>bold</strong>" in response.text
+    assert "<code>inline code</code>" in response.text
+    assert "&lt;script&gt;" in response.text
+    assert "<script>alert('x')</script>" not in response.text
 
 
 def test_insight_engagement_action_creates_job_and_fills_missing_copy(client: TestClient) -> None:

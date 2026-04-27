@@ -24,6 +24,7 @@ from observatory.engagement.service import create_engagement_job
 from observatory.explain.service import create_explain_job
 from observatory.models import Insight
 from observatory.web.revision_notes import revision_notes_by_insight_id
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -35,6 +36,7 @@ MATRIX_REOPEN_URL_RE = re.compile(r"^/matrix/cells/[A-Za-z0-9][A-Za-z0-9_-]*/[A-
 @dataclass(frozen=True)
 class InsightLibraryItem:
     insight: Insight
+    body_html: str | None
     harness_label: str
     topic_label: str
     evidence_count: int
@@ -62,6 +64,7 @@ def insight_library(
     items = [
         InsightLibraryItem(
             insight=insight,
+            body_html=render_inline_markup(insight.body),
             harness_label=insight.harness.name if insight.harness is not None else "Any harness",
             topic_label=insight.topic.name if insight.topic is not None else "No topic label",
             evidence_count=len(insight.evidence_items),

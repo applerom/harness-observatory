@@ -13,6 +13,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+from collections.abc import Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -23,6 +24,7 @@ from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, Topic
 from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
 from observatory.web.revision_notes import revision_notes_by_insight_id
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -96,6 +98,7 @@ def topic_dossier(
         select(Insight).where(Insight.topic_id == topic.id).order_by(Insight.short_title)
     ).all()
     sections = _topic_harness_sections(session, topic)
+    evidence_items = [item for section in sections for item in section.evidence_items]
     return templates.TemplateResponse(
         request,
         "topic/dossier.html",
@@ -104,6 +107,10 @@ def topic_dossier(
             "topic": topic,
             "insights": insights,
             "sections": sections,
+            "insight_body_html_by_id": _render_insight_field_map(insights, "body"),
+            "insight_why_html_by_id": _render_insight_field_map(insights, "why_it_matters"),
+            "evidence_claim_html_by_id": _render_evidence_field_map(evidence_items, "claim_summary"),
+            "evidence_citation_html_by_id": _render_evidence_field_map(evidence_items, "exact_citation"),
             "revision_notes_by_insight": revision_notes_by_insight_id(session, list(insights)),
         },
     )
@@ -141,6 +148,33 @@ def _topic_harness_sections(session: Session, topic: Topic) -> list[TopicHarness
                 cell.confidence_band = derived_confidence
         sections.append(TopicHarnessSection(harness=harness, cell=cell, evidence_items=evidence_items))
     return sections
+
+
+def _render_insight_field_map(insights: Sequence[Insight], field_name: str) -> dict[int, str]:
+    rendered_by_id: dict[int, str] = {}
+    for insight in insights:
+        if insight.id is None:
+            continue
+        value = getattr(insight, field_name, None)
+        rendered = render_inline_markup(value)
+        if rendered is not None:
+            rendered_by_id[insight.id] = rendered
+    return rendered_by_id
+
+
+def _render_evidence_field_map(
+    items: Sequence[EvidenceItem],
+    field_name: str,
+) -> dict[int, str]:
+    rendered_by_id: dict[int, str] = {}
+    for item in items:
+        if item.id is None:
+            continue
+        value = getattr(item, field_name, None)
+        rendered = render_inline_markup(value)
+        if rendered is not None:
+            rendered_by_id[item.id] = rendered
+    return rendered_by_id
 
 
 # :END_ROUTE_TOPIC_DOSSIER

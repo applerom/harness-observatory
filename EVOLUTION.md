@@ -193,6 +193,29 @@ Action:
 - PRD/WHY now require Curation status views/tabs for Needs review, Verified,
   Historical, and All.
 
+## 2026-04-27 — Same Data Type, Same Visual Risk
+
+Observation:
+- Roman found raw Markdown-ish payload in Curation's Verified and Historical
+  tabs after Matrix detail had already been fixed for the same symptom.
+- The underlying issue was not specific to Matrix or Curation; it was `Insight.body`
+  and related agent-produced text being rendered differently across surfaces.
+
+Impact:
+- Fixing only the screen where feedback arrived leaves the same visual defect in
+  sibling surfaces.
+- A full app-wide visual review after every small bug is too expensive, but a
+  same-data-type sweep is cheap and usually high-signal.
+
+Action:
+- For visual defects tied to a shared field or component (`Insight.body`,
+  `EvidenceItem.exact_citation`, confidence badges, action buttons), the lead
+  should search where the same data type renders and validate 2-4 adjacent
+  surfaces before declaring the feedback slice complete.
+
+Rule added:
+- Feedback fix = local fix + sibling-surface check for the same data type.
+
 ## 2026-04-27 — ClaudeRunner Empiricism Found A Parser Shape Gap
 
 Observation:

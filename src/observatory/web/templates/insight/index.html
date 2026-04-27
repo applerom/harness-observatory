@@ -65,7 +65,11 @@ INVARIANTS:
                 <span class="rounded-full border border-slate-200 px-2 py-1 text-slate-600">{{ item.evidence_count }} evidence</span>
               </div>
               <h2 class="text-lg font-semibold tracking-normal text-slate-950">{{ insight.short_title }}</h2>
-              <p class="max-w-3xl text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+              {% if item.body_html is not none %}
+                <div class="max-w-3xl text-sm leading-6 text-slate-700">{{ item.body_html | safe }}</div>
+              {% else %}
+                <p class="max-w-3xl text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+              {% endif %}
               {% if insight.first_observed_by %}
                 <p class="text-sm font-medium text-emerald-700">First observed by {{ insight.first_observed_by }}</p>
               {% endif %}

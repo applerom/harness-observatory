@@ -745,6 +745,8 @@ Feedback-hardening update (2026-04-27): curation actions are scary if their effe
 
 Feedback-hardening update (2026-04-27, status visibility): after `Verify` or `Archive historical`, an Insight must not appear to disappear into nowhere. The Curation Queue needs explicit status views/tabs for at least `Needs review`, `Verified`, `Historical`, and `All`. Action confirmation should keep the user in a view where the changed Insight is visible, or give an obvious link to that view. The point is trust calibration: curation changes where the Insight is listed, not whether the Insight exists.
 
+Feedback-hardening update (2026-04-27, repeated visual defect): when an `Insight.body`, `why_it_matters`, `EvidenceItem.claim_summary`, or citation contains Markdown-ish agent output (`**bold**`, backticks, headings, bullets), UI surfaces should render it legibly rather than as raw punctuation in a collapsed paragraph. A fix for one surface must trigger a small sibling-surface scan for the same data type, especially Curation, Insight Library, Live detail, harness/topic dossiers, and Matrix detail.
+
 ### 11.8 Live Agent Studio
 
 Projector-optimized surface for teaching sessions.
@@ -1247,6 +1249,7 @@ v0.3c acceptance:
 - Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
 - Feedback-hardening acceptance: action controls explain their effect; a completed action returns to Curation with a visible undo affordance; undo restores the previous status/confidence and logs that restoration.
 - Feedback-hardening acceptance: Curation has visible status views/tabs so `human-verified` and `historical` Insights can be found after action, with counts or labels that make the destination clear.
+- Feedback-hardening acceptance: Curation cards render Markdown-ish Insight payloads legibly instead of raw `**` / backtick / heading text; the same renderer is reused by sibling Insight body surfaces where practical.
 - The navigation exposes Curation as an owner/workbench surface.
 
 Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.

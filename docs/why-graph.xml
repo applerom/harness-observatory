@@ -203,7 +203,7 @@
   </FEATURE_LIVE_AGENT_STUDIO>
 
   <FEATURE_CURATION_QUEUE ID="FEAT-CURATION-QUEUE" PRIORITY="MEDIUM" STATE="STARTED">
-    <INTENT>Workbench queue that surfaces proposed, disputed, verified, and historical Insights through explicit status views with target labels, evidence counts, and clear reversible curation actions. It is not an approval gate; Insights remain visible elsewhere while labels improve trust calibration, and button copy must explain that actions change labels rather than delete agent output.</INTENT>
+    <INTENT>Workbench queue that surfaces proposed, disputed, verified, and historical Insights through explicit status views with target labels, evidence counts, clear reversible curation actions, and legible Markdown-ish Insight payload rendering. It is not an approval gate; Insights remain visible elsewhere while labels improve trust calibration, and button copy must explain that actions change labels rather than delete agent output.</INTENT>
     <PRD_REF>docs/PRD.md §11.7 Curation Queue</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-CURATION"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>

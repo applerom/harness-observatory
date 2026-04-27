@@ -11,8 +11,6 @@
 # - Expanded cell detail renders verification pass history without creating AgentJobs.
 # :END_MODULE_CONTRACT
 
-import html
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -25,6 +23,7 @@ from observatory import db
 from observatory.models import ComparisonCell, EvidenceItem, Harness, Insight, RevisionNote, Topic
 from observatory.verification.service import VerificationPass, verification_passes_for_items
 from observatory.web.revision_notes import revision_notes_by_insight_id
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -138,31 +137,31 @@ def _matrix_cell_detail(session: Session, harness_slug: str, topic_slug: str) ->
         insight.id: rendered
         for insight in insights
         if insight.id is not None
-        if (rendered := _render_inline_markup(insight.body)) is not None
+        if (rendered := render_inline_markup(insight.body)) is not None
     }
     insight_why_html_by_id = {
         insight.id: rendered
         for insight in insights
         if insight.id is not None
-        if (rendered := _render_inline_markup(insight.why_it_matters)) is not None
+        if (rendered := render_inline_markup(insight.why_it_matters)) is not None
     }
     evidence_claim_html_by_id = {
         item.id: rendered
         for item in evidence_items
         if item.id is not None
-        if (rendered := _render_inline_markup(item.claim_summary)) is not None
+        if (rendered := render_inline_markup(item.claim_summary)) is not None
     }
     evidence_citation_html_by_id = {
         item.id: rendered
         for item in evidence_items
         if item.id is not None
-        if (rendered := _render_inline_markup(item.exact_citation)) is not None
+        if (rendered := render_inline_markup(item.exact_citation)) is not None
     }
     return MatrixCellDetail(
         harness=harness,
         topic=topic,
         cell=cell,
-        cell_summary_html=_render_inline_markup(cell.cell_summary if cell else None),
+        cell_summary_html=render_inline_markup(cell.cell_summary if cell else None),
         insights=insights,
         evidence_items=evidence_items,
         verification_passes=verification_passes,
@@ -171,16 +170,6 @@ def _matrix_cell_detail(session: Session, harness_slug: str, topic_slug: str) ->
         evidence_claim_html_by_id=evidence_claim_html_by_id,
         evidence_citation_html_by_id=evidence_citation_html_by_id,
     )
-
-
-def _render_inline_markup(value: str | None) -> str | None:
-    if not value:
-        return None
-    escaped = html.escape(value)
-    escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
-    escaped = re.sub(r"`([^`]+)`", r"<code>\1</code>", escaped)
-    return escaped
-
 
 def _dedupe_latest_revision_notes(
     notes_by_insight: dict[int, list[RevisionNote]],

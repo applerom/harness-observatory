@@ -29,6 +29,7 @@ from observatory.runners.claude import ClaudeRunner
 from observatory.runners.codex import CodexRunner
 from observatory.verification.service import confidence_from_verification_passes, verification_passes_for_items
 from observatory.web.revision_notes import revision_notes_by_insight_id
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -105,6 +106,10 @@ def harness_dossier(
             "refresh_enabled": True,
             "sections": sections,
             "harness_insights": harness_insights,
+            "insight_body_html_by_id": _insight_body_html_by_id(rendered_insights),
+            "insight_why_html_by_id": _insight_why_html_by_id(rendered_insights),
+            "evidence_claim_html_by_id": _evidence_claim_html_by_id(sections),
+            "evidence_citation_html_by_id": _evidence_citation_html_by_id(sections),
             "revision_notes_by_insight": revision_notes_by_insight_id(session, rendered_insights),
         },
     )
@@ -154,6 +159,44 @@ def _harness_topic_sections(session: Session, harness: Harness) -> list[HarnessT
             )
         )
     return sections
+
+
+def _insight_body_html_by_id(insights: list[Insight]) -> dict[int, str]:
+    return {
+        insight.id: rendered
+        for insight in insights
+        if insight.id is not None
+        if (rendered := render_inline_markup(insight.body)) is not None
+    }
+
+
+def _insight_why_html_by_id(insights: list[Insight]) -> dict[int, str]:
+    return {
+        insight.id: rendered
+        for insight in insights
+        if insight.id is not None
+        if (rendered := render_inline_markup(insight.why_it_matters)) is not None
+    }
+
+
+def _evidence_claim_html_by_id(sections: list[HarnessTopicSection]) -> dict[int, str]:
+    return {
+        item.id: rendered
+        for section in sections
+        for item in section.evidence_items
+        if item.id is not None
+        if (rendered := render_inline_markup(item.claim_summary)) is not None
+    }
+
+
+def _evidence_citation_html_by_id(sections: list[HarnessTopicSection]) -> dict[int, str]:
+    return {
+        item.id: rendered
+        for section in sections
+        for item in section.evidence_items
+        if item.id is not None
+        if (rendered := render_inline_markup(item.exact_citation)) is not None
+    }
 
 
 # :END_ROUTE_HARNESS_DOSSIER

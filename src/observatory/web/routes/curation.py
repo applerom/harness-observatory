@@ -21,6 +21,7 @@ from sqlmodel import Session, select
 
 from observatory import db
 from observatory.models import Insight, RevisionNote
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -61,6 +62,7 @@ CURATION_VIEW_CONFIG = [
 @dataclass(frozen=True)
 class CurationInsightView:
     insight: Insight
+    body_html: str | None
     harness_label: str
     topic_label: str
     evidence_count: int
@@ -173,6 +175,7 @@ def curation_queue(
     queue_items = [
         CurationInsightView(
             insight=insight,
+            body_html=render_inline_markup(insight.body),
             harness_label=insight.harness.name if insight.harness is not None else "Any harness",
             topic_label=insight.topic.name if insight.topic is not None else "No topic label",
             evidence_count=len(insight.evidence_items),

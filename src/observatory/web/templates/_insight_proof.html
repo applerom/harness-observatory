@@ -18,14 +18,28 @@ INVARIANTS:
       {% if show_card_title is not defined or show_card_title %}
         <h3 class="text-base font-semibold tracking-normal text-slate-950">{{ insight.short_title }}</h3>
       {% endif %}
-      {% if matrix_cell_detail is defined and matrix_cell_detail and insight_body_html is defined and insight_body_html %}
-        <p class="mt-2 text-sm leading-6 text-slate-700">{{ insight_body_html | safe }}</p>
+      {% set rendered_body_html = none %}
+      {% if matrix_cell_detail is defined and matrix_cell_detail %}
+        {% set rendered_body_html = insight_body_html if insight_body_html is defined else none %}
+      {% endif %}
+      {% if rendered_body_html is none and insight.id %}
+        {% set rendered_body_html = insight_body_html_by_id.get(insight.id) if insight_body_html_by_id is defined else none %}
+      {% endif %}
+      {% if rendered_body_html %}
+        <div class="mt-2 text-sm leading-6 text-slate-700">{{ rendered_body_html | safe }}</div>
       {% else %}
         <p class="mt-2 text-sm leading-6 text-slate-700">{{ insight.body }}</p>
       {% endif %}
       {% if insight.why_it_matters %}
-        {% if matrix_cell_detail is defined and matrix_cell_detail and insight_why_html is defined and insight_why_html %}
-          <p class="mt-2 text-sm leading-6 text-slate-600">{{ insight_why_html | safe }}</p>
+        {% set rendered_why_html = none %}
+        {% if matrix_cell_detail is defined and matrix_cell_detail %}
+          {% set rendered_why_html = insight_why_html if insight_why_html is defined else none %}
+        {% endif %}
+        {% if rendered_why_html is none and insight.id %}
+          {% set rendered_why_html = insight_why_html_by_id.get(insight.id) if insight_why_html_by_id is defined else none %}
+        {% endif %}
+        {% if rendered_why_html %}
+          <div class="mt-2 text-sm leading-6 text-slate-600">{{ rendered_why_html | safe }}</div>
         {% else %}
           <p class="mt-2 text-sm leading-6 text-slate-600">{{ insight.why_it_matters }}</p>
         {% endif %}
@@ -96,7 +110,7 @@ INVARIANTS:
           <div class="proof-item">
             {% set evidence_claim_html = evidence_claim_html_by_id.get(evidence.id) if evidence_claim_html_by_id is defined and evidence.id else none %}
             {% if evidence_claim_html %}
-              <p class="text-sm font-medium text-slate-800">{{ evidence_claim_html | safe }}</p>
+              <div class="text-sm font-medium text-slate-800">{{ evidence_claim_html | safe }}</div>
             {% else %}
               <p class="text-sm font-medium text-slate-800">{{ evidence.claim_summary }}</p>
             {% endif %}
@@ -114,7 +128,7 @@ INVARIANTS:
             {% if evidence.exact_citation %}
               {% set evidence_citation_html = evidence_citation_html_by_id.get(evidence.id) if evidence_citation_html_by_id is defined and evidence.id else none %}
               {% if evidence_citation_html %}
-                <p class="mt-2 text-sm text-slate-600">{{ evidence_citation_html | safe }}</p>
+                <div class="mt-2 text-sm text-slate-600">{{ evidence_citation_html | safe }}</div>
               {% else %}
                 <p class="mt-2 text-sm text-slate-600">{{ evidence.exact_citation }}</p>
               {% endif %}

@@ -25,6 +25,7 @@ from observatory.models import AgentJob, Harness, Insight
 from observatory.runners.base import AgentRunner
 from observatory.web.routes.harness import make_refresh_runner
 from observatory.web.routes.jobs import _job_view
+from observatory.web.markup import render_inline_markup
 
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
@@ -100,8 +101,18 @@ def live_job_detail(
             "active_nav": "live",
             "job_view": _job_view(session, job),
             "claimable_insights": claimable_insights,
+            "insight_body_html_by_id": _insight_body_html_by_id(claimable_insights),
         },
     )
+
+
+def _insight_body_html_by_id(insights: list[Insight]) -> dict[int, str]:
+    return {
+        insight.id: rendered
+        for insight in insights
+        if insight.id is not None
+        if (rendered := render_inline_markup(insight.body)) is not None
+    }
 
 
 def _claimable_insights_for_job(session: Session, job: AgentJob) -> list[Insight]:

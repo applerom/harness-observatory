@@ -52,7 +52,11 @@ INVARIANTS:
                   <span class="state-badge">{{ insight.confidence_band }}</span>
                 </div>
                 <h3 class="text-base font-semibold tracking-normal text-slate-950">{{ insight.short_title }}</h3>
-                <p class="text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+                {% if insight_body_html_by_id.get(insight.id) is not none %}
+                  <div class="text-sm leading-6 text-slate-700">{{ insight_body_html_by_id.get(insight.id) | safe }}</div>
+                {% else %}
+                  <p class="text-sm leading-6 text-slate-700">{{ insight.body }}</p>
+                {% endif %}
                 {% if insight.first_observed_by %}
                   <p class="text-sm font-medium text-emerald-700">First observed by {{ insight.first_observed_by }}</p>
                 {% endif %}

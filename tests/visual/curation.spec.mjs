@@ -12,6 +12,13 @@ test("curation queue exposes post-publication confidence actions", async ({ page
   await expect(page.getByText("Mark this as verified without deleting any evidence.").first()).toBeVisible();
   await expect(page.getByText("Mark this as disputed for follow-up review.").first()).toBeVisible();
   await expect(page.getByText("Archive as historical in this queue without deleting output.").first()).toBeVisible();
+  const firstBody = page
+    .locator("article")
+    .first()
+    .locator("div.max-w-3xl.text-sm.leading-6.text-slate-700")
+    .first();
+  await expect(firstBody).not.toContainText("**");
+  await expect(firstBody).not.toContainText("`");
 
   await page.getByRole("button", { name: "Verify this insight" }).first().click();
   await expect(page).toHaveURL(/\/curation\?.*view=verified/);

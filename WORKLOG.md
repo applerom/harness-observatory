@@ -10,7 +10,7 @@
 > Distinct from `CONTEXT.md`: CONTEXT is the decision log (what was decided and why),
 > WORKLOG is task state (what is happening and what comes next).
 
-**Last update:** 2026-04-27 — Curation status views and Spark prompt-budget feedback implemented
+**Last update:** 2026-04-27 — Markdown-ish payload rendering feedback implemented and sibling-surface checked
 **Active session lead:** Codex GPT-5.5 (execution lead)
 **Current phase:** v1.1 published to `main`; feedback-hardening active on `development`
 
@@ -18,7 +18,7 @@
 
 ## 1. Current state (1-3 sentences)
 
-v0.1 through v1.1 are implemented and published to `main`; `development` is processing feedback-hardening slices from Roman/student/lecturer use. Curation now has explicit status views so verified/historical items remain findable after actions; Spark prompt-budget discipline is documented and validated on a context-budgeted worker run.
+v0.1 through v1.1 are implemented and published to `main`; `development` is processing feedback-hardening slices from Roman/student/lecturer use. Markdown-ish Insight payload rendering now uses a shared safe renderer across Curation, Insight Library, Live detail, Matrix, and harness/topic proof partials; Curation tabs were self-clicked for raw-marker regressions.
 
 ## 2. Active items
 
@@ -66,6 +66,7 @@ Current ordered queue after v0.2a+:
 | FB-CURATION-ACTION-AFFORDANCE | Roman feedback: Curation buttons do not explain what they do, whether pressing is safe, or whether action can be undone. | Codex lead + fast_implementation_worker[gpt-5.3-codex-spark/medium] (Harvey) + Spark validator (Herschel) | completed | Curation copy/buttons/confirmation/undo implemented; focused route tests, ruff, mypy, anchors, and fresh-server `visual:curation` green |
 | FB-CURATION-STATUS-VIEWS | Roman feedback: after Verify the Insight appears to disappear; user cannot tell where verified/historical items are visible. | Codex lead + context-budgeted Spark worker (Faraday) + Spark validator (Carver) | completed | Curation views/tabs added; Verify/Historical redirects land in visible destination views; Undo returns to visible restored view; pytest + visual curation green |
 | OPS-SPARK-CONTEXT-BUDGET | Roman observed Spark worker read broad project docs, duplicated exploration after compaction, and spent tokens before editing a tiny slice. | Codex lead + context-budgeted Spark worker (Faraday) | completed | Fast worker profile, Codex subagent profile, EVOLUTION, and ledger updated; Faraday obeyed read budget and avoided broad cold-start docs |
+| FB-MARKDOWNISH-SURFACE-SWEEP | Roman feedback: raw Markdown-ish payload still appears in Curation Verified/Historical after Matrix detail fix; lead should proactively scan sibling surfaces for same data type. | Codex lead + context-budgeted Spark worker (Anscombe) | completed | Shared renderer added; Curation/Insight/Live/_insight_proof/Matrix/harness/topic wired; full pytest, ruff, mypy, anchors, visual curation/insight/matrix/harness/live green; Curation tabs self-clicked rawCount=0 |
 
 ## 4. Blocked / waiting
 
@@ -98,6 +99,10 @@ Current ordered queue after v0.2a+:
 - **2026-04-27** — Roman inspected the Spark worker's live log and found that the fast worker immediately read broad cold-start docs (`SPIRIT.md`, full PRD, WHY graph, WORKLOG, CONTEXT, EVOLUTION), then compacted and repeated local reads. Codex accepts this as an orchestration bug: a fast model with a large context window still wastes time and attention if the prompt permits ritual reading. New rule for Spark feedback tasks: the lead supplies a tiny context packet, exact files to read, and a read budget; Spark should not cold-start-read required project docs unless the delegated task explicitly needs them. Same feedback exposed a product bug: after `Verify`, the Insight is filtered out of `/curation` and there is no obvious `Verified` view. PRD/WHY opened FB-CURATION-STATUS-VIEWS.
 
 - **2026-04-27** — Completed FB-CURATION-STATUS-VIEWS and OPS-SPARK-CONTEXT-BUDGET. Faraday (`gpt-5.3-codex-spark/medium`) received a context-budgeted prompt and reported that it did not read broad project docs; it added Curation tabs/views (`Needs review`, `Verified`, `Historical`, `All`) with counts, redirected actions into destination views, and made Undo land where the restored item is visible. Lead tightened the visual test to cover Verify -> Verified -> Undo -> Needs review. Carver (`gpt-5.3-codex-spark/low`) validated without edits and caught an ambiguous Playwright locator; after lead fix, focused route tests passed (`3 passed, 31 deselected`) and `npm run visual:curation` passed. Carver also had ruff, mypy, and anchor validator green before that JS-only locator fix.
+
+- **2026-04-27** — Roman found another repeated visual defect in Curation Verified/Historical: agent-produced Markdown-ish payload still renders as plain text (`**`, backticks, `###`) even though Matrix detail had already received a local fix. Codex records this as a sibling-surface validation failure: when a bug is tied to a shared data type (`Insight.body`), fixing one route is not enough; the lead should run a small same-data-type sweep across adjacent surfaces rather than the whole app. PRD/WHY opened FB-MARKDOWNISH-SURFACE-SWEEP.
+
+- **2026-04-27** — Completed FB-MARKDOWNISH-SURFACE-SWEEP. Anscombe (`gpt-5.3-codex-spark/medium`) obeyed the context budget and added `observatory.web.markup.render_inline_markup`, a safe escaped Markdown-ish renderer for bold, inline code, headings, bullets, paragraphs, and line breaks. Matrix now uses the shared helper instead of a route-local regex; Curation, Insight Library, Live detail, harness/topic dossiers, and `_insight_proof.html` receive rendered maps where they display `Insight.body`, `why_it_matters`, evidence summaries, or citations. Lead self-clicked Curation views `review`, `verified`, `historical`, and `all`: all had `rawCount=0` for `**`, backticks, and `###`, with Historical showing rendered `<strong>`, `<code>`, `<h3>`, and `<ul>`. Validation: `uv run pytest` 111 passed; ruff passed; mypy passed; anchor validator passed; `visual:curation`, `visual:insight`, `visual:matrix`, `visual:harness`, and `visual:live` passed.
 
 - **2026-04-26** — Roman gave the v0.1 implementation start signal in Codex and explicitly authorized Codex subagent use for this session as a lead-agent orchestration mechanism. Lead first action: clean up small doc drift, then dispatch the first bounded v0.1 work wave.
 - **2026-04-26** — Committed `2f0da69`: small v0.1 start alignment docs update. Fixed PRD §27 stale sequencing wording, DELEGATION Task dependency/count wording, README WHY graph overstatement, and recorded Codex session-level subagent authorization.

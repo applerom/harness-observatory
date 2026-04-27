@@ -1,6 +1,6 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-27 — Curation status views and Spark prompt-budget feedback implemented
+> **Last update:** 2026-04-27 — Markdown-ish payload rendering implemented across sibling surfaces
 > **Phase:** v1.1 published to `main`; feedback-hardening active on `development`
 > **Next milestone:** continue owner/student feedback hardening on the next surfaced tab
 
@@ -87,6 +87,22 @@ What changed:
 Process lesson from the same feedback: Roman inspected Spark logs and caught a lead-orchestration problem. A fast Spark worker had read the broad cold-start docs and compacted before a tiny patch. The Codex subagent profile and fast-worker profile now require context-budgeted Spark prompts: a tiny context packet, exact allowed files, and no broad SPIRIT/PRD/WHY/WORKLOG/CONTEXT/EVOLUTION read unless the delegated task explicitly needs it.
 
 Validation evidence: Faraday (`gpt-5.3-codex-spark/medium`) implemented the bounded Curation patch while obeying the read budget. Carver (`gpt-5.3-codex-spark/low`) ran validation without edits and caught an ambiguous Playwright locator. After the lead narrowed the locator, `uv run pytest tests/web/test_readonly_routes.py -k "curation"` passed (`3 passed, 31 deselected`) and `npm run visual:curation` passed.
+
+## Update 2026-04-27 — feedback-hardening: same data type, same visual risk
+
+Roman found raw Markdown-ish text in Curation's `Verified` and `Historical` views (`**bold**`, backticks, `###` headings) after Matrix detail had already been fixed for the same kind of payload. Codex treats this as a process lesson: when a defect belongs to a shared data type, the lead should do a sibling-surface sweep, not only patch the screen in the screenshot.
+
+What changed:
+- Added `observatory.web.markup.render_inline_markup`, a small safe renderer that escapes text first, then supports bold, inline code, headings, bullet lists, paragraphs, and line breaks.
+- Replaced Matrix's route-local renderer with the shared helper.
+- Wired the same rendered output into Curation cards, Insight Library cards, Live detail first-observer claim cards, and shared `_insight_proof.html` used by Matrix/harness/topic dossiers.
+- Added tests proving rendered bold/code and escaped raw HTML for Curation, Insight Library, and Live detail.
+
+Self-validation beyond the original screenshot:
+- Codex clicked/loaded Curation `review`, `verified`, `historical`, and `all` views with Playwright and checked card bodies for raw `**`, backticks, and `###`: `rawCount=0` in all four views.
+- Historical sample rendered `<strong>`, `<code>`, `<h3>`, and `<ul>` in the card body.
+
+Validation evidence: `uv run pytest` passed 111 tests; `uv run ruff check .` passed; `uv run mypy src tests` passed; anchor validator checked 66 anchors; `visual:curation`, `visual:insight`, `visual:matrix`, `visual:harness`, and `visual:live` passed.
 
 ---
 
