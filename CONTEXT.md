@@ -86,7 +86,6 @@ harness-observatory/
 ├── docs/                      PRD, WHY graph, lessons, runtime notes
 ├── generated-docs/            generated artifacts; ignored
 ├── live-sessions/             product runner raw logs and semantic JSONL traces; ignored
-├── media/                     local media attachments; ignored
 ├── migrations/                Alembic migrations
 ├── scripts/                   validators and local scripts
 ├── src/observatory/           application code

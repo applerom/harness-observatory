@@ -28,6 +28,36 @@ cross-cutting refactors, or final review. Strong reviewers are reserved for
 risky behavior, stable checkpoints, schema/runtime boundaries, or repeated
 failures.
 
+## Dispatch Decision — When To Delegate, When Not To
+
+Subagents are not free. Each dispatch costs the lead's brief-writing time, plus
+review time on the report, plus integration time. The dispatch is worth doing
+only when it net-saves the lead's attention or compresses wall-clock through
+parallelism.
+
+**Delegate when:**
+
+- The work is bounded enough to brief in roughly fifteen lines or less.
+- The lead can specify acceptance criteria without doing the work first.
+- The result protects lead context for harder downstream decisions.
+- Two or more independent sub-tasks can run in parallel with disjoint write
+  sets.
+- The task is mechanical enough that a smaller/faster worker is a strict
+  improvement (validation, Playwright runs, ruff/mypy sweeps, focused tests).
+
+**Do not delegate when:**
+
+- The next step is the lead's own thinking (architecture, scope, taste).
+- Writing a clean brief would take longer than doing the work.
+- The result needs immediate iteration where round-trips through delegation
+  are slower than a local edit.
+- The task touches `SPIRIT.md`, `docs/PRD.md` principles, or `AGENTS.md`
+  doctrine — those are spirit-lead surfaces, not delegable.
+- A previous identical dispatch shape failed and the brief has not changed.
+
+When in doubt, do the small thing locally; reserve dispatches for slices where
+the lead-context save is unambiguous.
+
 ## Lead Responsibilities
 
 - Own architecture, PRD/WHY movement, integration, and final evidence.
@@ -108,6 +138,45 @@ done / partial / blocked
 ## Recommended next step
 - one sentence
 ```
+
+## Verdict And Ledger Discipline
+
+After every dispatch finishes (success, failure, or rework), the lead writes a
+one-line verdict before integrating the result and appends a row to
+`docs/agent-run-ledger.md`. This is not optional ceremony — it is the only
+mechanism that lets the dispatch craft self-improve.
+
+**Verdict vocabulary** (use one):
+
+- `useful` — patch and report integrate as-is or with minor tweaks; the lead
+  spent less attention than doing the work directly.
+- `partial` — usable, but the lead did real follow-up to finish or correct.
+- `wasted` — the lead would have been faster doing it directly; the dispatch
+  was net context loss.
+- `rework` — the same task was re-dispatched with a different brief or worker
+  class.
+
+**The real metric: lead-context delta.** A dispatch is successful when the
+lead reads a shorter report than the patch the lead would have produced
+locally. If the report is longer than the patch, or if the report demanded
+extra clarifying reads from the lead, the dispatch was a context loss and the
+verdict reflects that — even when the patch itself is correct.
+
+**Periodic sweep.** Every roughly ten dispatches, or weekly while feedback work
+is hot, the lead re-reads the ledger and looks for repeated friction:
+
+- Same brief shape produced two `partial` or `wasted` verdicts → graduate the
+  fix (sharpen this profile, add an explicit clause to the Subagent Prompt
+  Contract, or update the dispatch decision rules above).
+- The pattern is teachable to students → write or extend a file under
+  `docs/lessons/` and pointer the ledger row at it.
+- The row's lesson has graduated → **delete the row**. The ledger is a runway,
+  not an archive. Long ledgers signal a missed sweep, not careful record
+  keeping.
+
+The ledger graduation loop mirrors the EVOLUTION → lessons graduation loop:
+in-flight observations crystallise into a canonical rule, then the in-flight
+copy is removed.
 
 ## Practical Fan-Out
 
