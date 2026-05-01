@@ -7,7 +7,7 @@ PRD_REF: docs/PRD.md §20, §26.2
 WHY_REF: docs/why-graph.xml MOD-WEB-APP
 SCOPE: small reusable classes layered on Tailwind CDN utilities
 INVARIANTS:
-- CSS stays small because Tailwind CDN carries v0.1 styling.
+- CSS stays small because Tailwind CDN carries the current local-first UI styling.
 :END_MODULE_CONTRACT
 */
 

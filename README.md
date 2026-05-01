@@ -5,12 +5,12 @@ developers how to work with agents by letting them watch (and question) the proc
 by agents, about agents, for developers who are skeptical of agents but ready to look at the
 evidence themselves.
 
-**Status: v1.0-minimal — working local product, feedback-ready.**
+**Status: v1.1+ — working local product in feedback-hardening.**
 
 The current app has importer/viewer surfaces, manual and scheduled refresh jobs, semantic runtime
 traces, curation, Live Agent Studio, deterministic abstract/verification/engagement/explain
 services, Insight Library, lens scoring, and generated Markdown exports. It is intentionally a
-minimum working version for lecturer/student feedback, not a polished production product.
+working version for lecturer/student feedback, not a polished production product.
 
 ---
 
@@ -72,8 +72,8 @@ and follow its required-reading list from there.
 
 Contribution guide is still intentionally light while the app is in feedback-hardening. For now:
 
-- The product is v1.0-minimal and feedback-ready; the right entry point is `SPIRIT.md`,
-  `docs/PRD.md`, `CONTEXT.md`, and `WORKLOG.md`
+- The product is v1.1+ and feedback-driven; the right entry point is `SPIRIT.md`,
+  `docs/PRD.md`, `CONTEXT.md`, and the lightweight `WORKLOG.md`
 - All architectural decisions go through the WHY graph before code is written
 - Agent-authored commits must use the agent's own author identity, not Roman's human identity;
   see `AGENTS.md` for the exact rule
@@ -94,4 +94,4 @@ Contribution guide is still intentionally light while the app is in feedback-har
 
 ## License
 
-TBD — will be set before v0.1 public release.
+TBD.

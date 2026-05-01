@@ -10,7 +10,7 @@
 - `fast_implementation_worker[gpt-5.3-codex-spark/low|medium]` is preferred for small UI/template/route/test patches.
 - Spark workers may also run validation/server/screenshot tasks when commands are explicit.
 - Strong reviewer agents are reserved for stabilized slices, risky behavior, security, schema, or persistent process changes.
-- The lead still owns PRD/WHY/WORKLOG intent, integration, and final evidence.
+- The lead still owns PRD/WHY intent, integration, and final evidence; WORKLOG is only a lightweight runway when needed.
 
 ## Runs
 

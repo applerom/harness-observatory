@@ -13,11 +13,13 @@ __pycache__/
 .venv/
 venv/
 
-# DB (local dev DB lives in repo root by convention; production DB excluded)
+# DB (local dev DB lives under data/; production DB excluded)
 *.db
 *.db-shm
 *.db-wal
 observatory.sqlite*
+data/*
+!data/.gitkeep
 
 # Live agent session raw logs (stored as flat files, not versioned)
 live-sessions/*.log
@@ -28,7 +30,7 @@ live-sessions/*.jsonl
 generated-docs/
 
 # Local dev server logs
-.uvicorn*.log
+.logs/
 
 # Media uploads (binary, not tracked by default; lecturers add per machine)
 media/**

@@ -137,7 +137,7 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
   ├── Spirit lead (Claude Opus 4.x) — constitutional steward:
   │     SPIRIT, PRD architecture, WHY graph; periodic deep review of trajectory
   └── Execution lead (currently Codex GPT-5.x) — primary orchestrator:
-        dispatches subagents, ships product slices, maintains EVOLUTION.md + WORKLOG.md
+        dispatches subagents, ships product slices, maintains EVOLUTION.md + lean runway state
         ├── Subagents (Codex/Claude/Sonnet/Haiku class, bounded) — one delegation, one bounded task
         └── AgentRunner (other agents in future) — runtime agents launched by the running application
 ```
@@ -146,7 +146,7 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
 
 **Spirit lead (Опус):** конституционный архитектор. Заложил SPIRIT/PRD/AGENTS на bootstrap. Возвращается для periodic deep review — оценить, держится ли дух при имплементации, нужна ли коррекция спецификации, не уехала ли реализация по сравнению с задумкой. Имеет standing right поправлять SPIRIT/PRD/AGENTS если видит drift. Может дёргать execution lead через owner. Может сам запускать субагентов когда находится в активной сессии и это уместно. По умолчанию не пишет ежедневный продуктовый код — это работа execution lead и его субагентов.
 
-**Execution lead (сейчас — Codex GPT-5.x):** основной оркестратор-исполнитель. Получает спецификацию от spirit lead через PRD/WHY/AGENTS, делегирует имплементацию субагентам, интегрирует, фиксит drift в момент возникновения, ведёт `EVOLUTION.md` и `WORKLOG.md`. Имеет standing right поднимать complaints (per agent1st §6 CDD) когда спецификация создаёт implementation pain — через `EVOLUTION.md`, чтобы spirit lead увидел и учёл при следующей ревизии.
+**Execution lead (сейчас — Codex GPT-5.x):** основной оркестратор-исполнитель. Получает спецификацию от spirit lead через PRD/WHY/AGENTS, делегирует имплементацию субагентам, интегрирует, фиксит drift в момент возникновения, ведёт `EVOLUTION.md` и короткое runway-состояние когда оно реально помогает продолжению работы. Имеет standing right поднимать complaints (per agent1st §6 CDD) когда спецификация создаёт implementation pain — через `EVOLUTION.md`, чтобы spirit lead увидел и учёл при следующей ревизии.
 
 **Subagents:** ограниченное delegation per agent1st §9. Получают: deliverable, acceptance criteria, релевантный subtree WHY-графа, релевантные контракты. Возвращают: evidence (что сделано) + блокеры/трения если были.
 
@@ -158,7 +158,7 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
 
 - Студенты видят в `EVOLUTION.md` как два разных агента работают в связке: один держит vision, другой держит implementation — и они корректируют друг друга, а не конкурируют. Это идеальный dog-food во все стороны: для самих агентов, для студентов, для будущих lead-сессий.
 - Spirit lead защищён от context bloat, который неизбежен у того, кто непрерывно дёргает CLI и читает subagent-репорты — он возвращается со свежей головой для архитектурных решений.
-- Execution lead имеет полный operational context, нужный чтобы делегировать корректно — этот context нельзя заменить чтением WORKLOG. Чтение и работа — разные ёмкости памяти.
+- Execution lead имеет полный operational context, нужный чтобы делегировать корректно — этот context нельзя заменить чтением короткого runway-файла. Чтение и работа — разные ёмкости памяти.
 
 Spirit lead и execution lead могут быть одним и тем же агентом в принципе — это допустимо. Но *в текущую эру* они разные, и это записано прямо здесь, чтобы будущие сессии не пытались механически "вернуть всё к Опусу" или наоборот "сделать всё через Codex".
 

@@ -1,12 +1,12 @@
 # FILE: src/observatory/db.py
-# VERSION: 2026-04-26
+# VERSION: 2026-04-30
 # START_MODULE_CONTRACT:
 # PURPOSE: SQLite engine and SQLModel session helpers for the local observatory database.
 # PRD_REF: docs/PRD.md §26.6
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
 # SCOPE: database URL selection; engine construction; session dependency; testable schema initialization
 # INVARIANTS:
-# - Default database path is ./observatory.sqlite for local-first development.
+# - Default database path is ./data/observatory.sqlite for local-first development.
 # - Importing this module does not create tables; migrations own persistent schema creation.
 # :END_MODULE_CONTRACT
 
@@ -17,7 +17,7 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from observatory import models  # noqa: F401  # ensure metadata registration
 
-DEFAULT_DATABASE_URL = "sqlite:///./observatory.sqlite"
+DEFAULT_DATABASE_URL = "sqlite:///./data/observatory.sqlite"
 
 
 # START_DB_ENGINE:

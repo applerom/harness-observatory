@@ -8,6 +8,37 @@
 > process friction, tool/version drift, and rule changes that future agents and
 > students should understand.
 
+## 2026-04-30 — Continuity Ritual Must Shrink When Constraints Change
+
+Observation:
+- The project originally used a heavy bootstrap delegation plan plus a detailed
+  WORKLOG because early development ran under tighter Claude Pro / Codex Plus
+  limits and could stop mid-slice.
+- Roman clarified that current development now runs primarily on Codex Pro, with
+  much larger practical limits and a stronger desire for fast implementation and
+  fast feedback.
+- The old artifacts had become active friction: new agents were told to read a
+  retired bootstrap plan, WORKLOG had grown into a historical ledger, and root
+  runtime files made the repository harder to scan.
+
+Impact:
+- Continuity tooling that once protected progress can later slow it down.
+- A teaching project should show this adjustment openly: process is not sacred;
+  it is another part of the system to inspect, simplify, and improve.
+
+Action:
+- Retired the bootstrap task plan from current docs.
+- Recast WORKLOG as a short current-runway file, not a history archive.
+- Moved local runtime defaults toward `data/observatory.sqlite` and `.logs/`,
+  while preserving product AgentJob logs in `live-sessions/`.
+- Kept `alembic.ini` at the repo root deliberately because standard Alembic
+  commands are more valuable than a perfectly tidy root.
+
+Rule added:
+- When the operating constraint changes, re-evaluate the process artifact that
+  was designed for the old constraint. Keep only the part that still improves
+  delivery or learning.
+
 ## 2026-04-27 — Commit Attribution Is Operational Context
 
 Observation:

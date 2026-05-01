@@ -8,7 +8,7 @@ developer conveniences. They are runtime dependencies of the product.
 
 ## Current Local Baseline
 
-Checked on 2026-04-27:
+Checked on 2026-04-27; runtime artifact topology updated on 2026-04-30:
 
 | Dependency | Current local version | Why it matters |
 |---|---:|---|
@@ -16,6 +16,17 @@ Checked on 2026-04-27:
 | Codex CLI (`@openai/codex`) | 0.125.0 | `CodexRunner` uses `codex exec`; `gpt-5.5` no-op prompt succeeds on this version. |
 | Claude Code CLI (`claude`) | 2.1.119 | `ClaudeRunner` uses `claude -p`; Job #9 completed through this runner against the Claude Code target on 2026-04-27. |
 | APScheduler | 3.11.2 | In-process schedule registration for v0.3b. 4.0.0a6 exists but is pre-release, so the project pins latest stable 3.x. |
+
+## Local Runtime Artifacts
+
+| Artifact | Default location | Why |
+|---|---|---|
+| SQLite database | `data/observatory.sqlite` | Keeps local mutable data out of the repo root while preserving SQLite's single-file simplicity. |
+| Dev server stdout/stderr logs | `.logs/` | Keeps transient Uvicorn logs out of the repo root. |
+| AgentJob raw logs and semantic events | `live-sessions/` | Product evidence for runner behavior; still ignored by git because it is per-machine runtime output. |
+
+`alembic.ini` stays at repo root deliberately so standard Alembic commands such
+as `uv run alembic upgrade head` work without extra flags.
 
 ## Empirical Runner Notes
 

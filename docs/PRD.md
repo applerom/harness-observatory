@@ -1060,7 +1060,7 @@ These choices are locked. They are chosen with bias toward popular, well-underst
 | Client state | Alpine.js | lightweight, optional for small client interactions |
 | CSS | Tailwind CSS | utility-first, minimal custom CSS |
 | ORM | SQLModel | Pydantic + SQLAlchemy combined |
-| DB | SQLite | single file, portable; Postgres upgrade path via ORM |
+| DB | SQLite | single file under `data/observatory.sqlite`; portable; Postgres upgrade path via ORM |
 | Migrations | Alembic | standard SQLAlchemy migration tool |
 | Scheduler | APScheduler | in-process with FastAPI; no separate worker process |
 | Agent runner | `asyncio.subprocess` calling local runner CLIs | NOT direct LLM SDKs in v1; `ClaudeRunner` owns Claude CLI, `CodexRunner` owns Codex CLI |
@@ -1344,7 +1344,7 @@ v1.0-minimal acceptance:
 
 ### v1.1 — Honesty pass + foundational hardening
 
-This phase is added after the spirit-lead deep review of v1.0-minimal (2026-04-27). It runs **in parallel with the first FEEDBACK-HARDENING wave** (per WORKLOG): owner is collecting real lecturer/student feedback, while execution lead implements items chosen to be **feedback-orthogonal** — they fix observed spirit-vs-implementation drift and improve proof-quality of the existing surface, without committing to UI shapes or product moves that real student/lecturer use will redesign.
+This phase is added after the spirit-lead deep review of v1.0-minimal (2026-04-27). It runs **in parallel with the first FEEDBACK-HARDENING wave**: owner is collecting real lecturer/student feedback, while execution lead implements items chosen to be **feedback-orthogonal** — they fix observed spirit-vs-implementation drift and improve proof-quality of the existing surface, without committing to UI shapes or product moves that real student/lecturer use will redesign.
 
 Items deliberately deferred to v1.2 or beyond, so the parallel implementation track does not conflict with feedback findings:
 - **Feature Radar UI** (PRD §11.5) — will be informed by whether real students/lecturers actually experience the Topic-vs-Feature distinction as missing. Today it is a structural PRD miss; tomorrow it might be obvious that nobody noticed.
@@ -1379,14 +1379,14 @@ v1.1 acceptance:
   - At least one real refresh job is executed end-to-end through `ClaudeRunner` against a real harness target (suggested: claude-code-architecture or any harness whose local upstream path resolves successfully). Raw log preserved in `live-sessions/agent-job-NNNNN.log`; semantic events captured in `live-sessions/semantic-events.jsonl`.
   - `EVOLUTION.md` records the episode: what worked, what failed, any version/CLI surprises (mirror the `CodexRunner` empirical episode pattern from 2026-04-26 "Runtime Runner CLI Truth Beats Remembered CLI Shape").
   - If `claude -p` invocation fails for environmental reasons (missing CLI, version mismatch, OAuth flow surprises), record that failure mode in `docs/runtime-dependencies.md` and adjust runner preflight accordingly. Failure is acceptable evidence; absence of any attempt is not.
-  - WORKLOG and CONTEXT show the live job id and outcome.
+  - CONTEXT, runtime dependency notes, or the relevant commit message show the live job id and outcome.
 
 - **Commit identity and Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation. Recent agent-authored commits were authored under Roman's human identity, which hides whether a change came from the owner, spirit lead, execution lead, or a subagent-reviewed integration. Concretely:
   - Agent-authored commits use an agent author identity, not `Roman Siewko <applerom@gmail.com>`, unless Roman personally authored the commit content.
   - Integration commits that include reviewer-subagent findings credit the reviewer in a `Co-Authored-By: <reviewer-subagent-name>` trailer, not only in `EVOLUTION.md`.
   - Acceptance: v1.1 implementation commits show a non-human agent author identity in `git log`, and commits integrating reviewer/subagent findings include appropriate `Co-Authored-By` trailers. v1.1 is the baseline; the rule applies forward thereafter.
 
-- **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No `claude -p` literal leaks below the runner abstraction (DELEGATION-PLAN Task E acceptance still holds, extended to ClaudeRunner now that it executes for real).
+- **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No concrete runner CLI literal leaks below the runner abstraction.
 
 **Out of scope for v1.1, by design:**
 - No new Insight/Evidence storage shape changes.
@@ -1395,6 +1395,40 @@ v1.1 acceptance:
 - No SSE / scheduler / DB-lock hardening unless feedback wave forces it.
 
 This phase is feedback-orthogonal by construction: nothing here forecloses on UI or product shape that real lecturer/student use will reshape.
+
+### v1.2 — Lean operations and structure readiness
+
+This phase begins from owner feedback on 2026-04-30: the project is no longer a
+pre-v0.1 bootstrap effort, and the operating model should optimize for fast
+implementation and fast feedback on Codex Pro rather than heavy resume ritual
+designed for tight Plus/Pro rate windows.
+
+v1.2 acceptance:
+
+- **Bootstrap plan retired.** The temporary v0.1 task plan is removed from the
+  current repo and no current operating doc requires agents to read it. New
+  delegation briefs are written from current PRD/WHY/context per slice.
+- **WORKLOG becomes a lightweight runway.** WORKLOG keeps only active work,
+  near queue, blockers, and in-flight subagent state. Historical task trains and
+  process lessons live in git, CONTEXT, and EVOLUTION instead.
+- **Runtime artifacts leave the repo root.** Local SQLite defaults to
+  `data/observatory.sqlite`; local dev-server stdout/stderr logs belong in
+  `.logs/`; product runner logs remain in `live-sessions/` because they are part
+  of AgentJob evidence.
+- **Configuration stays conventional unless there is real payoff.** `alembic.ini`
+  remains at repo root so `uv run alembic upgrade head` works in the standard
+  way for students and agents. Moving config files for tidiness alone is not a
+  goal.
+- **Structure audit before larger feature work.** The execution lead reviews the
+  current package/module layout for student readability and agent development
+  speed. Any real refactor proposal must name the pain, PRD/WHY impact, tests,
+  and migration risk before implementation.
+
+Out of scope for this hygiene pass:
+
+- No broad package reshuffle without a concrete pain report.
+- No autonomous long-haul orchestrator.
+- No production hardening unless feedback exposes a concrete failure.
 
 ---
 
@@ -1529,7 +1563,7 @@ This section commits to constraints, not implementation. The following are delib
 
 - Directory layout (`orchestration/` at repo root vs inside `src/observatory/orchestrator/` module vs separate `harness-orchestrator/` repo)
 - Exact plan format (YAML schema, top-level fields, item shape)
-- Whether to build the orchestrator *before* v0.1 dispatch (delaying dispatch ~1-2 days but running v0.1 under the orchestrator) or *alongside* v0.1 (using v0.1's 5 hand-dispatches as empirical input for orchestrator design — Task F in DELEGATION-PLAN)
+- Whether to build the orchestrator *before* a future large dispatch wave or *alongside* real manual dispatches as empirical input for orchestrator design.
 - Exactly which runners ship in the first automated orchestrator version. Product-level `ClaudeRunner` and `CodexRunner` already exist in v0.2a, but the future long-haul orchestrator may choose a narrower initial runner set based on empirical rate-window behavior.
 - Windows scheduled-task setup script (PowerShell `Register-ScheduledTask` per global CLAUDE.md preference) vs cron on Linux/Mac
 

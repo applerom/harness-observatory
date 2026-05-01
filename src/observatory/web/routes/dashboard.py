@@ -1,7 +1,7 @@
 # FILE: src/observatory/web/routes/dashboard.py
-# VERSION: 2026-04-26
+# VERSION: 2026-04-30
 # START_MODULE_CONTRACT:
-# PURPOSE: Home dashboard route and tiny HTMX partial for the v0.1 read-only web surface.
+# PURPOSE: Home dashboard route and tiny HTMX partial for the current local workbench.
 # PRD_REF: docs/PRD.md §11.1, §26.2, §26.6
 # WHY_REF: docs/why-graph.xml MOD-WEB-ROUTES-DASHBOARD
 # SCOPE: dashboard page; database counts; HTMX proof-of-life partial
@@ -28,7 +28,7 @@ router = APIRouter()
 
 
 class DashboardCounts(TypedDict):
-    """Aggregate counts shown on the v0.1 dashboard."""
+    """Aggregate counts shown on the dashboard."""
 
     harnesses: int
     topics: int
@@ -46,7 +46,7 @@ def _dashboard_counts(session: Session) -> DashboardCounts:
 # START_ROUTE_DASHBOARD:
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, session: Session = Depends(db.get_session)) -> HTMLResponse:
-    """Render the v0.1 home dashboard."""
+    """Render the home dashboard."""
     return templates.TemplateResponse(
         request,
         "dashboard.html",
