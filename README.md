@@ -59,6 +59,29 @@ use the WHY graph to find where that decision should land in code.
 
 ---
 
+## Quickstart
+
+```bash
+uv sync                                                              # install deps
+uv run alembic upgrade head                                          # apply migrations to ./data/observatory.sqlite
+uv run python -m observatory.importers.canon --source ../harness-architecture  # import the markdown corpus
+uv run uvicorn observatory.web.app:create_app --factory --reload     # serve the app on http://localhost:8000
+```
+
+Validation commands used by every slice:
+
+```bash
+uv run pytest                                                        # tests
+uv run ruff check src/ tests/                                        # lint
+uv run mypy src/                                                     # types
+uv run python scripts/validate_anchors.py                            # WHY anchor validator
+```
+
+The scheduler is opt-in. Set `OBSERVATORY_SCHEDULER_ENABLED=1` only when you actually want
+refresh jobs to fire automatically; local dev and tests must not spend model calls by accident.
+
+---
+
 ## For agents starting work
 
 The canonical reading order for agents is in **`AGENTS.md`** (the "Required Reading" section of

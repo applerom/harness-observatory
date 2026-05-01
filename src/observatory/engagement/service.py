@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Deterministic v0.6 engagement service for Insight hooks and first-observer claims.
-# PRD_REF: docs/PRD.md §7 Insight, §24 v0.6
+# PRD_REF: docs/PRD.md §7 Insight, §14.2 Job types
 # WHY_REF: docs/why-graph.xml#MOD-ENGAGEMENT-SERVICE
 # SCOPE: engagement AgentJob creation; missing engagement field generation; first-observer attribution
 # INVARIANTS:

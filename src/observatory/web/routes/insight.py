@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Insight Library routes for retrieval, filtering, engagement generation, and explain jobs.
-# PRD_REF: docs/PRD.md §11.6, §24 v0.6, §24 v0.7
+# PRD_REF: docs/PRD.md §11.6, §14.2 Job types, §14.2 Job types
 # WHY_REF: docs/why-graph.xml#MOD-WEB-ROUTES-INSIGHTS
 # SCOPE: library list; audience/format filters; deterministic engagement action; deterministic explain action
 # INVARIANTS:

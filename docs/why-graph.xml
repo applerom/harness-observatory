@@ -97,7 +97,7 @@
 
   <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Importer reads harness-architecture registry, topic files, and harness-map comparison and populates the SQLite database with normalized Harness, Topic, Insight, and EvidenceItem records.</INTENT>
-    <PRD_REF>docs/PRD.md §26.1 Importer (v0.1 slice)</PRD_REF>
+    <PRD_REF>docs/PRD.md §26.1 Importer behavior + §26.2 mapping</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-IMPORTER"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-MODELS"/>
   </FEATURE_MARKDOWN_IMPORT>
@@ -211,7 +211,7 @@
 
   <FEATURE_ABSTRACT_JOB ID="FEAT-ABSTRACT-JOB" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Abstract job type that turns EvidenceItems into diagrams, ascii art, or other higher-level teaching artifacts. The first v0.4b slice can use deterministic artifacts to prove storage, visibility, and traceability before model-backed generation.</INTENT>
-    <PRD_REF>docs/PRD.md §14.2 Job types, §24 v0.4</PRD_REF>
+    <PRD_REF>docs/PRD.md §14.2 Job types, §14.2 Job types, §11.8 Live Studio</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-ABSTRACT-SERVICE"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </FEATURE_ABSTRACT_JOB>
@@ -251,7 +251,7 @@
 
   <FEATURE_ENGAGEMENT_HONESTY ID="FEAT-ENGAGEMENT-HONESTY" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>v1.1 honesty pass: UI surfaces that render engagement copy must disclose when the copy is template-generated rather than agent-authored.</INTENT>
-    <PRD_REF>docs/PRD.md §24 v1.1 Engagement honesty</PRD_REF>
+    <PRD_REF>docs/PRD.md §14.2 Job types</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-INSIGHT-LIBRARY"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-TEMPLATE-LIVE-DETAIL"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
@@ -259,7 +259,7 @@
 
   <FEATURE_PARSER_EMPTY_GUARD ID="FEAT-PARSER-EMPTY-GUARD" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>v1.1 parser guard: a successful runner result that produces zero parsed Insights and zero EvidenceItems must not appear as a green success; it gets a distinct done_no_findings status plus semantic warning.</INTENT>
-    <PRD_REF>docs/PRD.md §24 v1.1 Parser silent-zero-Insights guard</PRD_REF>
+    <PRD_REF>docs/PRD.md §14.2 Job types</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-PARSER-EMPTY-GUARD"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-JOBS"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-AGENT-JOB"/>
@@ -283,7 +283,7 @@
 
   <FEATURE_INSIGHT_LIBRARY ID="FEAT-INSIGHT-LIBRARY" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Insight Library surface for retrieving Insights across harness/topic boundaries with filters for audience and format, including confidence, attribution, and engagement copy.</INTENT>
-    <PRD_REF>docs/PRD.md §11.6 Insight Library, §24 v0.6</PRD_REF>
+    <PRD_REF>docs/PRD.md §11.6 Insight Library, §14.2 Job types</PRD_REF>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-INSIGHTS"/>
     <REL TYPE="DEPENDS_ON" TARGET="FEATURE:FEAT-ENGAGEMENT-HOOKS"/>
   </FEATURE_INSIGHT_LIBRARY>

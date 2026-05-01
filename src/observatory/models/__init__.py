@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: SQLModel entity definitions for the observatory database.
-# PRD_REF: docs/PRD.md §7, §24 v1.0-minimal, §24 v1.1, §26.1
+# PRD_REF: docs/PRD.md §7, §24.1 + §14.2 Job types, §26.1
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
 # SCOPE: core entity tables; runtime job/schedule tables; curation/explanation/scoring/export support tables
 # INVARIANTS:

@@ -2,7 +2,7 @@
 # VERSION: 2026-04-30
 # START_MODULE_CONTRACT:
 # PURPOSE: SQLite engine and SQLModel session helpers for the local observatory database.
-# PRD_REF: docs/PRD.md §26.6
+# PRD_REF: README.md "Quickstart"
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
 # SCOPE: database URL selection; engine construction; session dependency; testable schema initialization
 # INVARIANTS:

@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Shared RevisionNote lookup helpers for Insight rendering routes.
-# PRD_REF: docs/PRD.md §24 v0.7
+# PRD_REF: docs/PRD.md §14.2 Job types
 # WHY_REF: docs/why-graph.xml#FEAT-ASK-AGENT-WHY
 # SCOPE: route helper only; no writes; maps persisted Insight ids to RevisionNotes
 # INVARIANTS:

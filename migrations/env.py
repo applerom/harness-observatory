@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Alembic environment wiring SQLModel metadata to migration execution.
-# PRD_REF: docs/PRD.md §26.6
+# PRD_REF: README.md "Quickstart"
 # WHY_REF: docs/why-graph.xml#MOD-MODELS
 # SCOPE: offline migrations; online migrations; model metadata registration
 # INVARIANTS:

@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Deterministic default lens seeding and score refresh service.
-# PRD_REF: docs/PRD.md §15, §24 v1.0
+# PRD_REF: docs/PRD.md §15, §24.1
 # WHY_REF: docs/why-graph.xml MOD-LENS-SERVICE
 # SCOPE: default Lens rows; Score upserts from current DB signals
 # INVARIANTS:

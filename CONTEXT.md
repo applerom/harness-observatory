@@ -1,10 +1,11 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-04-30 — post-v1.1 process cleanup and root artifact cleanup
+> **Last update:** 2026-05-01 — post-v1.2 doc pruning pass (PRD §24/§26 collapsed; EVOLUTION demoted from required reading)
 >
-> This file is the compact handoff for the current project state. Historical
-> trajectory and process lessons live in `EVOLUTION.md`; shipped truth lives in
-> git.
+> This file is the compact handoff for the current project state. Shipped truth
+> lives in git; durable teaching lessons live in `docs/lessons/`; in-flight
+> spirit-lead observations live in `EVOLUTION.md` (not part of the standard
+> reading order).
 
 ---
 
@@ -42,7 +43,10 @@ The old heavy continuity model has been replaced with a lean model:
 - In-session detail lives in the Codex plan/subagent tools.
 - Product/architecture changes still go through PRD + WHY graph before or with
   code.
-- Reusable process lessons go into `EVOLUTION.md`.
+- Reusable lessons graduate from `EVOLUTION.md` into `docs/lessons/` (or
+  `SPIRIT.md` / `AGENTS.md` / module contract headers if the rule belongs
+  there). `EVOLUTION.md` is allowed to stay short and is a spirit-lead surface,
+  not required reading.
 - Fast feedback slices may use Spark workers with strict read budgets and narrow
   write scopes.
 
@@ -56,8 +60,13 @@ The old heavy continuity model has been replaced with a lean model:
 6. `docs/why-contracts-v1.md`
 7. `CONTEXT.md`
 8. `WORKLOG.md`
-9. `EVOLUTION.md`
+9. `docs/lessons/` — skim the index when working in adjacent areas
 10. `docs/codex-subagent-profile.md` before dispatching Codex subagents
+
+`EVOLUTION.md` is intentionally not in this list. It is a spirit-lead surface
+for unfinished observations; reading it cold should not be the price of starting
+a slice. A spirit-lead pass reads it; everyone else reads what graduated to
+`docs/lessons/`.
 
 For tiny delegated implementation workers, do not copy this full reading order.
 Give the worker a small context packet, exact files, acceptance criteria, and a
@@ -71,7 +80,7 @@ harness-observatory/
 ├── SPIRIT.md                  project constitution
 ├── CONTEXT.md                 compact current handoff
 ├── WORKLOG.md                 lightweight current runway
-├── EVOLUTION.md               teaching-facing trajectory and lessons
+├── EVOLUTION.md               in-flight spirit-lead observations (not required reading)
 ├── alembic.ini                Alembic entrypoint kept at root by convention
 ├── data/                      local SQLite data directory; ignored except .gitkeep
 ├── docs/                      PRD, WHY graph, lessons, runtime notes
@@ -106,12 +115,17 @@ default SQLite database is `data/observatory.sqlite`; an old ignored
 
 ## 6. Current Next Steps
 
-1. Finish the 2026-04-30 cleanup: stale docs, root artifacts, runtime paths, and
-   lean continuity model.
-2. Validate with pytest, ruff, mypy, and the WHY anchor checker.
-3. Continue feedback-hardening from real use.
-4. Do a focused structure audit before the next larger feature wave; promote any
-   real refactor into PRD/WHY first.
+1. Continue feedback-hardening from real lecturer/student use; each item should
+   produce visible evidence (Playwright screenshot or test) and a short
+   commit-message rationale.
+2. Run the focused structure audit (`STRUCTURE-AUDIT` in `WORKLOG.md`) before
+   the next larger feature wave. Audit reports pain, then PRD/WHY captures any
+   intent change, then code follows. Do not refactor without that loop.
+3. After a feedback or audit slice ships, briefly check whether any new rule it
+   produced should graduate from `EVOLUTION.md` into `docs/lessons/`,
+   `SPIRIT.md`, `AGENTS.md`, or a module contract header — and prune the
+   EVOLUTION entry once the rule lives canonically elsewhere.
+4. Validate every slice with pytest, ruff, mypy, and the WHY anchor checker.
 
 ## 7. Known Gaps
 

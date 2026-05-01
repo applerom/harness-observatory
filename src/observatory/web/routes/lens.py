@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Lens scoring web routes.
-# PRD_REF: docs/PRD.md §15, §24 v1.0
+# PRD_REF: docs/PRD.md §15, §24.1
 # WHY_REF: docs/why-graph.xml MOD-WEB-ROUTES-LENSES
 # SCOPE: list Lens rows, render Score matrix rows, trigger deterministic refresh
 # INVARIANTS:

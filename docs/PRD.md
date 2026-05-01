@@ -1175,260 +1175,57 @@ Mitigation: `AgentRunner` is a defined Protocol from v0.1. Concrete subprocess b
 
 ---
 
-## 24. Implementation Phases
+## 24. Phase Hint
 
-Current phase status (2026-04-26):
+The project is no longer in initial-build mode. The PRD ships features-by-rationale,
+not features-by-version. New work is driven by observed feedback, not by a roadmap
+of remaining slices.
 
-- v0.1 is complete locally: importer, schema, read-only dashboard/dossiers/matrix.
-- v0.2a is complete locally: OpenCode refresh job spine, selectable Codex/Claude runners, raw logs, Job Dashboard, and Playwright CLI visual QA.
-- v0.2b is complete locally: one real OpenCode Codex refresh raw log has been parsed into proposed `Insight` / `EvidenceItem` rows visible in the OpenCode dossier.
-- Full v0.2 is functionally complete for the one-harness vertical.
-- v0.3a is complete locally: manual refresh is target-generic beyond OpenCode, stale imported local paths can resolve to current sibling architecture directories, and a live Codex CLI smoke job produced proposed `Insight` / `EvidenceItem` rows.
-- v0.3b is complete locally: DB-backed refresh schedules exist, APScheduler is wired through an opt-in FastAPI lifespan, and Job Dashboard shows schedule metadata.
-- v0.3c is complete locally: Curation Queue surfaces proposed/disputed/unverified Insights, applies confidence labels, and writes `RevisionNote` audit entries without becoming an approval gate.
-- v0.4a is complete locally: Live Agent Studio creates live discover jobs, streams real runner stdout/stderr through SSE, preserves raw logs, emits semantic runtime events, and stores exact prompt text.
-- v0.4b/v0.5a/v0.6a are complete locally: deterministic abstract artifacts, verification/confidence UI, engagement seeds, first-observer claims, and Insight Library exist.
-- v0.7a is complete locally: every persisted Insight card can dispatch a deterministic explain job; explanations are stored as RevisionNotes and rendered on Insight Library, harness dossier, topic dossier, and matrix detail surfaces.
-- v1.0-minimal is complete locally: deterministic lens scoring UI, generated Markdown exports, legacy archive manifest, and onboarding checklist exist. This is a feedback-ready minimum, not a polished final v1.0.
+If a future spirit-lead pass adds a new phase here, it is added as a short
+acceptance block at the bottom — not as a multi-section plan ladder. Durable rules
+that come out of any such phase are promoted to their canonical location
+(`SPIRIT.md` for stance, `AGENTS.md` for operating discipline, module contract
+headers for code-level invariants) and not restated here.
 
-### v0.1 — Read-only viewer slice
+### 24.1 Shipped phases — short log
 
-~3-5 days of subagent work.
+| Version | Date | Slice |
+|---|---|---|
+| v0.1 | 2026-04-26 | Markdown importer + read-only dashboard, dossiers, matrix |
+| v0.2 | 2026-04-26 | OpenCode refresh vertical, `AgentRunner` Protocol, Codex/Claude runners, Job Dashboard |
+| v0.3 | 2026-04-26 | Refresh generalized to all harnesses, DB-backed schedules with guarded scheduler, Curation Queue |
+| v0.4 | 2026-04-26 | Live Agent Studio (SSE), deterministic `abstract` artifact service |
+| v0.5 | 2026-04-26 | Multi-pass verification, confidence labels in matrix and dossiers |
+| v0.6 | 2026-04-26 | Engagement seeds (deterministic, honestly labelled), `first_observed_by` claim flow, Insight Library |
+| v0.7 | 2026-04-26 | "Ask the agent why" / `explain` job type rendered next to Insights |
+| v1.0-minimal | 2026-04-27 | Lens scoring, generated Markdown exports, legacy archive manifest, onboarding checklist — feedback-ready minimum |
+| v1.1 | 2026-04-27 | Honesty pass: engagement template-generated badge, parser zero-findings guard, ClaudeRunner empirical validation, agent commit identity discipline |
+| v1.2 | 2026-04-30 | Lean operations: bootstrap plan retired, WORKLOG recast as runway, runtime artifacts out of repo root |
 
-- Markdown importer ingests `harness-architecture/registry/harnesses.md`, all `topics/*/`, `comparisons/harness-map.md` into SQLite
-- All 8 harnesses + ~11 topics + their evidence cells visible in DB after import
-- Web UI surfaces: home dashboard (counts, links), harness list, harness dossier, topic list, topic dossier, comparison matrix (harness × topic, read-only)
-- Confidence band fields exist in schema but display as "not yet verified" for all imported data
-- **No agent jobs in v0.1.** `AgentRunner` abstraction scaffolded as empty interface; not invoked.
-- WHY graph file exists (`docs/why-graph.xml`), starts with USECASE and FEATURE skeletons
-- Anchor validator script exists, checks WHY graph anchors resolve (trivial in v0.1 since little code)
-- Validates schema against real data before agents depend on it
+### 24.2 Where the rules from those phases live now
 
-### v0.2 — One harness vertical with one AgentJob type
+The acceptance criteria from each phase produced durable rules. Those rules are
+canonical at exactly one location each. Do not restate them here.
 
-- Pick OpenCode (most-covered in canon)
-- Add `refresh` AgentJob type
-- Implement `AgentRunner` interface and `ClaudeRunner` (calls `claude -p` subprocess)
-- Implement `CodexRunner` using `codex exec` so Codex can be used as a runtime runner, not only as the development harness hosting the lead agent
-- Manual trigger button on Harness Dossier dispatches a `refresh` job
-- Watch one full end-to-end cycle work: trigger → subprocess → parse output → Insights stored → visible in dossier
-- Job Dashboard (basic: list of jobs, status, stdout log link)
+- Agent fallibility, honesty labelling, three-stage learner journey → `SPIRIT.md`.
+- Cross-harness lead model, commit identity, subagent dispatch posture, lean continuity → `AGENTS.md`.
+- Runner subprocess isolation → `runners/base.py` and `runners/{claude,codex}.py` contract headers + §23.8 here.
+- Scheduler opt-in startup → `scheduler/service.py` invariants + `CONTEXT.md` §5.
+- Engagement is currently template-generated; agent-authored engagement is gated on real feedback signal → §14.2 below + `SPIRIT.md` §"Agent Fallibility as Pedagogy".
+- Parser zero-findings guard → `jobs/log_parser.py` and `models` `AgentJob.status` constants.
 
-Implementation sequencing note (2026-04-26): v0.2 was split into smaller feedback slices. v0.2a shipped the durable job spine first: OpenCode refresh button → `AgentJob` lifecycle → selected `AgentRunner` execution → raw log visible in Job Dashboard. v0.2b then parsed the first real raw runner log into proposed `Insight` / `EvidenceItem` rows, intentionally using observed output rather than an invented format.
+### 24.3 Out of scope until feedback says otherwise
 
-### v0.3 — All harnesses and cron
+These items were named in earlier phases and remain intentionally deferred. Do
+not pull them forward without a feedback signal.
 
-- Generalize `refresh` to all 8+ harnesses
-- APScheduler in-process; cron schedule configurable per harness
-- Job Dashboard shows cron next-run times
-- Curation Queue surfaces `proposed` Insights
-
-Implementation sequencing note (2026-04-26): v0.3 starts with **v0.3a manual refresh generalization** before cron. The slice enables the existing manual refresh path for additional harness targets through the same `AgentJob` / `AgentRunner` / raw-log / parser / semantic-trace spine proven in v0.2. Cron is intentionally deferred until the target-selection, path-preflight, and parser assumptions work for more than OpenCode.
-
-v0.3a acceptance:
-
-- Refresh controls are available on harness dossiers beyond OpenCode.
-- Refresh no longer rejects non-OpenCode harnesses at the service boundary.
-- Target cwd preflight resolves current local sibling architecture directories when imported paths are stale, and records the resolved cwd in semantic events.
-- The refresh prompt template is target-generic rather than named for OpenCode.
-- Successful refresh logs parse into harness-scoped proposed `Insight` / `EvidenceItem` rows for the actual target harness.
-- Tests cover at least one non-OpenCode harness refresh path and one stale imported path repaired to a local sibling directory.
-
-v0.3b acceptance:
-
-- A DB-backed per-harness refresh schedule model exists with enabled flag, runner name, interval, next-run time, last-run time, and last job link.
-- FastAPI can start and stop an in-process APScheduler instance through app lifespan, but automatic scheduled dispatch is guarded by configuration and is off by default in local/test runs.
-- The scheduler registration layer is testable without waiting for real time and without invoking Codex/Claude.
-- Job Dashboard shows a compact schedule section with next-run metadata.
-- The first scheduler slice reuses the existing `AgentJob` / `RefreshJobService` path instead of inventing a separate cron execution path.
-
-v0.3c acceptance:
-
-- A Curation Queue route surfaces `proposed` and `disputed` Insights without hiding them from dossiers or the matrix.
-- Queue rows show status, confidence band, harness/topic labels when known, and evidence count.
-- Minimal action buttons can mark an Insight `human-verified`, `disputed`, or `historical`; these are curation labels, not a publication gate.
-- Feedback-hardening acceptance: action controls explain their effect; a completed action returns to Curation with a visible undo affordance; undo restores the previous status/confidence and logs that restoration.
-- Feedback-hardening acceptance: Curation has visible status views/tabs so `human-verified` and `historical` Insights can be found after action, with counts or labels that make the destination clear.
-- Feedback-hardening acceptance: Curation cards render Markdown-ish Insight payloads legibly instead of raw `**` / backtick / heading text; the same renderer is reused by sibling Insight body surfaces where practical.
-- The navigation exposes Curation as an owner/workbench surface.
-
-Implementation sequencing note (2026-04-26): v0.3c is implemented in the same milestone pass as v0.4a because both are workbench surfaces over agent output. Curation makes produced Insights manageable; Live Studio makes new interactive output visible.
-
-### v0.4 — Live Agent Studio and abstract job type
-
-- SSE streaming UI for live agent stdout
-- Live Agent Studio surface (§11.8) — projector-optimized
-- `abstract` job type for diagram and ascii art generation from EvidenceItems
-- First live discovery demo possible: lecturer dispatches, students watch, finding claimed
-
-v0.4a acceptance:
-
-- `/live` renders a projector-friendly Live Agent Studio with harness, runner, and task prompt controls.
-- Posting the form creates an `AgentJob(type="discover", trigger="live")` through the `AgentRunner` abstraction and redirects to a live job page.
-- `/live/{job_id}` shows target, runner, status, raw-log link when available, and a stream panel.
-- `/live/{job_id}/stream` is an SSE endpoint that starts execution only for a queued live job, streams runner events, writes the raw log, emits semantic runtime events, and updates the `AgentJob` terminal status.
-- `AgentJob.prompt_text` stores the exact prompt used for live/runtime replay; `PromptTemplate` remains the reusable prompt library, not a per-run prompt dump.
-- Tests use fake runners and never call real Codex/Claude.
-- A first `abstract` job type placeholder is visible in code/docs as a next v0.4 slice, but diagram generation itself is deferred until the live stream surface works.
-
-v0.4b acceptance:
-
-- A service can create an `AgentJob(type="abstract")` for an existing Insight/Evidence set without invoking a real model in tests.
-- The job produces at least one higher-level teaching artifact as an `Insight(format="mermaid_diagram" | "ascii_art")` linked to the same harness/topic context when available.
-- The produced artifact has a `RevisionNote` that cites the source EvidenceItem ids and the parent abstract job id.
-- Job Dashboard shows the abstract job with `produced_artifact_ids`, raw log, and semantic events.
-- The first artifact generator may be deterministic/template-based; model-backed abstract generation is allowed later after the artifact shape proves useful.
-
-### v0.5 — Multi-pass verification and confidence labels in UI
-
-- `verify` job type
-- Confidence band displayed in comparison matrix and all dossiers
-- Per-pass UI breakdown on cell click
-- `disputed` status visible with inter-pass disagreement indicator
-
-v0.5a acceptance:
-
-- A verification service can record support/dispute passes for an Insight through `AgentJob(type="verify")`.
-- Verification updates `EvidenceItem.verification_passes`, `verifier_agents`, and `confidence`, and writes an `ObservationReview`.
-- Confidence labels update deterministically: disputed evidence marks the Insight/cell disputed; two supporting passes can mark an Insight/cell corroborated.
-- Harness dossier, topic dossier, matrix cells, and expanded cell detail show current confidence/status rather than the old "not yet verified" placeholder.
-- Expanded matrix cell detail shows a compact per-pass verification breakdown.
-- Tests use fake/manual verification outcomes and do not call real Codex/Claude.
-
-### v0.6 — Engagement layer
-
-- `engagement` job type: generates `engagement_hook`, `joke_or_telegram_seed`
-- `first_observed_by` student attribution flow in Live Agent Studio
-- Telegram seed displayed on attribution
-- Insight Library filterable by `audience` and `format`
-
-v0.6a acceptance:
-
-- An engagement service can create an `AgentJob(type="engagement")` for an Insight and fill missing `engagement_hook` / `joke_or_telegram_seed` with a deterministic teaching seed in tests.
-- Live Agent Studio exposes a first-observer claim path for Insights produced by that live job; it stores `Insight.first_observed_by` and shows the generated telegram seed when present.
-- An Insight Library route lists Insights with filters for `audience` and `format`, and renders confidence, attribution, engagement hook, and telegram seed when available.
-- Navigation exposes the Insight Library.
-- Tests cover engagement generation, first-observer claim, and library filters without real model calls.
-
-### v0.7 — "Ask the agent why" and explain job type
-
-- "Ask the agent why" button on every Insight
-- `explain` job type dispatched; output streamed and stored
-- Per-Insight explanation available on demand
-
-v0.7a acceptance:
-
-- Every rendered Insight card includes an "Ask the agent why" action routed through `AgentJob(type="explain")`.
-- The first slice may use deterministic local generation; it must still store `prompt_text`, timestamps, raw log, semantic events, and a `RevisionNote` linked to the Insight.
-- The explanation uses the Insight plus its EvidenceItems and appears below the Insight on subsequent renders without replacing the original Insight body.
-- The Job Dashboard can show the explain job, produced artifact ids, raw log, and semantic trace.
-- Tests cover explain job creation, route action, and rendered explanation without real model calls.
-
-### v1.0 — Lens scoring, generated docs export, legacy Markdown archived
-
-- Lens-based scoring UI
-- Generated Markdown export from DB (comparison reports, harness summaries, lecturer briefs)
-- `harness-architecture/legacy-data/` archive complete
-- Full feature parity with PRD intent
-- Onboarding polished: new harness from clone to first refresh in under 15 minutes
-
-v1.0-minimal acceptance:
-
-- Default lenses (`Research`, `Lecturer`, `Practical Selection`, `Ecosystem`) can be seeded and rendered in a Lens Scoring UI.
-- A deterministic scoring service can refresh `Score` rows for existing Harness/Topic pairs from current DB signals; the UI shows per-lens scores and no universal winner.
-- A generated-docs service can write at least three Markdown artifacts from DB state: comparison report, harness summary, and lecturer brief / engagement digest.
-- A web export surface can trigger generation, list generated Markdown files, and expose enough metadata for a user to inspect outputs from disk.
-- Legacy Markdown archive support exists as a deterministic export/archive manifest under generated output; it records source path, generated-at time, and copied/covered Markdown counts without treating legacy Markdown as the source of truth.
-- Onboarding is represented by a short generated checklist or docs section that names the actual current commands from clone/import/migrate/server/first refresh.
-- Tests cover scoring seed/refresh, export generation, archive manifest, and the new web routes. Playwright CLI covers the new Lens and Export surfaces.
-
-### v1.1 — Honesty pass + foundational hardening
-
-This phase is added after the spirit-lead deep review of v1.0-minimal (2026-04-27). It runs **in parallel with the first FEEDBACK-HARDENING wave**: owner is collecting real lecturer/student feedback, while execution lead implements items chosen to be **feedback-orthogonal** — they fix observed spirit-vs-implementation drift and improve proof-quality of the existing surface, without committing to UI shapes or product moves that real student/lecturer use will redesign.
-
-Items deliberately deferred to v1.2 or beyond, so the parallel implementation track does not conflict with feedback findings:
-- **Feature Radar UI** (PRD §11.5) — will be informed by whether real students/lecturers actually experience the Topic-vs-Feature distinction as missing. Today it is a structural PRD miss; tomorrow it might be obvious that nobody noticed.
-- **Real `engagement` agent job** — depends on whether feedback shows engagement copy is even noticed/used. Investing in agent-authored engagement before knowing this would be over-investment.
-- **Operational hardening** (SQLite OperationalError retry, SSE client-disconnect cleanup, concurrency tests, performance work on 1000+ Insights) — defer until real usage exposes which one breaks first. v1.0-minimal was never aimed at production-ready by owner intent; production hardening enters PRD only when feedback creates the demand.
-
-v1.1 acceptance:
-
-- **v1.0 snapshot hygiene (documentation bugfix).** Before treating v1.0-minimal as the `main` snapshot, human-facing and agent-facing docs must not describe the repo as pre-v0.1 or code-not-started. Concretely:
-  - `README.md` states that v1.0-minimal is a working local product and names the implemented surfaces at a high level.
-  - `CONTEXT.md` "What's next" points at the v1.1 queue rather than the old v0.2a direction.
-  - Source module contracts touched during the pass no longer describe active runtime entities (`AgentJob`, `Lens`, `Score`, `RevisionNote`, `ObservationReview`) as future-only storage when they are now implemented product surfaces.
-  - Acceptance: tests/linters/anchor validator still pass after the doc-only pass.
-
-- **Engagement honesty (labelling pass, not implementation).** The current `engagement` job type is deterministic template generation, not an agent invocation — `AgentJob.runner_name="deterministic"`, `status="done"` mid-creation, no model call, hardcoded copy templates in `src/observatory/engagement/service.py`. This is fine as v0.6a compromise but must not be hidden behind the word "engagement agent." Concretely:
-  - Insight Library and any other UI surface rendering `Insight.engagement_hook` / `Insight.joke_or_telegram_seed` displays a small `template-generated` badge near that copy, visually distinct from confidence badges.
-  - The Insight detail surface displays a one-line note: "Engagement copy is currently template-generated; agent-authored engagement is planned for v1.2."
-  - PRD §14.2 entry for the `engagement` job type is amended to say: "v1.1 = deterministic template generation; planned upgrade to a real agent-authored job in v1.2 (or later, if feedback shows the feature is unused)."
-  - No code changes to engagement service logic; this is a labelling + doc pass only.
-  - Acceptance test: a Playwright smoke run on the Insight Library surface confirms the `template-generated` badge is visible on at least one Insight whose `engagement_hook` was set by the deterministic service.
-
-- **Parser silent-zero-Insights guard.** Today, when `parse_refresh_report()` returns no parsed Insights/EvidenceItems for a successful refresh job, the job is marked `done` with zero artifacts and the operator sees a green status with empty findings — a misleading signal. Concretely:
-  - `RefreshJobService` emits a semantic event with code `parser_returned_no_findings` (level: `warning`) into the job's JSONL trace whenever a successful runner result produces zero Insights and zero EvidenceItems.
-  - `AgentJob.status` is set to a new value distinct from `done` — name chosen by execution lead during implementation; suggested `done_no_findings`. The new status MUST be added to the schema as a discrete enum/literal value, not a free-text marker.
-  - Implementation note (2026-04-27): the current SQLModel/SQLite schema stores `AgentJob.status` as an indexed string, so v1.1 adds canonical model constants including `AGENT_JOB_STATUS_DONE_NO_FINDINGS` rather than a DDL migration. A future migration may add a DB-level check constraint if status drift becomes a practical problem.
-  - Job Dashboard renders `done_no_findings` jobs with a distinct visual marker (amber badge, not green).
-  - Tests: at least one unit test exercises this path with a deliberately empty/malformed runner output; at least one route test confirms the Job Dashboard renders the new status correctly.
-  - WHY graph adds a new `MOD-PARSER-EMPTY-GUARD` PLANNED node at slice start; flips to STARTED when the slice merges.
-  - Empirical ClaudeRunner note (2026-04-27): real Claude output used plain `path:line — note` evidence bullets rather than Markdown links. v1.1 parser hardening therefore also includes plain-path evidence parsing so runner diversity does not create proofless Insights.
-
-- **ClaudeRunner empirical validation.** The dual-runner architecture is currently theatrical — `ClaudeRunner` is wired in `src/observatory/web/routes/harness.py:53-54` but no live refresh job through `claude -p` exists in `live-sessions/`. Concretely:
-  - At least one real refresh job is executed end-to-end through `ClaudeRunner` against a real harness target (suggested: claude-code-architecture or any harness whose local upstream path resolves successfully). Raw log preserved in `live-sessions/agent-job-NNNNN.log`; semantic events captured in `live-sessions/semantic-events.jsonl`.
-  - `EVOLUTION.md` records the episode: what worked, what failed, any version/CLI surprises (mirror the `CodexRunner` empirical episode pattern from 2026-04-26 "Runtime Runner CLI Truth Beats Remembered CLI Shape").
-  - If `claude -p` invocation fails for environmental reasons (missing CLI, version mismatch, OAuth flow surprises), record that failure mode in `docs/runtime-dependencies.md` and adjust runner preflight accordingly. Failure is acceptable evidence; absence of any attempt is not.
-  - CONTEXT, runtime dependency notes, or the relevant commit message show the live job id and outcome.
-
-- **Commit identity and Co-Authored-By discipline (operational).** Lives in `AGENTS.md` Cross-Harness Lead-Agent Model rather than as a product surface, but is mirrored here as a v1.1 process expectation. Recent agent-authored commits were authored under Roman's human identity, which hides whether a change came from the owner, spirit lead, execution lead, or a subagent-reviewed integration. Concretely:
-  - Agent-authored commits use an agent author identity, not `Roman Siewko <applerom@gmail.com>`, unless Roman personally authored the commit content.
-  - Integration commits that include reviewer-subagent findings credit the reviewer in a `Co-Authored-By: <reviewer-subagent-name>` trailer, not only in `EVOLUTION.md`.
-  - Acceptance: v1.1 implementation commits show a non-human agent author identity in `git log`, and commits integrating reviewer/subagent findings include appropriate `Co-Authored-By` trailers. v1.1 is the baseline; the rule applies forward thereafter.
-
-- **WHY graph and validator hold.** All v1.1 code additions add corresponding `MOD-*` / `FEAT-*` nodes to `docs/why-graph.xml` with `PRD_REF` pointing at this section. `scripts/validate_anchors.py` continues to return 0 with strictly-monotonic anchor count (must not drop). No concrete runner CLI literal leaks below the runner abstraction.
-
-**Out of scope for v1.1, by design:**
-- No new Insight/Evidence storage shape changes.
-- No new product surfaces (no Feature Radar, no media rendering, no lesson-package CMS).
-- No engagement agent rewrite (only labelling).
-- No SSE / scheduler / DB-lock hardening unless feedback wave forces it.
-
-This phase is feedback-orthogonal by construction: nothing here forecloses on UI or product shape that real lecturer/student use will reshape.
-
-### v1.2 — Lean operations and structure readiness
-
-This phase begins from owner feedback on 2026-04-30: the project is no longer a
-pre-v0.1 bootstrap effort, and the operating model should optimize for fast
-implementation and fast feedback on Codex Pro rather than heavy resume ritual
-designed for tight Plus/Pro rate windows.
-
-v1.2 acceptance:
-
-- **Bootstrap plan retired.** The temporary v0.1 task plan is removed from the
-  current repo and no current operating doc requires agents to read it. New
-  delegation briefs are written from current PRD/WHY/context per slice.
-- **WORKLOG becomes a lightweight runway.** WORKLOG keeps only active work,
-  near queue, blockers, and in-flight subagent state. Historical task trains and
-  process lessons live in git, CONTEXT, and EVOLUTION instead.
-- **Runtime artifacts leave the repo root.** Local SQLite defaults to
-  `data/observatory.sqlite`; local dev-server stdout/stderr logs belong in
-  `.logs/`; product runner logs remain in `live-sessions/` because they are part
-  of AgentJob evidence.
-- **Configuration stays conventional unless there is real payoff.** `alembic.ini`
-  remains at repo root so `uv run alembic upgrade head` works in the standard
-  way for students and agents. Moving config files for tidiness alone is not a
-  goal.
-- **Structure audit before larger feature work.** The execution lead reviews the
-  current package/module layout for student readability and agent development
-  speed. Any real refactor proposal must name the pain, PRD/WHY impact, tests,
-  and migration risk before implementation.
-
-Out of scope for this hygiene pass:
-
-- No broad package reshuffle without a concrete pain report.
-- No autonomous long-haul orchestrator.
-- No production hardening unless feedback exposes a concrete failure.
+- Feature Radar UI (PRD §11.5) — pending evidence that students/lecturers feel
+  the Topic-vs-Feature distinction as missing.
+- Agent-authored engagement job — pending evidence engagement copy is read/used.
+- Operational hardening (SQLite OperationalError retry, SSE client-disconnect
+  cleanup, concurrency tests, large-N performance) — pending real failure signal.
+- Long-haul autonomous orchestration — see §27; current Codex Pro limits do not
+  justify the machinery.
 
 ---
 
@@ -1440,88 +1237,40 @@ Harness Observatory should become:
 
 ---
 
-## 26. v0.1 — First Working Slice: Acceptance Criteria
+## 26. Markdown Corpus Import Mapping
 
-This section defines concrete acceptance criteria for the v0.1 milestone. v0.1 is the first shippable slice. It proves the schema against real data before any agent job infrastructure is built.
+The `harness-architecture/` markdown corpus is the historical source of truth.
+This section defines how that corpus maps onto the Observatory data model so
+that `src/observatory/importers/canon.py` can stay short and the contract lives
+in product spec, not only in code.
 
-### 26.1 Importer
+### 26.1 Importer behavior
 
-- Markdown importer runs as a Python module entry: `uv run python -m observatory.importers.canon --source <path-to-harness-architecture>`
-- Implementation lives in `src/observatory/importers/canon.py` (note plural `importers`; `import` alone is a Python reserved word and cannot be a module name). The module exposes a `__main__` block parsing `--source`; no `[project.scripts]` entry, no Typer/Click wrapper in v0.1
-- A unified `observatory` Typer CLI (`uv run observatory dev | import-canon | migrate | …`) is a candidate scope-add for v0.2; deferred from v0.1 to keep the slice tight and avoid an extra dependency before any subagent code lands
-- Re-runnable: importing twice from the same source is idempotent (no duplicate rows; existing rows updated by stable identifier)
-- Ambiguous items (could not be cleanly parsed) are logged to `import-ambiguous.log`; script does not silently discard them
-- All imported Insights default to `status = proposed`, `confidence_band = unverified`
+- The importer runs as a Python module entry: `uv run python -m observatory.importers.canon --source <path-to-harness-architecture>`. Concrete implementation lives in `src/observatory/importers/canon.py` (plural `importers`; `import` alone is a Python reserved word and cannot be a module name).
+- Re-running the importer from the same source is idempotent: no duplicate rows; existing rows updated by stable identifier.
+- Rows that cannot be cleanly parsed are appended to `import-ambiguous.log` rather than silently discarded. The owner reviews that log and resolves manually before re-importing.
+- All imported `Insight` rows default to `status="proposed"` and `confidence_band="unverified"` — the importer never invents confidence.
 
-#### 26.1.1 Source → Entity field mapping
+### 26.2 Source → entity field mapping
 
 | Source file in `harness-architecture/` | Target entity | Key fields |
 |---|---|---|
 | `registry/harnesses.md` (table rows) | `Harness` | `name`, `slug`, `upstream_url`, `local_upstream_path`, `language`, `status_note`, `last_review_date` |
-| `registry/harnesses.md` (rows marked "agent tool") | `EcosystemObject` (kind=`agent-tool`) | same as Harness — see §26.1.2 |
+| `registry/harnesses.md` (rows marked "agent tool") | `EcosystemObject` (kind=`agent-tool`) | same as `Harness` — see §26.3 |
 | `topics/<slug>/topic.md` (front matter + prose) | `Topic` | `name`, `slug`, `definition` (first paragraph), `why_it_matters`, `body_markdown` (raw remaining prose) |
-| `topics/<slug>/evidence.md` (per-harness sections) | `EvidenceItem` (one row per harness × topic where citation present) | `harness_id`, `topic_id`, `file_path`, `line_number`, `code_snippet` (pulled from upstream at import time), `claim_summary`, `evidence_class` |
+| `topics/<slug>/evidence.md` (per-harness sections) | `EvidenceItem` (one row per harness × topic where citation present) | `harness_id`, `topic_id`, `file_path`, `line_number`, `code_snippet`, `claim_summary`, `evidence_class` |
 | `topics/<slug>/teaching.md` (hooks + telegram seeds) | `Insight` (audience=`lecturer-only` for hooks; `student-introductory` for general framings) | `title`, `concise_formulation`, `why_it_matters`, `audience`, `engagement_hook`, `joke_or_telegram_seed`, `format=text`, `status=proposed` |
 | `comparisons/harness-map.md` (table cells) | `ComparisonCell` | `harness_id`, `topic_id`, `state` (present/absent/partial/unknown — parsed from cell text), `cell_summary` (cell text verbatim) |
 | `comparisons/<topic>.md` (deep narrative comparison files) | `Insight` (audience=`developer-deep-dive`) | `title`, `concise_formulation` (first paragraph), `why_it_matters`, `body_markdown`, `audience`, `format=text` |
-| `comparisons/investigations/*.md` (case studies) | `Insight` (audience=`developer-deep-dive`, `format=text`) | one Insight per investigation file; `title` from H1, `body_markdown` is the file body |
+| `comparisons/investigations/*.md` (case studies) | `Insight` (audience=`developer-deep-dive`, `format=text`) | one Insight per file; `title` from H1, `body_markdown` is the file body |
 
-After import, expected counts (acceptance criterion):
-- `SELECT COUNT(*) FROM harness` ≥ 8 (registry-listed harnesses, see §26.1.2 for non-harness rows)
-- `SELECT COUNT(*) FROM topic` ≥ 11 (current topic directory count in `harness-architecture/topics/`)
-- `SELECT COUNT(*) FROM ecosystem_object WHERE kind='agent-tool'` ≥ 1 (MiniMax CLI at minimum)
-- `SELECT COUNT(*) FROM insight` ≥ 30 (rough lower bound across topic teaching files + investigations)
-- `SELECT COUNT(*) FROM comparison_cell` ≥ 80 (8 harnesses × 10 well-covered topics)
+### 26.3 EcosystemObject vs Harness classification
 
-#### 26.1.2 EcosystemObject exception (MiniMax CLI)
+The registry distinguishes a `Harness` (a `while(true)` loop over a model + tools + prompt) from an `EcosystemObject` of `kind="agent-tool"` (a component or composable service). MiniMax CLI is the canonical `agent-tool` instance.
 
-The current `harness-architecture/registry/harnesses.md` registry has rows classified as "agent tool" rather than as a full harness (the project's distinction: harnesses run `while(true)` over a model + tools + prompt; agent tools are component pieces or composable services). MiniMax CLI is the v0.1 known instance.
+Importer rule: rows whose registry classification reads "agent tool" — or any non-"harness" classifier — MUST go into `EcosystemObject` with `kind` set accordingly, NOT into `Harness`. This preserves the ontological distinction even when the row shape overlaps. Per §7.2, the data model supports this from the first slice even though most current surfaces only render Harnesses.
 
-Importer rule: rows whose registry classification reads "agent tool" (or any non-"harness" classifier) MUST go into the `EcosystemObject` table with `kind` set accordingly, NOT into the `Harness` table. This preserves the ontological distinction even when both row types share most fields. Per PRD §7.2 (`EcosystemObject`), the data model supports this from v0.1 even though most v0.1 surfaces only render Harnesses.
-
-If the importer encounters a registry row whose classifier is unclear, it logs the row to `import-ambiguous.log` and does NOT default-create either entity (avoid silent misclassification — the owner reviews the log and resolves manually before re-running).
-
-### 26.2 Web UI surfaces
-
-All surfaces are read-only in v0.1. No edit forms required except as stubs.
-
-- **Home dashboard:** harness count, topic count, Insight count, link to matrix, link to harness list, link to topic list
-- **Harness list:** table of all harnesses with name, source model, status
-- **Harness dossier:** identity fields, list of Topics covered, list of Insights (title + status badge), placeholder for "Refresh" button (disabled in v0.1 — no AgentRunner)
-- **Topic list:** table of all topics with name, harness coverage count
-- **Topic dossier:** topic definition, per-harness ComparisonCell states, list of Insights for this topic
-- **Comparison matrix:** harness × topic grid, each cell shows state (present/absent/partial/unknown), confidence band placeholder ("not yet verified" for all v0.1 data)
-
-### 26.3 No agent jobs in v0.1
-
-- `AgentRunner` interface exists in code as an abstract base class with no implementation
-- `ClaudeRunner` class exists as a stub (raises `NotImplementedError`)
-- `AgentJob` table exists in schema and is migratable, but no jobs are created or dispatched
-- "Refresh" button on Harness Dossier exists in HTML but is disabled with tooltip "Agent jobs available from v0.2"
-
-### 26.4 WHY graph and anchor validator
-
-- `docs/why-graph.xml` exists with at minimum: one `USECASE` node per major surface (Comparison Matrix, Harness Dossier, Topic Dossier, Live Agent Studio, Job Dashboard), one `FEATURE` node per entity type
-- `scripts/validate_anchors.py` exists and passes with exit code 0 (trivial in v0.1 since all MODULE nodes are still `STATE="PLANNED"` and the validator skips them per the policy in the WHY graph header comment)
-
-### 26.5 Tests
-
-- `pytest` passes with no failures
-- At minimum: one test per importer function, one smoke test per web route
-- Test coverage is not required to be comprehensive in v0.1, but the test suite must run clean
-
-### 26.6 Dev startup
-
-Canonical commands for v0.1 (no CLI wrapper invented; one `uv run <tool>` pattern):
-
-- `uv run uvicorn observatory.web.app:create_app --factory --reload` starts the server with no errors
-- `uv run python -m observatory.importers.canon --source ../harness-architecture` runs the importer with no crashes on the real source data
-- `uv run alembic upgrade head` applies all migrations to a fresh SQLite file with no errors
-- `uv run pytest` runs all tests
-- `uv run python scripts/validate_anchors.py` runs the anchor validator
-- `uv run ruff check src/ tests/` lints
-
-A future Typer CLI (`uv run observatory <subcmd>`) would unify these behind one surface and is a probable v0.2 ergonomics improvement; punted from v0.1 because it adds a dependency and a CLI module before any of the things it wraps exist.
+If the importer sees a row whose classifier is unclear, it logs to `import-ambiguous.log` and creates neither entity. Silent default-classification is forbidden.
 
 ---
 

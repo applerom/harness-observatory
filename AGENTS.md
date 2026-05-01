@@ -16,13 +16,15 @@ dogfooding example of the agent1st protocol.
 Before writing code, modifying architecture, or delegating subagents, read in this order:
 
 1. `SPIRIT.md` — project constitution (mission, pedagogy, anti-patterns)
-2. `docs/PRD.md` — product truth (what we build and why, v-by-v scope)
+2. `docs/PRD.md` — product truth (what we build and why, plus a short shipped-phases log)
 3. `docs/why-graph.xml` — intent-to-implementation map (pin during session; answers "why is X done this way")
 4. `docs/why-graph-principles.md` — how to read and author the WHY graph
 5. `docs/why-contracts-v1.md` — contract and anchor rules for v1 scope
 6. `CONTEXT.md` — current project state, active decisions, and near-term direction
 7. `WORKLOG.md` — lightweight current runway; read it for active task/blocker state, not history
-8. `EVOLUTION.md` — teaching-facing development trajectory log (agent mistakes, process friction, rule changes)
+8. `docs/lessons/` — graduated teaching lessons; skim the index when working in adjacent areas
+
+`EVOLUTION.md` is **not** required reading for execution-lead or subagent work. It is a spirit-lead surface — in-flight observations not yet graduated. Lessons that mature there are promoted to `docs/lessons/`, `SPIRIT.md`, `AGENTS.md`, or relevant module contract headers and then either reduced to a short EVOLUTION pointer or deleted. Reading it cold should not be the cost of starting a slice.
 
 ### Key Semantic Distinctions (§5 applies immediately)
 
@@ -39,7 +41,8 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - **AGENTS.md** (this file) is the canonical operating rules and required-reading list for agents. If you need to know "what should I read next" — it lives here, not in README and not in CONTEXT.
 - **CONTEXT.md** is the compact current-state handoff — what the project is now, what changed recently, what comes next. Keep it short enough that a new lead agent can read it quickly.
 - **WORKLOG.md** is the lightweight current runway — only active task, next queue, blockers, and in-flight subagents. It is not a historical ledger and is not updated after every tiny step.
-- **EVOLUTION.md** is the development trajectory log — lessons from actual project evolution, including agent-version inertia, tool friction, subagent-process changes, and reusable teaching observations. Historical process truth goes here, not into WORKLOG.
+- **EVOLUTION.md** is a spirit-lead in-flight observation log: episodes of agent-version inertia, tool friction, subagent-process changes, drift between intent and implementation. It is **not** part of the execution-lead or subagent reading order. Entries graduate by promotion (a stable rule moves to `docs/lessons/`, `SPIRIT.md`, `AGENTS.md`, or a module contract header) and the EVOLUTION entry is then either reduced to a short pointer or deleted. EVOLUTION is allowed to stay short; it is not an archive and there is no obligation to preserve every episode.
+- **`docs/lessons/`** is the durable teaching surface students and execution leads read. A lesson here is short, self-contained, and authored from a real episode after the rule has stabilised. Avoid duplicating content between `EVOLUTION.md` and `docs/lessons/` once an entry has graduated.
 - **SPIRIT.md** is the constitution — slow-changing intent, pedagogy, anti-patterns. Changes to SPIRIT.md require owner discussion.
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
 - README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.

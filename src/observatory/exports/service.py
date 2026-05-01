@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Generate derived Markdown artifacts from the observatory database.
-# PRD_REF: docs/PRD.md §13, §24 v1.0
+# PRD_REF: docs/PRD.md §13, §24.1
 # WHY_REF: docs/why-graph.xml#MOD-DOC-EXPORT-SERVICE
 # SCOPE: comparison report; harness summaries; lecturer brief; onboarding checklist; legacy archive manifest
 # INVARIANTS:

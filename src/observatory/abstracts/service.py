@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Deterministic abstract AgentJob service for teaching artifacts.
-# PRD_REF: docs/PRD.md §24 v0.4b
+# PRD_REF: docs/PRD.md §14.2 Job types
 # WHY_REF: docs/why-graph.xml#MOD-ABSTRACT-SERVICE
 # SCOPE: abstract job creation; template artifact generation; raw log persistence; semantic event logging
 # INVARIANTS:

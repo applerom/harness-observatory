@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Parse real AgentJob raw refresh logs into proposed Insight and EvidenceItem rows.
-# PRD_REF: docs/PRD.md §24 v0.2
+# PRD_REF: docs/PRD.md §14.2 Job types
 # WHY_REF: docs/why-graph.xml#MOD-JOB-LOG-PARSER
 # SCOPE: markdown-ish refresh report parsing; conservative evidence path extraction; DB application
 # INVARIANTS:

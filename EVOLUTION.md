@@ -1,12 +1,30 @@
-# EVOLUTION.md — development trajectory log
+# EVOLUTION.md — spirit-lead in-flight observation log
 
-> This is the teaching-facing development trajectory log.
+> This file is a spirit-lead surface. It is **not** part of the standard
+> agent reading order (see `AGENTS.md` "Required Reading" and `CONTEXT.md` §3).
 >
-> `CONTEXT.md` records project decisions and handoff state.
-> `WORKLOG.md` records current work in flight.
-> `EVOLUTION.md` records lessons learned while building: agent mistakes,
-> process friction, tool/version drift, and rule changes that future agents and
-> students should understand.
+> Purpose: capture episodes — agent-version inertia, tool/version drift,
+> subagent-process friction, drift between intent and implementation — while
+> they are still hot, before they have crystallised into a rule.
+>
+> Graduation, not accumulation. When an entry's lesson stabilises, promote it:
+>
+> - operational rule → `AGENTS.md`
+> - constitutional stance → `SPIRIT.md`
+> - code-level invariant → relevant module contract header
+> - student-facing teaching → a short, self-contained file under `docs/lessons/`
+>
+> After promotion, reduce the EVOLUTION entry to a one-line pointer ("graduated
+> to `docs/lessons/X.md` on YYYY-MM-DD") or delete it entirely. EVOLUTION is not
+> an archive. The spirit-lead pass is responsible for keeping it short; if it
+> grows past what a spirit lead can re-read in one sitting, the next pass owes
+> the project a graduation/prune sweep.
+>
+> Other handoff surfaces:
+>
+> - `CONTEXT.md` — current state and decisions.
+> - `WORKLOG.md` — current runway only.
+> - `docs/lessons/` — graduated, durable teaching material.
 
 ## 2026-04-30 — Continuity Ritual Must Shrink When Constraints Change
 

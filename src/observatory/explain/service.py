@@ -2,7 +2,7 @@
 # VERSION: 2026-04-26
 # START_MODULE_CONTRACT:
 # PURPOSE: Deterministic explain AgentJob service for per-Insight explanations.
-# PRD_REF: docs/PRD.md §24 v0.7
+# PRD_REF: docs/PRD.md §14.2 Job types
 # WHY_REF: docs/why-graph.xml#MOD-EXPLAIN-SERVICE
 # SCOPE: explain AgentJob creation; prompt rendering; RevisionNote persistence; raw log persistence; semantic event logging
 # INVARIANTS:
