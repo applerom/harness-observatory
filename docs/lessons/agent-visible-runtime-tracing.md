@@ -6,7 +6,7 @@
 An agent can work much better when the harness gives it feedback it can inspect.
 
 In this project, Playwright CLI changed the frontend loop. Before that, the
-agent could write UI code and run backend tests, but Roman still had to report
+agent could write UI code and run backend tests, but human still had to report
 that a wide matrix was hard to use. After Playwright visual checks existed, the
 agent could verify that the top scrollbar was present and that clicking a matrix
 cell revealed the detail region. That is not magic vision; it is tooling that

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   WHY GRAPH — harness-observatory
-  Schema: 0.8  |  State: LIVE (implemented anchors enforced for STARTED/DONE nodes)
+  State: LIVE (implemented anchors enforced for STARTED/DONE nodes)
 
   This is the live intent-navigation map for harness-observatory.
   It covers use cases, features, and modules derived from docs/PRD.md and SPIRIT.md.
@@ -19,7 +19,7 @@
     docs/why-contracts-v1.md      — anchor and contract rules
     docs/WHY-APPROACH.md          — the idea behind the layer
 -->
-<Why_Graph schema="0.8" project="harness-observatory">
+<Why_Graph project="harness-observatory">
 
   <!-- ================================================================
        USE CASES
@@ -91,10 +91,6 @@
     <REL TYPE="COVERS" TARGET="FEATURE:FEAT-AGENT-JOB"/>
   </USECASE_EXPLAIN>
 
-  <!-- ================================================================
-       FEATURES — v0.1 slice (PRIORITY="HIGH")
-  ================================================================ -->
-
   <FEATURE_MARKDOWN_IMPORT ID="FEAT-MARKDOWN-IMPORT" PRIORITY="HIGH" STATE="STARTED">
     <INTENT>Importer reads harness-architecture registry, topic files, and harness-map comparison and populates the SQLite database with normalized Harness, Topic, Insight, and EvidenceItem records.</INTENT>
     <PRD_REF>docs/PRD.md §26.1 Importer behavior + §26.2 mapping</PRD_REF>
@@ -130,10 +126,6 @@
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-ROUTES-DASHBOARD"/>
     <REL TYPE="IMPLEMENTED_BY" TARGET="MODULE:MOD-WEB-APP"/>
   </FEATURE_DASHBOARD>
-
-  <!-- ================================================================
-       FEATURES — later phases (PRIORITY="MEDIUM")
-  ================================================================ -->
 
   <FEATURE_AGENT_RUNNER ID="FEAT-AGENT-RUNNER" PRIORITY="MEDIUM" STATE="STARTED">
     <INTENT>Abstract AgentRunner Python protocol class defining the interface for dispatching research jobs; v0.2a wires the first manual refresh path through this boundary.</INTENT>

@@ -1,6 +1,6 @@
 # Codex Subagent Operating Profile
 
-> Status: current Codex-led operating profile for v1.1+ feedback-hardening.
+> Status: current Codex-led operating profile for post-v1.2 feedback-hardening.
 > Scope: how a Codex execution lead uses Codex subagents in this repository.
 > Authority: subordinate to `AGENTS.md`, `CONTEXT.md`, `WORKLOG.md`,
 > `docs/PRD.md`, and `docs/why-graph.xml`.
@@ -9,6 +9,12 @@ This project no longer uses the bootstrap v0.1 task plan. The current operating
 shape is fast feedback: the lead agent frames the slice, writes or updates
 PRD/WHY when intent changes, delegates bounded work when useful, integrates, and
 validates with evidence.
+
+Owner reaffirmed on 2026-05-01 that the Codex execution lead is expected to use
+Codex subagents actively, not timidly, when real project work can be delegated.
+The purpose is still delivery, not synthetic benchmarking. But real delegated
+work is also the evidence stream for improving prompts, choosing worker classes,
+and updating this profile or `docs/lessons/` when a pattern stabilizes.
 
 ## Default Codex Shape
 
@@ -57,6 +63,19 @@ parallelism.
 
 When in doubt, do the small thing locally; reserve dispatches for slices where
 the lead-context save is unambiguous.
+
+## Experimentation Discipline
+
+The execution lead may deliberately try different Codex roles, model classes,
+reasoning settings, and prompt shapes on real implementation, review, scouting,
+or validation work. This is part of the project's dogfooding contract. The
+experiment is valid only when the delegated task is genuinely useful to the
+current slice and has bounded acceptance criteria.
+
+Record the operational truth in `docs/agent-run-ledger.md`: what role was used,
+whether it saved lead context, and what the next brief should change. When a
+pattern repeats, graduate it into this profile or a short lesson, then prune the
+ledger row. Do not run toy tasks just to compare agents.
 
 ## Lead Responsibilities
 

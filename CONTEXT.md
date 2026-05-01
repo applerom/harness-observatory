@@ -1,6 +1,6 @@
 # Harness Observatory — Current Context
 
-> **Last update:** 2026-05-01 — post-v1.2 doc pruning pass (PRD §24/§26 collapsed; EVOLUTION demoted from required reading)
+> **Last update:** 2026-05-01 — post-v1.2 feedback-hardening wording + Codex subagent mandate clarified
 >
 > This file is the compact handoff for the current project state. Shipped truth
 > lives in git; durable teaching lessons live in `docs/lessons/`; in-flight
@@ -11,8 +11,8 @@
 
 ## 1. Current Product State
 
-Harness Observatory is a working v1.1+ local-first application for comparing AI
-coding harnesses and teaching agent-operation practice.
+Harness Observatory is a working post-v1.2 local-first application for comparing
+AI coding harnesses and teaching agent-operation practice.
 
 Implemented surfaces and services include:
 
@@ -32,9 +32,10 @@ and durable lessons.
 
 ## 2. Active Operating Model
 
-Roman owns intent, taste, and acceptance. Codex is the day-to-day execution lead
-and may use bounded subagents when that speeds delivery or protects lead context.
-Spirit-lead review remains possible when Roman explicitly asks for a constitutional
+Human owns intent, taste, and acceptance. Codex is the day-to-day execution lead
+and should use bounded subagents when that speeds delivery, protects lead
+context, or teaches the project how to route real work better.
+Spirit-lead review remains possible when human explicitly asks for a constitutional
 pass.
 
 The old heavy continuity model has been replaced with a lean model:
@@ -50,27 +51,16 @@ The old heavy continuity model has been replaced with a lean model:
 - Fast feedback slices may use Spark workers with strict read budgets and narrow
   write scopes.
 
-## 3. Reading Order For A New Agent
+## 3. Reading Order
 
-1. `SPIRIT.md`
-2. `AGENTS.md`
-3. `docs/PRD.md`
-4. `docs/why-graph.xml`
-5. `docs/why-graph-principles.md`
-6. `docs/why-contracts-v1.md`
-7. `CONTEXT.md`
-8. `WORKLOG.md`
-9. `docs/lessons/` — skim the index when working in adjacent areas
-10. `docs/codex-subagent-profile.md` before dispatching Codex subagents
+Canonical reading order lives in `AGENTS.md` so every lead agent and subagent
+sees one boot authority. This file only adds current-state handoff details after
+that boot sequence.
 
-`EVOLUTION.md` is intentionally not in this list. It is a spirit-lead surface
-for unfinished observations; reading it cold should not be the price of starting
-a slice. A spirit-lead pass reads it; everyone else reads what graduated to
-`docs/lessons/`.
-
-For tiny delegated implementation workers, do not copy this full reading order.
-Give the worker a small context packet, exact files, acceptance criteria, and a
-read budget.
+For tiny delegated implementation workers, do not copy the full lead-agent
+reading order. Give the worker a small context packet, exact files, acceptance
+criteria, and a read budget. Use `docs/codex-subagent-profile.md` for the current
+Codex delegation contract.
 
 ## 4. Repository Layout
 

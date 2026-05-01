@@ -4,7 +4,7 @@
 
 Codex lead agent fixed the comparison matrix scrollbar, scroll-to-detail behavior, and first Playwright visual test directly.
 
-The outcome was good: the UI improved and the new visual QA check passed. But Roman noticed a process problem: this was a bounded implementation task that could have been delegated after the lead agent made the PRD and WHY graph decisions.
+The outcome was good: the UI improved and the new visual QA check passed. But human noticed a process problem: this was a bounded implementation task that could have been delegated after the lead agent made the PRD and WHY graph decisions.
 
 ## Lesson
 

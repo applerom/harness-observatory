@@ -5,7 +5,7 @@ developers how to work with agents by letting them watch (and question) the proc
 by agents, about agents, for developers who are skeptical of agents but ready to look at the
 evidence themselves.
 
-**Status: v1.1+ — working local product in feedback-hardening.**
+**Status: post-v1.2 feedback-hardening — working local product.**
 
 The current app has importer/viewer surfaces, manual and scheduled refresh jobs, semantic runtime
 traces, curation, Live Agent Studio, deterministic abstract/verification/engagement/explain
@@ -95,10 +95,10 @@ and follow its required-reading list from there.
 
 Contribution guide is still intentionally light while the app is in feedback-hardening. For now:
 
-- The product is v1.1+ and feedback-driven; the right entry point is `SPIRIT.md`,
+- The product is post-v1.2 and feedback-driven; the right entry point is `SPIRIT.md`,
   `docs/PRD.md`, `CONTEXT.md`, and the lightweight `WORKLOG.md`
 - All architectural decisions go through the WHY graph before code is written
-- Agent-authored commits must use the agent's own author identity, not Roman's human identity;
+- Agent-authored commits must use the agent's own author identity, not human's identity;
   see `AGENTS.md` for the exact rule
 - If you want to understand the agent1st protocol that governs how this is built:
   [https://github.com/applerom/agent1st](https://github.com/applerom/agent1st)

@@ -8,16 +8,16 @@
 > direction. WORKLOG exists only to help a fresh agent resume if the active work
 > stops in the middle.
 
-**Last update:** 2026-05-01 — spirit-lead pass: doc pruning + subagent-dispatch-craft scaffolding
-**Active session lead:** Codex GPT-5.5-class execution lead (next session)
-**Current phase:** v1.1+ feedback-hardening on `development`
+**Last update:** 2026-05-01 — server smoke check + post-v1.2 wording cleanup
+**Active session lead:** Codex GPT-5.5-class execution lead
+**Current phase:** post-v1.2 feedback-hardening on `development`
 
 ---
 
 ## 1. Current State
 
-Harness Observatory is a working v1.1+ local product. The old bootstrap task
-plan has been retired; current work is driven by Roman's feedback, PRD slices,
+Harness Observatory is a working post-v1.2 local product. The old bootstrap task
+plan has been retired; current work is driven by human's feedback, PRD slices,
 WHY graph updates, bounded Codex subagents, and fast validation.
 
 The main product loop is now: fast implementation -> fast feedback -> fast
@@ -35,7 +35,7 @@ short process lessons in `EVOLUTION.md`.
 
 | ID | Brief | Trigger |
 |---|---|---|
-| FEEDBACK-HARDENING | Continue improving the app from Roman/student/lecturer feedback. | Owner or lecturer feedback |
+| FEEDBACK-HARDENING | Continue improving the app from human/student/lecturer feedback. | Owner or lecturer feedback |
 | STRUCTURE-AUDIT | Review code/package structure for student readability and agent development speed; promote real refactor work into PRD/WHY before implementation. | Lead-agent audit before next larger feature wave |
 | EXEC-CLEANUP-MINORS | Two small bounded items left by the 2026-05-01 spirit-lead pass: (a) add a thin unit test for `engagement/service.py` (the only deterministic service without one); (b) opportunistic pass over older `EVOLUTION.md` entries to graduate stable rules into `docs/lessons/` and prune the EVOLUTION entry — see EVOLUTION preamble for the graduation rule. | Execution lead, opportunistic |
 | DISPATCH-LEDGER-DISCIPLINE | Pick up the rolling subagent-dispatch ledger discipline scaffolded on 2026-05-01: (a) append a row to `docs/agent-run-ledger.md` after every Codex subagent dispatch with the verdict (`useful` / `partial` / `wasted` / `rework`) per `docs/codex-subagent-profile.md` "Verdict And Ledger Discipline"; (b) on the first occasion that has ~10 fresh rows or feels like a natural lull, run the periodic sweep — graduate stable patterns into the profile or `docs/lessons/`, and delete the seven 2026-04-27 seed rows whose lessons have already graduated to `docs/lessons/subagent-dispatch-craft.md` and the profile updates; (c) if a friction recurs that the existing profile does not cover, propose the new rule before adding a third instance — repeating the experiment is not a dispatch. | Execution lead, recurring |

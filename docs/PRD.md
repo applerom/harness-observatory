@@ -1,8 +1,8 @@
 # PRD — Harness Observatory
 
-> **Status:** Draft v2 — interview-locked
-> **Date:** 2026-04-25
-> **Owner:** Roman + lead agent
+> **Status:** Current product spec — post-v1.2 feedback-hardening
+> **Date:** 2026-05-01
+> **Owner:** Human + lead agent
 > **Project type:** local-first single-user research, comparison, and teaching application
 
 ---
@@ -482,7 +482,7 @@ Fields:
 - `discover` — find new Insights in a harness or topic not currently in the DB
 - `verify` — re-run a previous claim against current upstream; updates `verification_passes`, may change status to `corroborated` or `disputed`
 - `abstract` — produce a higher-level diagram, ascii art, or mermaid summary from a set of EvidenceItems
-- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights. **v1.1 status:** deterministic template generation (no model call). The `AgentJob` row is created with `runner_name="deterministic"` and immediately marked `done`. Real agent-authored engagement is planned for v1.2 (or later — may be deprioritized if v1.1 feedback shows engagement copy is unused). UI must surface this distinction per v1.1 acceptance — see §24 v1.1.
+- `engagement` — produce `engagement_hook`, `joke_or_telegram_seed`, or audience-specific formulations from existing Insights. **Current status:** deterministic template generation (no model call). The `AgentJob` row is created with `runner_name="deterministic"` and immediately marked `done`. Real agent-authored engagement remains deferred until lecturer/student feedback shows the engagement copy is actually read or used. UI must surface the template-generated distinction per the v1.1 honesty pass — see §24.2 and §24.3.
 - `refresh` — full re-sweep of a harness or topic (may chain discover + verify)
 - `explain` — triggered by "Ask the agent why" button; agent explains its own reasoning for a specific Insight
 

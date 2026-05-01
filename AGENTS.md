@@ -47,6 +47,11 @@ Before writing code, modifying architecture, or delegating subagents, read in th
 - Subdirectory documentation for agents goes in module-contract headers (per `docs/why-contracts-v1.md` rules), not in README.md files.
 - README.md and AGENTS.md may reference each other but should not duplicate content. Single source of truth: agent reading lives in AGENTS.md, human reading lives in README.md.
 
+### Subagent reading rules
+
+- Read only `docs/why-graph.xml`.
+- Subagents should not read other files without explicit request.
+
 ### Change discipline
 
 - Product or architecture changes start in `docs/PRD.md` and `docs/why-graph.xml`, then move into code in the same working slice. If code already drifted ahead, record the drift in `EVOLUTION.md` and fix the docs before adding more behavior.
@@ -62,11 +67,11 @@ The project role is **lead agent**, not "Claude-only lead." Claude Code, Codex, 
 - **Codex lead agent** — typically GPT-5.x-class. May dispatch Codex subagents (for example explorer/worker roles, and smaller/faster models when the harness exposes that control) through Codex's `spawn_agent` tooling.
 - **Other lead harnesses** — follow the same contract if they can provide bounded delegation, durable file edits, test evidence, and clear reports.
 
-Roman grants standing project-level authorization for lead agents to use subagents when the active harness permits it. Use delegation to protect lead context, parallelize independent work, and route low-risk or highly bounded tasks to cheaper/faster agents. If a harness-level policy still requires a fresh session-level user request before spawning subagents, ask Roman to restate the authorization in that session instead of silently falling back.
+Human grants standing project-level authorization for lead agents to use subagents when the active harness permits it. Use delegation to protect lead context, parallelize independent work, and route low-risk or highly bounded tasks to cheaper/faster agents. If a harness-level policy still requires a fresh session-level user request before spawning subagents, ask human to restate the authorization in that session instead of silently falling back.
 
-Codex session note: on 2026-04-26 Roman explicitly reaffirmed session-level authorization for the Codex lead agent to use Codex subagents as an efficiency mechanism during v0.1 work. Subagents are encouraged when they help the lead preserve context, parallelize bounded work, or validate results; they are not mandatory ritual. Future sessions should treat this as durable project intent while still obeying any active harness policy that requires fresh confirmation.
+Codex session note: on 2026-04-26 human explicitly reaffirmed session-level authorization for the Codex lead agent to use Codex subagents as an efficiency mechanism during v0.1 work. Subagents are encouraged when they help the lead preserve context, parallelize bounded work, or validate results; they are not mandatory ritual. Future sessions should treat this as durable project intent while still obeying any active harness policy that requires fresh confirmation.
 
-Lead agents should run **serially across harnesses**, not concurrently, unless Roman explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates CONTEXT/WORKLOG/git if needed, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low.
+Lead agents should run **serially across harnesses**, not concurrently, unless human explicitly says otherwise. Example: Opus in Claude Code completes or pauses, updates CONTEXT/WORKLOG/git if needed, then Codex reads the durable state and continues. This keeps merge conflicts and process complexity low.
 
 When working in Codex, read `docs/codex-subagent-profile.md` before dispatching subagents. The profile and `.codex/agents/*.toml` files are Codex-specific operating aids; they do not override this file, CONTEXT, WORKLOG, the PRD, or the WHY graph.
 
@@ -78,9 +83,9 @@ This project runs with a two-lead model — **spirit lead** (constitutional, per
 - **Spirit-lead sessions are owner-initiated** as deep-review passes (e.g. "посмотри, как агент GPT-5.5 реализовал твой план"). They read `EVOLUTION.md` first thing, produce SPIRIT/PRD/AGENTS deltas, and write a v-bump in PRD §24 with explicit acceptance criteria for the next phase.
 - Execution-lead sessions read those deltas as authoritative and turn them into concrete PRD/WHY/code slices.
 - Execution lead pushes back to spirit lead by writing the friction into `EVOLUTION.md` (timestamp + observable symptom + suggested constraint to relax). The next spirit-lead pass will see it.
-- Both leads commit with their own agent identity so git history shows which lead made which change. Agent-authored commits must **not** use Roman's human author identity (`Roman Siewko <applerom@gmail.com>`) unless Roman personally authored that commit content. This is load-bearing, not cosmetic: multiple agents and Roman all work in this repo, and future agents need authorship to distinguish human edits from Opus/Codex edits.
+- Both leads commit with their own agent identity so git history shows which lead made which change. Agent-authored commits must **not** use human's author identity unless he personally authored that commit content. This is load-bearing, not cosmetic: multiple agents and human all work in this repo, and future agents need authorship to distinguish human edits from Opus/Codex edits.
 - Before creating a commit, the lead agent checks `git config user.name` / `git config user.email` or uses per-command environment variables (`GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL`) so the commit author matches the active agent/harness. Suggested identities:
-  - Claude spirit lead: `Claude Opus <noreply@anthropic.com>`
+  - Claude spirit lead: `Claude Opus 4.7 <noreply@anthropic.com>` (or the active Claude model if different)
   - Codex execution lead: `Codex GPT-5.5 <noreply@openai.com>` (or the active Codex model if different)
 - Use `Co-Authored-By: <subagent/reviewer>` trailers when a commit integrates a reviewer or implementation subagent's substantive findings. Do not use a co-author trailer as a substitute for correct primary author identity.
 
@@ -102,7 +107,7 @@ Core §11 (Continuity) still applies: do not leave the next agent a crater. But 
 
 This project uses a strong-and-simple hierarchy. Optimized for: protecting the lead agent's context budget, parallelizing independent work, surviving any single agent's session loss.
 
-- **Owner (human, Roman)** — intent, taste, feedback, and final product judgment.
+- **Owner (human)** — intent, taste, feedback, and final product judgment.
 - **Lead agent (Opus/GPT-5.x class)** — keeps project context, makes architecture and scope decisions, writes PRD/WHY/contracts when needed, dispatches subagents, reviews + integrates their output, owns commits.
 - **Subagents (Spark/mini/strong workers as exposed by the active harness)** — receive a bounded brief, acceptance criteria, relevant PRD/WHY context, allowed files, and a read budget. Return evidence + a short report. One subagent = one bounded task.
 

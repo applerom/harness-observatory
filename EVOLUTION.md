@@ -32,7 +32,7 @@ Observation:
 - The project originally used a heavy bootstrap delegation plan plus a detailed
   WORKLOG because early development ran under tighter Claude Pro / Codex Plus
   limits and could stop mid-slice.
-- Roman clarified that current development now runs primarily on Codex Pro, with
+- Human clarified that current development now runs primarily on Codex Pro, with
   much larger practical limits and a stronger desire for fast implementation and
   fast feedback.
 - The old artifacts had become active friction: new agents were told to read a
@@ -60,14 +60,12 @@ Rule added:
 ## 2026-04-27 — Commit Attribution Is Operational Context
 
 Observation:
-- Roman pointed out that the previous execution flow forgot, after a few commits,
+- Human pointed out that the previous execution flow forgot, after a few commits,
   that agents must commit under their own identities.
-- Recent development commits were authored as `Roman Siewko <applerom@gmail.com>`
-  even when WORKLOG and commit messages show agent-led implementation.
 - In a two-lead project (spirit lead + execution lead) with occasional human
   edits, this is not a cosmetic problem. Authorship is one of the cheapest
   durable signals future agents have for deciding whether a change came from
-  Roman, Claude/Opus, Codex, or a subagent-reviewed integration.
+  Human, Claude/Opus, Codex, or a subagent-reviewed integration.
 
 Impact:
 - Human and agent edits blur together in `git log`.
@@ -77,8 +75,7 @@ Impact:
   hides the collaboration it is supposed to demonstrate.
 
 Action:
-- `AGENTS.md` now states that agent-authored commits must not use Roman's human
-  author identity unless Roman actually authored the commit content.
+- `AGENTS.md` now states that agent-authored commits must not use human's author identity unless Human actually authored the commit content.
 - `PRD.md` §24 v1.1 now includes commit author identity discipline alongside
   `Co-Authored-By` reviewer/subagent trailers.
 - This current pass uses an explicit Codex author/committer identity as the new
@@ -92,7 +89,7 @@ Rule added:
 ## 2026-04-27 — Matrix Feedback: Overview Surfaces Must Scan First
 
 Observation:
-- Roman's first usage-feedback screenshot showed the Comparison Matrix using
+- Human's first usage-feedback screenshot showed the Comparison Matrix using
   large card-like cells for values that were mostly `present`, `unknown`, and
   `unverified`.
 - The old layout technically exposed the state, but it made the user scroll
@@ -122,13 +119,13 @@ Rule added:
 ## 2026-04-27 — Feedback Speed Still Needs the Agent1st Loop
 
 Observation:
-- Roman corrected Codex after the first Matrix-density pass: even feedback UI
+- Human corrected Codex after the first Matrix-density pass: even feedback UI
   fixes must pass through PRD/task/WHY/delegation, because the lead agent's
   context and judgment are the scarce resource.
 - The direct implementation was useful, but it skipped the project's own
   pedagogy: make intent durable, delegate bounded work, then integrate with
   evidence.
-- Roman also pointed out a new tactical resource: GPT-5.3-Codex-Spark workers
+- Human also pointed out a new tactical resource: GPT-5.3-Codex-Spark workers
   appear to have separate practical limits and are very fast, which matters
   during iterative feedback where the first UI attempt may need quick revision.
 
@@ -154,7 +151,7 @@ Rule added:
 ## 2026-04-27 — Early Feedback Does Not Want Gold-Plated Review
 
 Observation:
-- Roman pointed out that applying strong-agent code review to every early visual
+- Human pointed out that applying strong-agent code review to every early visual
   feedback slice is locally "best practice" but globally wrong for this moment.
 - The product has only just reached v1.0-minimal and feedback has started on the
   first of many tabs. Many UI decisions will be thrown away or revised quickly.
@@ -182,7 +179,7 @@ Rule added:
 ## 2026-04-27 — Curation Buttons Need Reversibility Before Trust
 
 Observation:
-- Roman's next screenshot showed the Curation Queue buttons: "Mark verified",
+- Human's next screenshot showed the Curation Queue buttons: "Mark verified",
   "Mark disputed", and "Mark historical".
 - The user cannot tell what pressing them changes, whether the original agent
   output is deleted, or whether a mistaken click can be undone.
@@ -200,7 +197,7 @@ Action:
 ## 2026-04-27 — Fast Agents Need Small Context Contracts
 
 Observation:
-- Roman inspected the live Spark-worker log and saw the worker immediately read
+- Human inspected the live Spark-worker log and saw the worker immediately read
   broad cold-start documentation (`SPIRIT.md`, full PRD, WHY graph, WORKLOG,
   CONTEXT, EVOLUTION) before a small UI/route patch.
 - The worker then hit context compaction and repeated local file reads.
@@ -245,7 +242,7 @@ Action:
 ## 2026-04-27 — Same Data Type, Same Visual Risk
 
 Observation:
-- Roman found raw Markdown-ish payload in Curation's Verified and Historical
+- Human found raw Markdown-ish payload in Curation's Verified and Historical
   tabs after Matrix detail had already been fixed for the same symptom.
 - The underlying issue was not specific to Matrix or Curation; it was `Insight.body`
   and related agent-produced text being rendered differently across surfaces.
@@ -558,7 +555,7 @@ Rule added:
 ## 2026-04-26 — Development As Curriculum
 
 Observation:
-- Roman explicitly confirmed that real project development episodes should be
+- Human explicitly confirmed that real project development episodes should be
   captured as teaching material, not merely as private process notes.
 - The project already had Level 2 dogfooding ("we build with agents"), but the
   curriculum extraction rule needed to be explicit.
@@ -602,7 +599,7 @@ Why:
 ## 2026-04-26 — Target/Runner Semantic Hygiene
 
 Observation:
-- Roman asked why an OpenCode dossier launches `ClaudeRunner`.
+- Human asked why an OpenCode dossier launches `ClaudeRunner`.
 - The implementation was technically correct (`OpenCode` was the target and
   `ClaudeRunner` was the runtime agent), but the wording made the two roles easy
   to confuse.
@@ -619,10 +616,10 @@ Rule added:
 ## 2026-04-26 — Visual QA And Current Tooling Checks
 
 Observation:
-- Roman found matrix UX issues by eye: wide tables need a top scrollbar, and
+- Human found matrix UX issues by eye: wide tables need a top scrollbar, and
   clicking a matrix cell changes a lower detail region that may be off-screen.
 - Codex could have missed this if it only ran backend and route tests.
-- Roman also flagged that expert knowledge about agent UI tooling ages quickly.
+- Human also flagged that expert knowledge about agent UI tooling ages quickly.
 
 Evidence:
 - Official OpenAI computer-use docs checked on 2026-04-26 describe GPT-5.5 with
@@ -644,7 +641,7 @@ Rule added:
 ## 2026-04-26 — Lead Agent Over-Execution
 
 Observation:
-- Roman noted that the lead agent directly implemented the matrix scrollbar and
+- Human noted that the lead agent directly implemented the matrix scrollbar and
   visual QA work.
 - The result worked, but part of that work was bounded enough for a subagent
   after the PRD/WHY decision had been made.
@@ -692,7 +689,7 @@ Action:
   leaving jobs stuck in `running`.
 - The web route temporarily used `gpt-5.4` for Codex runtime refresh until the
   local Codex CLI could run the desired default model.
-- Roman flagged that Codex CLI is itself a project runtime dependency. Codex
+- Human flagged that Codex CLI is itself a project runtime dependency. Codex
   checked npm, found local `@openai/codex` at `0.104.0` and stable latest at
   `0.125.0`, upgraded the local CLI, and verified `codex exec --model gpt-5.5`
   with a no-op prompt.
@@ -728,7 +725,7 @@ Rule added:
 
 Observation:
 - Playwright CLI gave the lead agent eyes for frontend work: it could verify
-  scroll affordances and clicked-cell behavior without waiting for Roman's
+  scroll affordances and clicked-cell behavior without waiting for Human's
   manual report.
 - The equivalent backend/runtime need is not more freeform logs, but semantic
   traces that say which step and WHY anchor expected what, and what actually
@@ -748,7 +745,7 @@ Teaching extraction:
 ## 2026-04-26 — Parallel Agents Need Isolation, Not Just Warnings
 
 Observation:
-- Roman noticed the lead warns subagents that they are not alone in the
+- Human noticed the lead warns subagents that they are not alone in the
   repository.
 - That warning is correct, but it is a weak control compared with giving each
   concurrent implementation worker an isolated workspace.
@@ -773,7 +770,7 @@ Source:
 ## 2026-04-26 — Better Agent Visibility Should Increase Autonomy
 
 Observation:
-- Roman noticed that after adding Playwright visual QA and semantic runtime
+- Human noticed that after adding Playwright visual QA and semantic runtime
   traces, the lead agent still kept stopping after relatively small slices.
 - Some of that was process churn: we were adding the instruments themselves,
   so short checkpoints were useful.
@@ -784,7 +781,7 @@ Decision:
 - Move v0.3 work in larger autonomous chunks: frame the PRD/WHY slice, delegate
   bounded implementation, run tests plus live smoke, inspect semantic traces,
   and report back with evidence.
-- Keep Roman informed with short progress notes, but do not stop after every
+- Keep Human informed with short progress notes, but do not stop after every
   small internal step when the next step is clear and reversible.
 
 Rule added:

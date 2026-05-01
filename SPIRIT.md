@@ -133,7 +133,7 @@ Harness-observatory — приложение которое одновремен
 ## Collaboration Model
 
 ```
-Roman (Human) — owner, intent, acceptance criteria, lecturer
+Human — owner, intent, acceptance criteria, lecturer
   ├── Spirit lead (Claude Opus 4.x) — constitutional steward:
   │     SPIRIT, PRD architecture, WHY graph; periodic deep review of trajectory
   └── Execution lead (currently Codex GPT-5.x) — primary orchestrator:
@@ -142,7 +142,7 @@ Roman (Human) — owner, intent, acceptance criteria, lecturer
         └── AgentRunner (other agents in future) — runtime agents launched by the running application
 ```
 
-**Roman:** держит интент, говорит "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead-агентов.
+**Human:** держит интент, может говорить "это правильно" и "это не в духе". Не пишет код руками. Не оркестрирует субагентов руками. Работает через lead-агентов.
 
 **Spirit lead (Опус):** конституционный архитектор. Заложил SPIRIT/PRD/AGENTS на bootstrap. Возвращается для periodic deep review — оценить, держится ли дух при имплементации, нужна ли коррекция спецификации, не уехала ли реализация по сравнению с задумкой. Имеет standing right поправлять SPIRIT/PRD/AGENTS если видит drift. Может дёргать execution lead через owner. Может сам запускать субагентов когда находится в активной сессии и это уместно. По умолчанию не пишет ежедневный продуктовый код — это работа execution lead и его субагентов.
 
@@ -181,7 +181,7 @@ Spirit lead и execution lead могут быть одним и тем же аг
 - **Делать "perfect first version".** Каждая v0.X должна быть shippable. Если что-то не помещается — отложить до следующей итерации, не задерживать релиз.
 - **Hardcode `claude -p`** где-либо ниже AgentRunner абстракции. Это убивает Level 3 dogfooding.
 - **Смешивать target и runner.** OpenCode как target — это объект исследования. OpenCodeRunner как runner — это агентный исполнитель. Эти роли нельзя склеивать в UI, логах или объяснениях.
-- **Разрабатывать UI вслепую.** Если агент меняет визуальную поверхность, он обязан увидеть её через screenshot/visual QA инструмент, а не ждать пока Roman глазами найдёт проблему.
+- **Разрабатывать UI вслепую.** Если агент меняет визуальную поверхность, он обязан увидеть её через screenshot/visual QA инструмент, а не ждать пока human глазами найдёт проблему.
 - **Делать UI красивее чем содержательнее.** Tailwind по умолчанию, никаких визуальных новаций пока контент не доказал что заслуживает их.
 - **Изобретать своё там где есть популярное.** Стек популярный намеренно (см. PRD §4.7) — студент должен мочь форкнуть и улучшить.
 - **Убирать упоминания агентских ошибок из live-session логов** "для архива". Логи как есть. Грязное состояние — учебный материал.

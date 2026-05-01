@@ -2,7 +2,7 @@
 
 ## Real Episode
 
-Roman noticed two matrix UX problems:
+Human noticed two matrix UX problems:
 
 - the wide comparison table had horizontal scroll only at the bottom;
 - clicking a cell updated a detail region below the table, but the user stayed near the top and could not see the update.
